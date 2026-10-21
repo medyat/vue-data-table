@@ -18,7 +18,6 @@ export default defineComponent({
     env: { type: Object as PropType<RenderEnv>, required: true },
     focused: { type: Boolean, default: false },
     keyboardFocus: { type: Boolean, default: false },
-    selected: { type: Boolean, default: false },
     /** Comfortable: `secondary` görünür (02 · Yoğunluk). */
     secondaryVisible: { type: Boolean, default: false },
     style: { type: Object as PropType<Record<string, string>>, default: undefined },
@@ -82,10 +81,9 @@ export default defineComponent({
         'div',
         {
           ref: (r) => (el = r as HTMLElement | null),
-          class: ['dt-row', { 'is-focus': props.focused && props.keyboardFocus, 'is-selected': props.selected }],
+          class: ['dt-row', { 'is-focus': props.focused && props.keyboardFocus }],
           role: 'row',
           'aria-rowindex': props.rowIndex,
-          'aria-selected': props.selected ? 'true' : undefined,
           tabindex: props.focused ? 0 : -1,
           'data-index': props.index,
           style: props.style,

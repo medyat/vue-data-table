@@ -34,15 +34,12 @@ const props = withDefaults(
     loading?: boolean
     /** aria-rowcount; bilinmiyorsa -1. */
     rowCount?: number
-    /** İlk veri satırının sayfa ofseti (aria-rowindex = 2 + ofset + i). */
-    rowIndexOffset?: number
-    selectedKeys?: ReadonlySet<string>
     /** Sütun id → sıralama (Faz 2'de doldurulur). */
     sort?: ReadonlyMap<string, { dir: 'asc' | 'desc'; index: number | null }>
     filteredColumns?: ReadonlySet<string>
     sortable?: boolean
   }>(),
-  { rowKey: 'id', density: 'standard', loading: false, rowCount: -1, rowIndexOffset: 0, sortable: false },
+  { rowKey: 'id', density: 'standard', loading: false, rowCount: -1, sortable: false },
 )
 const emit = defineEmits<{
   'row-click': [row: AnyRow, event: MouseEvent]
@@ -162,7 +159,6 @@ const onClick = (e: MouseEvent) => {
   if (row) emit('row-click', toRaw(row), e)
 }
 
-const selectedSet = computed(() => props.selectedKeys ?? new Set<string>())
 const sortOf = (id: string) => props.sort?.get(id)
 const columnSortable = (c: LayoutColumn<AnyRow>) =>
   props.sortable && (c.def.sortable ?? TYPE_SPECS[c.def.type].sortable)
@@ -257,12 +253,11 @@ defineExpose({ focusRow: roving.focusRow, scrollToIndex: (i: number) => virtuali
             v-else
             :row="rows[item.index]!"
             :index="item.index"
-            :row-index="2 + rowIndexOffset + item.index"
+            :row-index="2 + item.index"
             :columns="layout.columns.value"
             :env="env"
             :focused="roving.focusedIndex.value === item.index"
             :keyboard-focus="roving.keyboard.value"
-            :selected="selectedSet.has(layout.rowId(rows[item.index]!))"
             :secondary-visible="density === 'comfortable'"
             :style="{ transform: `translateY(${item.start}px)`, height: `${item.size}px` }"
           />

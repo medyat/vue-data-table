@@ -50,12 +50,6 @@
 .dt-row:hover {
   --dt-row-bg: var(--dt-row-hover);
 }
-.dt-row.is-selected {
-  --dt-row-bg: var(--dt-row-selected);
-}
-.dt-row.is-selected:hover {
-  --dt-row-bg: var(--dt-row-selected-hover);
-}
 /* Klavye odağı: 2 px accent iç çerçeve, 3 px yarıçap (05 §4); fareyle gelen odakta çizilmez (08 §2). */
 .dt-row.is-focus::after {
   content: '';
