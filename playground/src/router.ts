@@ -7,8 +7,16 @@ import T3Views from './pages/T3Views.vue'
 import T7Actions from './pages/T7Actions.vue'
 import T8Cells from './pages/T8Cells.vue'
 import T9States from './pages/T9States.vue'
+import T11Sheet from './pages/T11Sheet.vue'
 
-const REAL: Record<string, Component> = { t1: T1List, t3: T3Views, t7: T7Actions, t8: T8Cells, t9: T9States }
+const REAL: Record<string, Component> = {
+  t1: T1List,
+  t3: T3Views,
+  t7: T7Actions,
+  t8: T8Cells,
+  t9: T9States,
+  t11: T11Sheet,
+}
 
 /** DESIGN-BRIEF görev paketleri; her biri bir rota. Sayfa, ilgili fazda gerçek senaryoyla değişir.
  * T2 (Filtering), T4 (Column headers), T5 (Row selection) ve T6 (Row detail) ayrı ekran değil, T1 liste ekranının

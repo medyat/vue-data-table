@@ -90,7 +90,7 @@ export interface CellAction<Row> {
   run?: (row: Row) => void | Promise<void>
 }
 
-/** Özel editör (DataSheet). Sözleşme: props { modelValue, row, column }, emit 'update:modelValue'. */
+/** Özel editör (DataSheet). Sözleşme: props { modelValue, row, column }, emit 'update:modelValue'; portallı içeriğin kökü `dt-sheet-layer` (07 §5). */
 export type CellEditor = Component
 
 export interface ValidationContext<Row> {

@@ -137,7 +137,8 @@ export interface CellAction<Row> {
 
 /**
  * Özel editör (DataSheet). Sözleşme: props { modelValue, row, column }, emit 'update:modelValue'.
- * Enter/Tab/Esc'i sheet yönetir; bileşen yalnızca değeri üretir. Portallı içerik (popover, combobox) serbesttir.
+ * Enter/Tab/Esc'i sheet yönetir; bileşen yalnızca değeri üretir. Portallı içerik (popover, combobox) serbesttir;
+ * köküne `dt-sheet-layer` sınıfı verilir ki oradaki tık düzenlemeyi onaylamasın (07 §5).
  */
 export type CellEditor = Component
 

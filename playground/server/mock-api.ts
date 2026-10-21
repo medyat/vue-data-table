@@ -2,6 +2,7 @@
 // GET /api/orders?page=1&size=100&sort=dueAt&dir=asc&q=&filters=[…]&delay=ms&fail=1 → { items, hasMore } (simplePaginate gibi)
 // `filters` JSON FilterCondition[]: sahte sunucu paketin `matches` eşlemesiyle uygular (hazır tarih aralıkları sunucuda çözülür, 04).
 // GET /api/orders/count?q=                                              → { total }
+// GET /api/products?page=1&size=2000&delay=ms                            → { items, total } (T11 · DataSheet, 10.000 ürün)
 import type { Plugin } from 'vite'
 import { matches } from '../../src/core/filters/model'
 import type { FilterCondition } from '../../src/types/query'
@@ -105,8 +106,67 @@ export function makeOrders(count = 1284): Order[] {
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
+export interface Product {
+  id: number
+  sku: string
+  name: string
+  category: 'hydraulics' | 'pumps' | 'valves' | 'seals' | 'power_units' | 'hoses'
+  unit: 'pcs' | 'sets' | 'm'
+  listPrice: number
+  cost: number
+  vat: number
+  minStock: number
+  leadTime: number
+  active: boolean
+  validFrom: string | null
+}
+
+const FAMILIES: Array<{
+  name: string
+  sku: string
+  category: Product['category']
+  unit: Product['unit']
+  base: number
+}> = [
+  { name: 'Hydraulic cylinder HC', sku: 'HC', category: 'hydraulics', unit: 'pcs', base: 1650 },
+  { name: 'Gear pump GP', sku: 'GP', category: 'pumps', unit: 'pcs', base: 2240 },
+  { name: 'Pressure relief valve PR', sku: 'PR', category: 'valves', unit: 'pcs', base: 455 },
+  { name: 'Pump shaft seal', sku: 'PS', category: 'seals', unit: 'pcs', base: 84 },
+  { name: 'Pump seal kit', sku: 'PS', category: 'seals', unit: 'sets', base: 214.5 },
+  { name: 'Power unit', sku: 'PU', category: 'power_units', unit: 'pcs', base: 18400 },
+  { name: 'Hydraulic hose', sku: 'HH', category: 'hoses', unit: 'm', base: 64 },
+  { name: 'Proportional valve PV', sku: 'PV', category: 'valves', unit: 'pcs', base: 3450 },
+]
+
+/** 10.000 ürün, deterministik; SKU'lar tekil ("HC-0001-S"). */
+export function makeProducts(count = 10_000): Product[] {
+  const r = rng(11)
+  return Array.from({ length: count }, (_, i) => {
+    const f = FAMILIES[i % FAMILIES.length]!
+    const n = Math.floor(i / FAMILIES.length) + 1
+    const code = String(n).padStart(4, '0')
+    const listPrice = Math.round(f.base * (0.6 + r() * 0.9) * 100) / 100
+    const day = Math.floor(r() * 300)
+    return {
+      id: i + 1,
+      sku: `${f.sku}-${code}-${'SABC'[i % 4]}`,
+      name: `${f.name} ${n}`,
+      category: f.category,
+      unit: f.unit,
+      listPrice,
+      cost: Math.round(listPrice * (0.55 + r() * 0.2) * 100) / 100,
+      vat: r() < 0.9 ? 20 : 10,
+      minStock: [2, 5, 10, 15, 20, 30, 40, 50][Math.floor(r() * 8)]!,
+      leadTime: [7, 10, 12, 14, 21, 30, 35][Math.floor(r() * 7)]!,
+      active: r() < 0.93,
+      validFrom: r() < 0.7 ? new Date(TODAY - day * 86_400_000).toISOString().slice(0, 10) : null,
+    }
+  })
+}
+
 export function mockApi(): Plugin {
   const orders = makeOrders()
+  const products = makeProducts()
   return {
     name: 'dt-mock-api',
     configureServer(server) {
@@ -120,6 +180,13 @@ export function mockApi(): Plugin {
         }
         if (q.has('delay')) await sleep(Number(q.get('delay')))
         if (q.get('fail') === '1') return json(500, { message: 'Simulated failure' })
+
+        if (url.pathname === '/products') {
+          const page = Math.max(1, Number(q.get('page') ?? 1))
+          const size = Math.min(2000, Math.max(1, Number(q.get('size') ?? 2000)))
+          const start = (page - 1) * size
+          return json(200, { items: products.slice(start, start + size), total: products.length })
+        }
 
         const search = (q.get('q') ?? '').toLocaleLowerCase('tr')
         const get = (o: Order, path: string): unknown =>

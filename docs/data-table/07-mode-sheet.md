@@ -127,7 +127,7 @@ Doğrulama hücre onaylanınca anında çalışır: tip çözümleme → `requir
 - Tek `editing` hücresi vardır; editör yalnızca düzenlenirken render edilir, taslak değer depoda durur (sanal kaydırmada kaybolmaz).
 - **Blur ile onaylama yoktur** (portallı bileşenler yanlış tetiklerdi). Onaylayan eylemler: `Enter`/`Tab` (editörde), başka hücreye `mousedown`, ızgara dışına `pointerdown` (reka katmanları — combobox listesi, popover — dışarı sayılmaz). `Esc` iptal eder.
 - Editördeki `Enter`/`Esc`, hedef `aria-expanded="true"` (açık combobox) ise, olay `defaultPrevented` ise ya da hedef input dışı bir buton ise sheet'e ulaşmaz: önce widget çalışır, ikinci `Esc` düzenlemeyi iptal eder.
-- `ColumnDef.editor` ile özel editör: props `{ modelValue, row, column }`, emit `update:modelValue`; Enter/Tab/Esc'i sheet yönetir; reka Popover/Combobox gibi portallı içerik serbesttir ve reka'nın public olayları (`escapeKeyDown`, `focusOutside`, `interactOutside`) kullanılır.
+- `ColumnDef.editor` ile özel editör: props `{ modelValue, row, column }`, emit `update:modelValue`; Enter/Tab/Esc'i sheet yönetir; reka Popover/Combobox gibi portallı içerik serbesttir ve reka'nın public olayları (`escapeKeyDown`, `focusOutside`, `interactOutside`) kullanılır. Portallı içeriğin köküne `dt-sheet-layer` sınıfı verilir: oradaki tık "ızgara dışı" sayılmaz, düzenleme sürer (yerleşik combobox ve takvim de böyle).
 - Hücredeki `actions` ve `cell` içindeki düğmeler düzenleme başlatmaz: düzenleme yalnızca hücre gövdesinden (çift tık, F2, yazma) açılır; düğmeye `mousedown` hücreyi aktif yapar ama düzenlemez.
 
 ## 6. Seçim ve aralıklar

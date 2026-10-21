@@ -43,7 +43,8 @@ const props = defineProps<{
   verticalLines: boolean
   columns: PanelColumn[]
   counts: { shown: number; total: number }
-  sort: SortRule[]
+  /** Verilmezse Sort › satırı yok (DataSheet: header tıklaması yeterli, 07 §2). */
+  sort?: SortRule[]
   /** Tercih deposu varsa "Saved for you only". */
   persistent: boolean
   iconOnly?: boolean
@@ -79,9 +80,9 @@ const onFocusOutside = (e: CustomEvent<{ originalEvent: FocusEvent }>) => {
 }
 const headerOf = (id: string) => props.columns.find((c) => c.id === id)?.def.header ?? id
 const sortSummary = computed(() => {
-  const first = props.sort[0]
+  const first = props.sort?.[0]
   if (!first) return '—'
-  const more = props.sort.length > 1 ? ` +${props.sort.length - 1}` : ''
+  const more = props.sort!.length > 1 ? ` +${props.sort!.length - 1}` : ''
   return `${headerOf(first.column)} ${first.dir === 'asc' ? '↑' : '↓'}${more}`
 })
 const matches = (c: PanelColumn) =>
@@ -132,7 +133,7 @@ const hiddenCols = computed(() => props.columns.filter((c) => !c.visible && matc
             <span class="dt-pop-value">{{ i18n.t('columns.shownOf', counts) }}</span>
             <PhCaretRight :size="14" aria-hidden="true" />
           </button>
-          <button type="button" class="dt-pop-item" @click="view = 'sort'">
+          <button v-if="sort" type="button" class="dt-pop-item" @click="view = 'sort'">
             {{ i18n.t('display.sort') }}
             <span class="dt-pop-value">{{ sortSummary }}</span>
             <PhCaretRight :size="14" aria-hidden="true" />
@@ -270,7 +271,7 @@ const hiddenCols = computed(() => props.columns.filter((c) => !c.visible && matc
           </div>
           <div class="dt-pop-foot">
             <span>{{ i18n.t('sort.addHint') }}</span>
-            <button type="button" class="dt-pop-action" :disabled="!sort.length" @click="emit('sort-clear')">
+            <button type="button" class="dt-pop-action" :disabled="!sort?.length" @click="emit('sort-clear')">
               {{ i18n.t('header.clearSort') }}
             </button>
           </div>

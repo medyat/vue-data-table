@@ -13,13 +13,18 @@ export default defineComponent({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     columns: { type: Array as PropType<Array<LayoutColumn<any>>>, required: true },
     style: { type: Object as PropType<Record<string, string>>, default: undefined },
+    /** DataSheet: solda 56 px gutter hücresi (kısa çubuk). */
+    gutter: { type: Boolean, default: false },
   },
   setup(props) {
+    const gutterCell = () =>
+      h('div', { class: 'dt-cell dt-gutter is-pinned-start', style: { left: '0px' }, role: 'rowheader' }, [
+        h('span', { class: 'dt-sk dt-sk-bar', style: { width: '24px' } }),
+      ])
     return () =>
-      h(
-        'div',
-        { class: 'dt-row dt-row-skeleton', role: 'row', 'aria-hidden': 'true', style: props.style },
-        withFill(props.columns, (col) => {
+      h('div', { class: 'dt-row dt-row-skeleton', role: 'row', 'aria-hidden': 'true', style: props.style }, [
+        props.gutter ? gutterCell() : null,
+        ...withFill(props.columns, (col) => {
           const i = props.columns.indexOf(col)
           const shape = TYPE_SPECS[col.def.type].skeleton
           const width = `${WIDTHS[(props.index + i) % WIDTHS.length]}%`
@@ -52,6 +57,6 @@ export default defineComponent({
                   : h('span', { class: 'dt-sk dt-sk-bar', style: { width } }),
           )
         }),
-      )
+      ])
   },
 })

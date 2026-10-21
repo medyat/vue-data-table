@@ -55,6 +55,8 @@ export interface ColumnLayoutOptions<Row extends object> {
   rowKey?: MaybeRefOrGetter<string>
   /** Görünümden gelen düzen (Faz 3b); verilmezse sütun tanımları. */
   layout?: MaybeRefOrGetter<Partial<ColumnLayout> | undefined>
+  /** DataSheet (07 §3): sola sabit son sütun (birincil ad) px değil minmax ile esner; ofseti kimseye gerekmez. */
+  flexLastStart?: boolean
 }
 
 const trackCss = (t: Track): string => (typeof t === 'number' ? `${t}px` : `minmax(${t.min}px, ${t.fr}fr)`)
@@ -147,7 +149,9 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
   /** grid-template-columns: sabit px, orta track'ler, bölge sonunda `auto` dolgu (05 · Resize). */
   const colsVar: ComputedRef<string> = computed(() =>
     [
-      ...table.getStartVisibleLeafColumns().map((c) => trackCss(trackOf(c, true))),
+      ...table
+        .getStartVisibleLeafColumns()
+        .map((c, i, all) => trackCss(trackOf(c, !(options.flexLastStart && i === all.length - 1)))),
       ...table.getCenterVisibleLeafColumns().map((c) => trackCss(trackOf(c, false))),
       'auto',
       ...table.getEndVisibleLeafColumns().map((c) => trackCss(trackOf(c, true))),

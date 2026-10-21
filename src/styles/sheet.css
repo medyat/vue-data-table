@@ -1,0 +1,519 @@
+/* DataSheet (07, handoff 06): kart, toolbar kayıt kontrolleri, ilerleme şeridi, formül çubuğu, gutter, hücre durumları,
+   editörler, status bar. Renk, yarıçap ve gölgeler yalnızca token'lardan (02). Hücre durum kuralları `[data-col]` ile
+   yazılır: grid.css'teki dikey çizgi kuralından (has-vlines) daha özgül olsun diye. */
+
+.dt-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--dt-line);
+  border-radius: var(--dt-radius-card);
+  box-shadow: var(--dt-shadow-sm);
+  overflow: hidden;
+}
+
+/* Toolbar sağı (06 §2): nokta + sayaç · Discard · Save; değişiklik yokken düğmeler yerinde kalır, pasif. */
+.dt-sheet-changes {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+  font-size: 12.5px;
+  color: var(--dt-text-2);
+  white-space: nowrap;
+}
+.dt-sheet-changes.is-empty {
+  color: var(--dt-text-3);
+}
+.dt-sheet-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--dt-radius-pill);
+  background: var(--dt-accent);
+}
+.dt-sheet-toolbar .dt-btn-ghost:disabled {
+  background: transparent;
+  border-color: transparent;
+  color: var(--dt-line-3);
+}
+.dt-sheet-save:disabled {
+  background: var(--dt-surface-3);
+  border-color: var(--dt-surface-3);
+  color: var(--dt-text-3);
+  box-shadow: none;
+}
+
+/* İlerleme şeridi (06 §9.1, 02 §7): etiket 600 + sayaç, 320 × 6 çubuk; sayaç yoksa belirsiz. */
+.dt-progress-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13px;
+}
+.dt-progress-strip strong {
+  font-weight: 600;
+}
+.dt-progress-count {
+  color: var(--dt-text-2);
+}
+.dt-progress {
+  position: relative;
+  flex: none;
+  width: 320px;
+  height: 6px;
+  border-radius: var(--dt-radius-pill);
+  background: var(--dt-surface-3);
+  overflow: hidden;
+}
+.dt-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dt-accent);
+  transition: width 160ms ease;
+}
+.dt-progress.is-indeterminate .dt-progress-fill {
+  position: absolute;
+  left: -32%;
+  width: 32%;
+  animation: dt-refresh 1.25s linear infinite;
+}
+
+/* Formül çubuğu (06 §4): 36 px; ad kutusu 240 · fx 40 · değer · ipucu. */
+.dt-formula {
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  height: 36px;
+  border-bottom: 1px solid var(--dt-line);
+  font-size: 12.5px;
+}
+.dt-formula-name {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: 240px;
+  padding: 0 12px;
+  border-right: 1px solid var(--dt-line);
+  color: var(--dt-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dt-formula-name .dt-mono {
+  font-size: 12px;
+  color: var(--dt-text);
+}
+.dt-formula-col {
+  margin-left: 5px;
+}
+.dt-formula-fx {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  border-right: 1px solid var(--dt-line);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  color: var(--dt-text-3);
+}
+.dt-formula-value {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--dt-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.dt-formula-value:focus {
+  box-shadow: inset 0 -2px 0 var(--dt-accent);
+}
+.dt-formula-hint {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--dt-text-3);
+  white-space: nowrap;
+}
+
+/* Header (06 §1): anahtar kilidi, zorunlu `*`, birim soluk; sayısal başlıkta sıra değişmez ("List price *", "Lead time d"). */
+.dt-sheet-grid .dt-head-cell {
+  gap: 4px;
+}
+.dt-sheet-grid .dt-head-cell.is-numeric {
+  flex-direction: row;
+}
+.dt-head-lock {
+  flex: none;
+  color: var(--dt-text-3);
+}
+.dt-head-required {
+  color: var(--dt-r-dot);
+  font-weight: 600;
+}
+
+/* Gutter (06 §5): 56 px, --dt-surface-2 (header --dt-surface-3); solda 13 px işaret yuvası, sağda satır no mono 11. */
+.dt-gutter {
+  --dt-row-bg: var(--dt-surface-2);
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 0 5px 0 4px;
+  color: var(--dt-text-3);
+  font-family: var(--dt-font-mono);
+  font-size: 11px;
+  user-select: none;
+  cursor: default;
+}
+.dt-head-cell.dt-gutter {
+  --dt-row-bg: var(--dt-surface-3);
+  justify-content: flex-end;
+  font-family: var(--dt-font);
+  font-size: var(--dt-fs-head);
+}
+.dt-gutter-no {
+  margin-left: auto;
+}
+.dt-mark {
+  display: inline-flex;
+  flex: none;
+}
+.dt-mark.is-changed {
+  width: 6px;
+  height: 6px;
+  border-radius: 1.5px;
+  background: var(--dt-accent);
+}
+.dt-mark.is-error {
+  color: var(--dt-r-dot);
+}
+.dt-status .dt-mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 1.5px;
+}
+.dt-status .dt-mark.is-error {
+  background: var(--dt-r-dot);
+}
+
+/* Hücreler (06 §5). Satır hover yok (Excel); zemin hücre durumundan. */
+.dt-sheet-grid .dt-row:hover {
+  --dt-row-bg: var(--dt-surface);
+}
+.dt-sheet-grid .dt-cell[data-col] {
+  cursor: cell;
+  outline: none;
+}
+.dt-sheet-grid .dt-cell[data-col].is-key {
+  font-family: var(--dt-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+.dt-sheet-grid .dt-cell[data-col].is-readonly {
+  cursor: default;
+}
+/* Anahtar sütun beyaz kalır (T11-01); diğer salt okunurlar soluk zemin + hover/aktifte kilit. */
+.dt-sheet-grid .dt-cell[data-col].is-readonly:not(.is-key) {
+  --dt-row-bg: var(--dt-surface-2);
+  color: var(--dt-text-2);
+}
+.dt-cell-lock {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dt-text-3);
+  opacity: 0;
+  pointer-events: none;
+}
+.dt-sheet-grid .dt-cell[data-col].is-readonly:hover,
+.dt-sheet-grid .dt-cell[data-col].is-readonly.is-active {
+  padding-right: 26px;
+}
+.dt-sheet-grid .dt-cell[data-col].is-readonly:hover .dt-cell-lock,
+.dt-sheet-grid .dt-cell[data-col].is-readonly.is-active .dt-cell-lock {
+  opacity: 1;
+}
+
+/* Changed / Warning / Error: zemin + sağ üstte 7 px köşe üçgeni; öncelik Error > Warning > Changed. */
+.dt-sheet-grid .dt-cell[data-col].is-changed {
+  --dt-row-bg: var(--dt-accent-soft);
+}
+.dt-sheet-grid .dt-cell[data-col].is-changed::after,
+.dt-sheet-grid .dt-cell[data-col].is-warning::after,
+.dt-sheet-grid .dt-cell[data-col].is-error::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-style: solid;
+  border-width: 0 7px 7px 0;
+  border-color: transparent var(--dt-accent) transparent transparent;
+  pointer-events: none;
+  z-index: 1;
+}
+.dt-sheet-grid .dt-cell[data-col].is-warning {
+  --dt-row-bg: var(--dt-a-bg);
+}
+.dt-sheet-grid .dt-cell[data-col].is-warning::after {
+  border-right-color: var(--dt-a-dot);
+}
+.dt-sheet-grid .dt-cell[data-col].is-error {
+  --dt-row-bg: var(--dt-r-bg);
+  box-shadow: inset 0 0 0 1.5px var(--dt-r-dot);
+}
+.dt-sheet-grid .dt-cell[data-col].is-error::after {
+  border-right-color: var(--dt-r-dot);
+}
+.dt-cell-required {
+  color: var(--dt-r-fg);
+  font-weight: 500;
+}
+
+/* In selection: zemin + aralığın dış kenarlarında 1.5 px accent (inset gölgeler). */
+.dt-sheet-grid .dt-cell[data-col].is-selected {
+  --dt-row-bg: var(--dt-accent-soft);
+  --dt-sel-l: 0;
+  --dt-sel-r: 0;
+  --dt-sel-t: 0;
+  --dt-sel-b: 0;
+  box-shadow:
+    inset calc(var(--dt-sel-l) * 1px) 0 0 0 var(--dt-accent),
+    inset calc(var(--dt-sel-r) * -1px) 0 0 0 var(--dt-accent),
+    inset 0 calc(var(--dt-sel-t) * 1px) 0 0 var(--dt-accent),
+    inset 0 calc(var(--dt-sel-b) * -1px) 0 0 var(--dt-accent);
+}
+.dt-sheet-grid .dt-cell[data-col].is-edge-l {
+  --dt-sel-l: 1.5;
+}
+.dt-sheet-grid .dt-cell[data-col].is-edge-r {
+  --dt-sel-r: 1.5;
+}
+.dt-sheet-grid .dt-cell[data-col].is-edge-t {
+  --dt-sel-t: 1.5;
+}
+.dt-sheet-grid .dt-cell[data-col].is-edge-b {
+  --dt-sel-b: 1.5;
+}
+
+/* Active: 2 px accent iç çerçeve + sağ altta fill handle (7 × 7, 1.5 px surface halka, 4 px dışarı taşar). */
+.dt-sheet-grid .dt-cell[data-col].is-active {
+  --dt-row-bg: var(--dt-surface);
+  z-index: 2;
+  box-shadow: inset 0 0 0 2px var(--dt-accent);
+}
+.dt-fill-handle {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 7px;
+  height: 7px;
+  background: var(--dt-accent);
+  box-shadow: 0 0 0 1.5px var(--dt-surface);
+  z-index: 1;
+  cursor: crosshair;
+}
+
+/* Editing: --dt-surface zemin, 2 px accent + gölge, üst katmanda. */
+.dt-sheet-grid .dt-cell[data-col].is-editing {
+  --dt-row-bg: var(--dt-surface);
+  z-index: 5;
+  padding: 0;
+  box-shadow:
+    inset 0 0 0 2px var(--dt-accent),
+    var(--dt-shadow-editing);
+}
+.dt-sheet-grid .dt-cell[data-col].is-editing::after {
+  display: none;
+}
+.dt-sheet-grid .dt-cell[data-col].is-editing > .dt-cell-content {
+  padding: 0 var(--dt-cell-x);
+}
+.dt-cell-editor {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+.dt-cell-anchor {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+.dt-cell-editor.is-number {
+  justify-content: flex-end;
+  padding-right: var(--dt-cell-x);
+}
+.dt-cell-input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 var(--dt-cell-x);
+  border: 0;
+  background: transparent;
+  color: var(--dt-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.dt-cell-input.is-right {
+  padding-right: 0;
+  text-align: right;
+}
+.dt-cell-input.is-multiline {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: auto;
+  min-height: 100%;
+  padding: 6px var(--dt-cell-x);
+  background: var(--dt-surface);
+  box-shadow:
+    inset 0 0 0 2px var(--dt-accent),
+    var(--dt-shadow-editing);
+  line-height: 1.4;
+  resize: none;
+}
+.dt-cell-editor.is-date .dt-cell-input {
+  padding-right: 0;
+}
+.dt-cell-editor-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: var(--dt-radius-xs);
+  background: transparent;
+  color: var(--dt-text-3);
+  cursor: pointer;
+}
+.dt-cell-editor-btn:hover {
+  background: var(--dt-surface-3);
+  color: var(--dt-text-2);
+}
+
+/* Combobox listesi (06 §7): hücrenin altında sağa hizalı; vurgulu öğe --dt-surface-3 + ↵. */
+.dt-cell-list {
+  min-width: 180px;
+  padding: 4px;
+}
+.dt-cell-option {
+  min-height: 30px;
+  justify-content: space-between;
+}
+.dt-cell-option[data-highlighted] {
+  background: var(--dt-surface-3);
+}
+.dt-cell-option-enter {
+  visibility: hidden;
+}
+.dt-cell-option[data-highlighted] .dt-cell-option-enter {
+  visibility: visible;
+}
+.dt-cell-date {
+  padding: 8px;
+}
+.dt-cell-date-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  border-radius: var(--dt-radius-item);
+  background: var(--dt-accent-soft);
+  color: var(--dt-accent-text);
+  font-size: 12.5px;
+}
+
+/* Hata / uyarı balonu (06 §5): hücrenin üstünde (ilk satırda altında), sol kenar hizalı, 6 px ara; hover veya aktifken. */
+.dt-cell-tip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  z-index: 6;
+  display: none;
+  width: max-content;
+  max-width: 280px;
+  padding: 7px 10px;
+  border-radius: var(--dt-radius-item);
+  background: var(--dt-error-tip-bg);
+  color: var(--dt-fill-text-light);
+  font-family: var(--dt-font);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  white-space: normal;
+  box-shadow: var(--dt-shadow-tip);
+  pointer-events: none;
+}
+.dt-cell-tip.is-warning {
+  background: var(--dt-tip-bg);
+  color: var(--dt-tip-fg);
+}
+.dt-cell.is-tip-below > .dt-cell-tip {
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+.dt-sheet-grid .dt-cell[data-col]:hover > .dt-cell-tip,
+.dt-sheet-grid .dt-cell[data-col].is-active > .dt-cell-tip {
+  display: block;
+}
+
+/* Status bar (06 §6): 36 px, --dt-surface-2, üstte 1 px çizgi. */
+.dt-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+  height: 36px;
+  padding: 0 12px;
+  border-top: 1px solid var(--dt-line);
+  background: var(--dt-surface-2);
+  color: var(--dt-text-2);
+  font-size: 12.5px;
+}
+.dt-status-rows {
+  color: var(--dt-text);
+}
+.dt-status-changes,
+.dt-status-errors {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dt-status-muted {
+  color: var(--dt-text-3);
+}
+.dt-status-errors {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dt-r-fg);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Satır sınırı şeridi (06 §1, 02 §7): 40 px. */
+.dt-sheet-strip {
+  height: 40px;
+  padding: 0 8px 0 12px;
+  border-top: 1px solid var(--dt-a-line);
+}

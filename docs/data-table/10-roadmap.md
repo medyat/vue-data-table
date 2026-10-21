@@ -138,14 +138,14 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 
 **Kapsam:** `DataSheet`, `useSheetTable` (TanStack `cellSelection`: roving tabindex, aralık, mousedown/mouseenter handler'ları), `useSheetStore` (draft/base/errors/added/removed, tek okuyucu), `loading` ilerlemesi, gutter, anahtar/birincil sabit sütunlar, hücre odaklı klavye, formula bar, editörler (3a'daki `core/editors` + `ColumnDef.editor` v-model sözleşmesi, commit kuralları), hücre durumları (01), doğrulama (required, tip, validate, warn, çapraz), status bar sayaçları, Save/Discard kontrolleri (henüz `@save` sahte).
 
-- [ ] 10.000 satır; düzenleme `loading` false olunca açılır.
-- [ ] DESIGN-BRIEF §8.4'teki tüm hücre durumları (T11), light/dark.
-- [ ] Yazmaya başlamak içeriği değiştirir; F2 sona koyar; Enter aşağı, Tab sağa, Esc iptal; blur ile commit yok; başka hücreye mousedown ve ızgara dışına tık commit eder.
-- [ ] Portallı editörler (combobox, popover): açık listede ↓/Enter/Esc yalnızca widget'ta; odak portala gidince düzenleme sürer; reka public API'leri kullanılır (Playwright).
-- [ ] Depo: bilinçli `null` değer korunur (`Map.has`); render, doğrulama ve kopyalama aynı okuyucuyu kullanır; `rows` mutasyonu yok.
-- [ ] Sayı girişleri `2240`, `2.240,00`, `2,240.00` kabul eder; tarih "24.10", "+7d".
-- [ ] Değişmiş hücre hover'da "Was …"; satır içi çapraz kural yeniden doğrulanır.
-- [ ] Hücre düzenleme → ekrana < 16 ms; aktif satır kaydırmada DOM'da kalır.
+- [x] 10.000 satır; düzenleme `loading` false olunca açılır.
+- [x] DESIGN-BRIEF §8.4'teki tüm hücre durumları (T11), light/dark.
+- [x] Yazmaya başlamak içeriği değiştirir; F2 sona koyar; Enter aşağı, Tab sağa, Esc iptal; blur ile commit yok; başka hücreye mousedown ve ızgara dışına tık commit eder.
+- [x] Portallı editörler (combobox, popover): açık listede ↓/Enter/Esc yalnızca widget'ta; odak portala gidince düzenleme sürer; reka public API'leri kullanılır (Playwright).
+- [x] Depo: bilinçli `null` değer korunur (`Map.has`); render, doğrulama ve kopyalama aynı okuyucuyu kullanır; `rows` mutasyonu yok.
+- [x] Sayı girişleri `2240`, `2.240,00`, `2,240.00` kabul eder; tarih "24.10", "+7d".
+- [x] Değişmiş hücre hover'da "Was …"; satır içi çapraz kural yeniden doğrulanır.
+- [x] Hücre düzenleme → ekrana < 16 ms; aktif satır kaydırmada DOM'da kalır.
 
 ### 6b — Seçim, pano, doldurma, geri al
 
