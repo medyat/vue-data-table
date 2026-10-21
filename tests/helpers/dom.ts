@@ -50,6 +50,7 @@ export function mockLayout() {
     return { x: 0, y: 0, top: 0, left: 0, right: 1000, bottom: h, width: 1000, height: h, toJSON: () => ({}) }
   }
   globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(0), 0) as unknown as number
+  Element.prototype.scrollIntoView ??= () => {}
   // reka-ui / floating-ui portallı içerik için gözlemci stub'ları.
   class Observer {
     observe() {}

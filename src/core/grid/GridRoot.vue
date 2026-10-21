@@ -21,7 +21,6 @@ import HeaderCell from './HeaderCell.vue'
 import type { HeaderAction } from './headerActions'
 import Row from './Row'
 import SkeletonRow from './SkeletonRow'
-import { useDelegatedTooltip } from './useDelegatedTooltip'
 
 const props = withDefaults(
   defineProps<{
@@ -46,6 +45,8 @@ const props = withDefaults(
     sort?: ReadonlyMap<string, { dir: 'asc' | 'desc'; index: number | null }>
     filteredColumns?: ReadonlySet<string>
     sortable?: boolean
+    /** `ajax`/`user` etiket önbelleği; DataTable filtre çipleriyle paylaşır. */
+    labels?: RemoteLabels
   }>(),
   { density: 'standard', loading: false, rowCount: -1, rowIndexOffset: 0, sortable: false },
 )
@@ -95,7 +96,7 @@ const env = computed<RenderEnv>(() => ({
   density: density.value,
   coarse,
 }))
-const labels = new RemoteLabels()
+const labels = props.labels ?? new RemoteLabels()
 
 const headerLabels = () => [...(root.value?.querySelectorAll<HTMLElement>('.dt-head-label') ?? [])]
 /** Sütunun header ve gövde hücreleri (id'de nokta olabilir: CSS.escape yerine dataset karşılaştırması). */
@@ -216,6 +217,9 @@ const fitToContent = (col: LayoutColumn<AnyRow>) => {
 /** Sütun menüsü ve ⌥⇧←/→ (05 §4): sıralama dışındakiler düzenin kendi işi. Taşınan başlığın odağı korunur. */
 const onHeaderAction = (col: LayoutColumn<AnyRow>, action: HeaderAction) => {
   switch (action) {
+    case 'filter':
+      emit('header-filter', col.id)
+      return
     case 'sort-asc':
     case 'sort-desc':
     case 'sort-clear':
@@ -252,8 +256,6 @@ const onHeaderNav = (col: LayoutColumn<AnyRow>, to: 'left' | 'right' | 'down') =
   const i = layout.columns.value.findIndex((c) => c.id === col.id)
   focusHeader(to === 'left' ? i - 1 : i + 1)
 }
-
-const tooltip = useDelegatedTooltip(root)
 
 watch(
   () => props.rows.length,
@@ -341,8 +343,5 @@ defineExpose({
     <div v-if="$slots.notice" class="dt-notice" role="status"><slot name="notice" /></div>
     <div v-if="$slots.state && !skeleton && rows.length === 0" class="dt-body-state"><slot name="state" /></div>
     <div class="dt-scroll-pill" :class="{ 'is-visible': pill }" aria-hidden="true">{{ pillText }}</div>
-    <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
-      {{ tooltip.text.value }}
-    </div>
   </div>
 </template>

@@ -3,6 +3,7 @@
 @import './cells.css';
 @import './grid.css';
 @import './list.css';
+@import './filters.css';
 
 /* Bileşen kökü. Tüm ölçü ve renkler --dt-* token'larından (02); sabit değer yok. */
 .dt {

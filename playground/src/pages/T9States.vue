@@ -2,6 +2,7 @@
 // T9 · States: sahte talep akışıyla her durum (design/T09-states). URL: ?s=normal|loading|slow|empty|error|stale|pageEmpty
 import { DataTable, type TableError, type TableRequest } from '@swors/data-table'
 import { ref } from 'vue'
+import { matches } from '../../../src/core/filters/model'
 import { makeOrders } from '../../server/mock-api'
 import { orderColumns, type Order } from '../data/orders'
 
@@ -10,6 +11,8 @@ type Scenario = (typeof SCENARIOS)[number]
 const params = new URLSearchParams(location.search)
 const scenario = ref<Scenario>((params.get('s') as Scenario) ?? 'normal')
 const all = makeOrders(260)
+const get = (o: Order, path: string): unknown =>
+  path.split('.').reduce<unknown>((v, k) => (v as Record<string, unknown> | null)?.[k], o)
 
 const rows = ref<Order[]>([])
 const hasMore = ref(false)
@@ -37,7 +40,11 @@ async function onRequest({ query, signal }: TableRequest) {
     s === 'empty'
       ? []
       : all.filter(
-          (o) => !q || [o.number, o.product.name, o.customer].some((v) => v.toLocaleLowerCase('tr').includes(q)),
+          (o) =>
+            (!q || [o.number, o.product.name, o.customer].some((v) => v.toLocaleLowerCase('tr').includes(q))) &&
+            query.filters.every((f) =>
+              matches(f, f.column === 'owner' ? (o.owner?.id ?? null) : get(o, f.column), { locale: 'tr' }),
+            ),
         )
   const { number, size } = query.page
   const start = (number - 1) * size

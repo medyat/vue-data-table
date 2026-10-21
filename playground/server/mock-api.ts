@@ -1,7 +1,10 @@
 // Sahte Laravel API'si (Vite dev middleware). Playground ve Playwright aynı deterministik veriye karşı koşar.
-// GET /api/orders?page=1&size=100&sort=dueAt&dir=asc&q=&delay=ms&fail=1  → { items, hasMore }  (simplePaginate gibi)
+// GET /api/orders?page=1&size=100&sort=dueAt&dir=asc&q=&filters=[…]&delay=ms&fail=1 → { items, hasMore } (simplePaginate gibi)
+// `filters` JSON FilterCondition[]: sahte sunucu paketin `matches` eşlemesiyle uygular (hazır tarih aralıkları sunucuda çözülür, 04).
 // GET /api/orders/count?q=                                              → { total }
 import type { Plugin } from 'vite'
+import { matches } from '../../src/core/filters/model'
+import type { FilterCondition } from '../../src/types/query'
 
 export interface Order {
   id: number
@@ -12,6 +15,7 @@ export interface Order {
   produced: number
   owner: { id: string; name: string } | null
   dueAt: string
+  createdAt: string
   value: number
   currency: 'TRY'
   plant: 'Gebze' | 'Dilovası'
@@ -91,6 +95,7 @@ export function makeOrders(count = 1284): Order[] {
       produced,
       owner: r() < 0.08 ? null : pick(OWNERS),
       dueAt: new Date(TODAY + Math.round(r() * 60 - 20) * 86400000).toISOString().slice(0, 10),
+      createdAt: new Date(TODAY - Math.round(r() * 90) * 86400000 - Math.round(r() * 86400000)).toISOString(),
       value: (Math.round(r() * 1_300_000 + 20_000) / 100) * 100,
       currency: 'TRY',
       plant: r() < 0.7 ? 'Gebze' : 'Dilovası',
@@ -117,19 +122,22 @@ export function mockApi(): Plugin {
         if (q.get('fail') === '1') return json(500, { message: 'Simulated failure' })
 
         const search = (q.get('q') ?? '').toLocaleLowerCase('tr')
-        const matching = search
-          ? orders.filter((o) =>
-              [o.number, o.product.name, o.customer].some((s) => s.toLocaleLowerCase('tr').includes(search)),
-            )
-          : orders
+        const get = (o: Order, path: string): unknown =>
+          path.split('.').reduce<unknown>((v, k) => (v as Record<string, unknown> | null)?.[k], o)
+        const filters = JSON.parse(q.get('filters') || '[]') as FilterCondition[]
+        const cell = (o: Order, column: string) => (column === 'owner' ? (o.owner?.id ?? null) : get(o, column))
+        const matching = orders.filter(
+          (o) =>
+            (!search ||
+              [o.number, o.product.name, o.customer].some((s) => s.toLocaleLowerCase('tr').includes(search))) &&
+            filters.every((f) => matches(f, cell(o, f.column), { locale: 'tr' })),
+        )
 
         if (url.pathname === '/orders/count') return json(200, { total: matching.length })
         if (url.pathname !== '/orders') return json(404, { message: 'Not found' })
 
         const sort = q.get('sort')
         const dir = q.get('dir') === 'desc' ? -1 : 1
-        const get = (o: Order, path: string): unknown =>
-          path.split('.').reduce<unknown>((v, k) => (v as Record<string, unknown> | null)?.[k], o)
         const sorted = sort
           ? [...matching].sort((a, b) => {
               const x = get(a, sort) as string | number

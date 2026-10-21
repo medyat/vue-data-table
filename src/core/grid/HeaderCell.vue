@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from 'reka-ui'
 import { computed, ref } from 'vue'
-import { alignOf, isNumericType, typeLabelKey } from '../cells/specs'
+import { TYPE_SPECS, alignOf, isNumericType, typeLabelKey } from '../cells/specs'
 import type { LayoutColumn } from '../columns/useColumnLayout'
 import { useDataTableContext } from '../plugin'
 import { MOVE_KBD, type HeaderAction } from './headerActions'
@@ -44,6 +44,7 @@ const numeric = computed(() => isNumericType(def.value.type))
 const align = computed(() => alignOf(def.value))
 const unit = computed(() => (typeof def.value.unit === 'string' ? def.value.unit : undefined))
 const canSort = computed(() => props.sortable ?? false)
+const canFilter = computed(() => def.value.filterable ?? TYPE_SPECS[def.value.type].filterable)
 const menuOpen = ref(false)
 
 const resizeHandler = (e: MouseEvent | TouchEvent) => {
@@ -164,6 +165,12 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
             </DropdownMenuItem>
             <DropdownMenuItem class="dt-menu-item" :disabled="!sort" @select="act('sort-clear')">
               {{ i18n.t('header.clearSort') }}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator class="dt-menu-sep" />
+          </template>
+          <template v-if="canFilter">
+            <DropdownMenuItem class="dt-menu-item" @select="act('filter')">
+              {{ i18n.t('header.filterBy') }}
             </DropdownMenuItem>
             <DropdownMenuSeparator class="dt-menu-sep" />
           </template>

@@ -9,6 +9,7 @@ const props = defineProps<{
   /** null: arama yuvası yok. */
   search: string | null
   searchPlaceholder: string
+  hasFilter: boolean
   hasDisplay: boolean
   /** ⋯ menüsünde en az bir öğe var mı. */
   hasMore: boolean
@@ -68,6 +69,7 @@ defineExpose({
         @focusout="searchOpen = false"
       />
     </template>
+    <slot v-if="hasFilter" name="filter" :icon-only="size === 'phone'" />
     <span class="dt-toolbar-spacer" />
     <slot v-if="hasDisplay && size !== 'phone'" name="display" :icon-only="size !== 'full'" />
     <slot

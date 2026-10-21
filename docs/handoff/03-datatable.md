@@ -34,7 +34,7 @@ Davranış: brief §6. Tasarım: **T1–T9** sayfaları. Örnek ekran “Product
 
 Yalnızca çip varken. En az 44 px, dolgu `8px 12px`, boşluk 6, üstte 1 px `--dt-line`. Çipler ([02 §5](02-ortak-bilesenler.md)) → **Add filter** (ghost 28, `Plus` 14) → sağ uçta **Clear all** (ghost 28, ilk satırın sonuna sabit).
 
-Taşma: 2 satıra kadar sarar; fazlası ikinci satırın sonunda **+N more** düğmesi (28 px, dolgu `0 10px`, ikincil; açıkken kenar `--dt-accent` + halo). Popover 340: başlık “3 more filters” 13 / 600 + “Click a row to edit it” 12 `--dt-text-3`; satırlar 32 px (ikon, alan, operatör, değer 500, sağda 24 px kaldır); ayırıcı; “Show all filters” / “Show fewer”.
+Taşma: **D29 (2026-10-21) ile tek satır** — sığmayan çipler yatay kayar (çubuk gizli), sağ kenarda 40 px solma; Add filter ve Clear all kayan alanın dışında, sağda sabit (çipler sığarken Add filter son çipin yanındadır). T2-07'deki `+N more` popover'ı uygulanmaz.
 
 ### 3.2 Column picker (272)
 

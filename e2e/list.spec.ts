@@ -75,8 +75,8 @@ test.describe('T1 · sunucu modu', () => {
     await expect(page.locator('[role="columnheader"]')).toHaveCount(7)
     await page.getByRole('button', { name: 'Display' }).click()
     await page.getByRole('button', { name: /^Columns/ }).click()
-    await expect(page.locator('.dt-display')).toContainText('7 of 8 shown')
-    await page.locator('.dt-col-row.is-hidden button').click()
+    await expect(page.locator('.dt-display')).toContainText('7 of 10 shown')
+    await page.locator('.dt-col-row.is-hidden', { hasText: 'Status' }).locator('button').click()
     await expect(page.locator('[role="columnheader"]')).toHaveCount(8)
   })
 

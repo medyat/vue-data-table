@@ -79,6 +79,7 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 | D26 | **Toolbar'da facet / hızlı filtre çipi yok.** Her filtre Filter › column picker veya header menüsünden eklenir; `ColumnDef.facet` yoktur. | Tek giriş noktası, sade toolbar. (Tasarım, 2026-10-21) |
 | D27 | **Görünüm kaydetme aksiyonları görünüm menüsündedir.** Görünüm düzenlenince menünün üstünde Save changes (`⌘S`) · Save as new view… · Discard changes; filtre satırında “View edited · Reset · Save view” yoktur. | Filtre satırı yalnızca filtre içindir; sıralama/sütun değişikliği de aynı yerden kaydedilir. (Tasarım, 2026-10-21) |
 | D28 | **Önizleme (peek) paketin değil.** Sağ panel, satırdaki Preview düğmesi, menüdeki Preview, `Space`, `peek` prop'u ve `#peek` slot'u yoktur; satır aksiyon sütunu yalnızca ⋯ (56 px). İhtiyaç duyan uygulama `row-click` olayı veya `rowActions` ile kendi panelini/sayfasını açar. | Sanal listeyle odak/Prev-Next senkronu pahalı; uygulama önizlemeyi kendi tasarımıyla taşır. (Tasarım, 2026-10-21) |
+| D29 | **Filtre satırı tek satırdır.** Çipler sarılmaz, `+N more` popover'ı ve Show all / Show fewer yoktur; sığmayan çipler yatay kayar, sağ kenarda solma, Clear all sağda sabit. | D2 çip sayısını sütun sayısıyla sınırlar; iki satır + ölçüm + gizli çip listesi bu sınırlı durum için karmaşıktı. (Uygulama, 2026-10-21) |
 
 ## Açık sorular (ilgili aşamaya başlamadan önce ürün sahibine sorun)
 
@@ -91,7 +92,7 @@ Q1 (kullanıcı varsayılan görünümü) kapandı: evet, tercihlerde `defaultVi
 
 ## Tasarım geçmişi
 
-İlk canvas board'ları (20 board, kit.css, ekran görüntüleri) kararlarla çeliştiği için kaldırıldı; oradaki davranışlardan değişen kararlar günlükte (D4, D6, D7, D17–D25). T1–T13 tasarımları 2026-10-21'de DESIGN-BRIEF'e göre Claude Design ile yapıldı; tasarım sırasında alınan D26–D28 günlüğe işlendi ve dokümanlar buna göre güncellendi. Teslim belgeleri `docs/handoff/`. Bir tasarım dokümanla çelişirse doküman geçerlidir, çelişki not edilip sorulur.
+İlk canvas board'ları (20 board, kit.css, ekran görüntüleri) kararlarla çeliştiği için kaldırıldı; oradaki davranışlardan değişen kararlar günlükte (D4, D6, D7, D17–D25). T1–T13 tasarımları 2026-10-21'de DESIGN-BRIEF'e göre Claude Design ile yapıldı; tasarım sırasında alınan D26–D28 günlüğe işlendi ve dokümanlar buna göre güncellendi; D29 uygulama sırasında (Faz 3a) alındı, T2-07 geçersiz. Teslim belgeleri `docs/handoff/`. Bir tasarım dokümanla çelişirse doküman geçerlidir, çelişki not edilip sorulur.
 
 ## Sözlük
 

@@ -1,10 +1,18 @@
 <script setup lang="ts" generic="Row extends object">
 // DataTable (05) — Faz 2: toolbar, ızgara, footer, durumlar, veri akışı (`@request`), sıralama, sayfalama, sütun yönetimi,
 // tercihler. Paket veri çekmez (D18): sorguyu yayar, `rows`/`hasMore`/`loading`/`error` alır. Seçim ve satır menüsü Faz 4.
-import { PhCircleNotch, PhWarning } from '@phosphor-icons/vue'
+import { PhCircleNotch, PhFunnel, PhPlus, PhWarning } from '@phosphor-icons/vue'
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { optionLabel } from '../core/cells/format'
+import { RemoteLabels } from '../core/cells/remoteLabels'
+import { TYPE_SPECS } from '../core/cells/specs'
 import { useColumnLayout } from '../core/columns/useColumnLayout'
+import ColumnPicker from '../core/filters/ColumnPicker.vue'
+import FilterBar from '../core/filters/FilterBar.vue'
+import { defaultOperator, isComplete, summarize, toCondition, type Chip, type Summary } from '../core/filters/model'
+import { getFormat } from '../core/format'
 import GridRoot from '../core/grid/GridRoot.vue'
+import { useDelegatedTooltip } from '../core/grid/useDelegatedTooltip'
 import { isTextInput } from '../core/interaction/isInteractive'
 import { useDataTableContext } from '../core/plugin'
 import { usePreferences } from '../core/preferences/usePreferences'
@@ -13,7 +21,15 @@ import DisplayPopover from '../core/toolbar/DisplayPopover.vue'
 import MoreMenu from '../core/toolbar/MoreMenu.vue'
 import Toolbar from '../core/toolbar/Toolbar.vue'
 import type { ColumnDef, Density, Plural, TableId } from '../types'
-import type { CountRequest, QueryWithoutPage, SortRule, TableError, TableQuery, TableRequest } from '../types/query'
+import type {
+  CountRequest,
+  FilterCondition,
+  QueryWithoutPage,
+  SortRule,
+  TableError,
+  TableQuery,
+  TableRequest,
+} from '../types/query'
 import Footer from './footer/Footer.vue'
 import { isSearchable, useListTable } from './useListTable'
 import { useRequest } from './useRequest'
@@ -27,7 +43,7 @@ const props = withDefaults(
     /** Verilmezse tercihten (Display › Density), o da yoksa standard. */
     density?: Density
     entityName?: Plural
-    /** Tek harfli kısayollar (/, R). Oklar, Enter, Space, Esc ve Alt←/→ her zaman. */
+    /** Tek harfli kısayollar (/, F, R). Oklar, Enter, Space, Esc ve Alt←/→ her zaman. */
     shortcuts?: boolean
     /** client: tüm satırlar verilir, arama/sıralama/sayfalama yerelde. server: `@request` ile uygulama çeker. */
     mode?: 'client' | 'server'
@@ -119,6 +135,66 @@ watch(
   (size) => (page.value = { number: 1, size }),
 )
 
+// Filtreler (04): çipler ekranda; yalnızca tam olanlar sorguya girer (D2: sütun başına tek çip).
+const chips = ref<Chip[]>([])
+const editing = ref<string | null>(null)
+const pickerOpen = ref(false)
+const labels = new RemoteLabels()
+const fmt = getFormat(ctx.locale)
+const defs = computed(() => new Map(props.columns.map((c) => [c.id as string, c as ColumnDef])))
+const typeOf = (column: string) => defs.value.get(column)?.type ?? 'string'
+const filters = computed<FilterCondition[]>(() =>
+  chips.value.filter((c) => isComplete(c, typeOf(c.column))).map(toCondition),
+)
+const filteredColumns = computed(() => new Set(filters.value.map((f) => f.column)))
+const hasFilter = computed(
+  () => props.toolbar === 'auto' && props.columns.some((c) => c.filterable ?? TYPE_SPECS[c.type].filterable),
+)
+const labelOf = (def: ColumnDef) => (v: string | number) => {
+  if (def.type === 'select' || def.type === 'multiselect' || (def.type === 'user' && def.options))
+    return optionLabel(def.options, v)
+  if ((def.type === 'user' || def.type === 'ajax') && def.remote) return labels.label(def.id as string, def.remote, v)
+  return String(v)
+}
+const summaryOf = (chip: Chip): Summary => {
+  const def = defs.value.get(chip.column)!
+  return summarize(chip, def, { i18n, fmt, labelOf: labelOf(def) })
+}
+const currenciesOf = (def: ColumnDef): string[] => {
+  if (def.type !== 'currency') return []
+  if (typeof def.currency === 'string') return [def.currency]
+  return [...new Set(props.rows.map((r) => (def.currency as (row: Row) => string)(r)))]
+}
+/** Picker / header: var olan çipi açar, yoksa tipin varsayılan operatörüyle oluşturup editörünü açar; boolean doğrudan uygulanır. */
+const pick = (column: string) => {
+  const def = defs.value.get(column)
+  if (!def) return
+  if (!chips.value.some((c) => c.column === column)) {
+    const op = defaultOperator(def)
+    chips.value = [...chips.value, def.type === 'boolean' ? { column, op, value: true } : { column, op }]
+    if (def.type === 'boolean') return
+  }
+  editing.value = column
+}
+const updateChip = (chip: Chip) => (chips.value = chips.value.map((c) => (c.column === chip.column ? chip : c)))
+const removeChip = (column: string) => {
+  chips.value = chips.value.filter((c) => c.column !== column)
+  if (editing.value === column) editing.value = null
+}
+/** Editör değer seçilmeden kapanırsa çip kaldırılır (04 §1). */
+const setEditing = (column: string | null) => {
+  const prev = editing.value
+  editing.value = column
+  if (prev && prev !== column) {
+    const c = chips.value.find((x) => x.column === prev)
+    if (c && !isComplete(c, typeOf(prev))) removeChip(prev)
+  }
+}
+const clearFilters = () => {
+  chips.value = []
+  editing.value = null
+}
+
 const visibleColumns = computed(() => layout.columns.value.map((c) => c.id))
 const fields = computed(() => {
   const out = new Set<string>([props.rowKey])
@@ -131,7 +207,7 @@ const fields = computed(() => {
 })
 const query = computed<TableQuery>(() => ({
   search: search.value,
-  filters: [],
+  filters: filters.value,
   sort: sort.value,
   page: page.value,
   columns: visibleColumns.value,
@@ -149,6 +225,7 @@ const list = useListTable<Row>({
   mode: () => props.mode,
   locale: ctx.locale,
   sort,
+  filters,
   page,
   search,
   hasMore: () => props.hasMore,
@@ -209,16 +286,23 @@ watch(refreshing, (on) => {
   if (on) barTimer = setTimeout(() => (refreshBar.value = true), 150)
 })
 const busy = computed(() => identityChange.value || (skeleton.value && !hasRows.value))
-const bodyState = computed<'error' | 'noResultsSearch' | 'noRowsOnPage' | 'empty' | null>(() => {
+const bodyState = computed<'error' | 'noResults' | 'noRowsOnPage' | 'empty' | null>(() => {
   if (skeleton.value || hasRows.value || pending.value) return null
   if (req.errorKind.value === 'error') return 'error'
-  if (search.value) return 'noResultsSearch'
+  if (search.value || filters.value.length) return 'noResults'
   if (page.value.number > 1) return 'noRowsOnPage'
   return 'empty'
 })
 const errorInfo = computed(() => {
   const e = props.error
   return typeof e === 'object' && e ? e : typeof e === 'string' ? { message: e } : {}
+})
+const noResultsTitle = computed(() => {
+  const count = filters.value.length
+  const params = { entity: entity.value, q: search.value, count }
+  if (search.value && count) return i18n.t('state.noResultsBoth', params)
+  if (search.value) return i18n.t('state.noResultsSearch', params)
+  return i18n.t('state.noResults', params)
 })
 const clock = (d: Date) => d.toLocaleTimeString(ctx.locale, { hour: '2-digit', minute: '2-digit' })
 
@@ -250,7 +334,7 @@ watch(
   },
 )
 watch(
-  () => JSON.stringify([search.value, sort.value]),
+  () => JSON.stringify([search.value, sort.value, filters.value]),
   () => {
     countCtl?.abort()
     counting.value = false
@@ -265,6 +349,28 @@ watch(
   () => grid.value?.scrollToTop(),
 )
 const setPageSize = (size: number) => pref.set({ pageSize: size })
+const polite = ref('')
+const assertive = ref('')
+// Her filtre değişikliğinde sayfa 1, gövde başa (04 §3); ekran okuyucuya eklenen/kaldırılan filtre (08 §5).
+watch(
+  () => JSON.stringify(filters.value),
+  (now, before) => {
+    goTo(1)
+    grid.value?.scrollToTop()
+    const prev = new Map((JSON.parse(before) as FilterCondition[]).map((f) => [f.column, JSON.stringify(f)]))
+    const next = new Map((JSON.parse(now) as FilterCondition[]).map((f) => [f.column, JSON.stringify(f)]))
+    for (const [column, key] of next)
+      if (prev.get(column) !== key) {
+        const chip = chips.value.find((c) => c.column === column)
+        if (chip) {
+          const sm = summaryOf(chip)
+          polite.value = i18n.t('sr.filterAdded', { summary: `${headerOf(column)} ${sm.text}`.trim() })
+        }
+      }
+    for (const column of prev.keys())
+      if (!next.has(column)) polite.value = i18n.t('sr.filterRemoved', { column: headerOf(column) })
+  },
+)
 
 // Auto-refresh (05 §3): açıkken footer "Live".
 const autoRefreshOn = ref(false)
@@ -345,6 +451,9 @@ const onKey = (e: KeyboardEvent) => {
   if (e.key === '/' && hasSearch.value) {
     e.preventDefault()
     toolbarRef.value?.focusSearch()
+  } else if ((e.key === 'f' || e.key === 'F') && hasFilter.value) {
+    e.preventDefault()
+    pickerOpen.value = true
   } else if ((e.key === 'r' || e.key === 'R') && listens('onRequest')) {
     e.preventDefault()
     req.refresh()
@@ -360,8 +469,6 @@ onBeforeUnmount(() => {
 })
 
 // Ekran okuyucu duyuruları (08 §5): tek polite + tek assertive bölge.
-const polite = ref('')
-const assertive = ref('')
 watch(
   () => rowsShown.value.length,
   (n) => {
@@ -382,20 +489,41 @@ watch(req.errorKind, (k) => {
     assertive.value = `${i18n.t('state.errorTitle', { entity: entity.value })} ${i18n.t('state.tryAgain')}`
 })
 
+// Tek tooltip, kart kökünde: hücreler, başlıklar ve çipler (02 · Tooltip).
+const rootEl = ref<HTMLElement | null>(null)
+const tooltip = useDelegatedTooltip(rootEl)
+
 defineExpose({ refresh: req.refresh })
 </script>
 
 <template>
-  <div class="dt dt-list" :data-density="density">
+  <div ref="rootEl" class="dt dt-list" :data-density="density">
     <Toolbar
       v-if="toolbar !== false"
       ref="toolbarRef"
       :search="hasSearch ? search : null"
       :search-placeholder="searchPlaceholder"
+      :has-filter="hasFilter"
       :has-display="hasDisplay"
       :has-more="hasMore"
       @update:search="setSearch"
     >
+      <template #filter="{ iconOnly }">
+        <ColumnPicker v-model:open="pickerOpen" :columns="columns" :chips="chips" @pick="pick">
+          <template #trigger>
+            <button
+              type="button"
+              class="dt-btn has-icon dt-filter-trigger"
+              :class="{ 'is-active': filters.length, 'dt-btn-icon': iconOnly && !filters.length }"
+              :aria-label="iconOnly ? i18n.t('toolbar.filter') : undefined"
+            >
+              <PhFunnel :size="16" aria-hidden="true" />
+              <span v-if="!iconOnly">{{ i18n.t('toolbar.filter') }}</span>
+              <span v-if="filters.length" class="dt-counter">{{ filters.length }}</span>
+            </button>
+          </template>
+        </ColumnPicker>
+      </template>
       <template #display="{ iconOnly }">
         <DisplayPopover v-bind="displayProps" :icon-only="iconOnly" v-on="displayOn" />
       </template>
@@ -425,6 +553,32 @@ defineExpose({ refresh: req.refresh })
       </template>
     </Toolbar>
 
+    <FilterBar
+      v-if="chips.length"
+      :chips="chips"
+      :defs="defs"
+      :editing="editing"
+      :rows="rows"
+      :labels="labels"
+      :summary-of="summaryOf"
+      :currencies-of="currenciesOf"
+      @update:chip="updateChip"
+      @remove="removeChip"
+      @update:editing="setEditing"
+      @clear-all="clearFilters"
+    >
+      <template #add>
+        <ColumnPicker :columns="columns" :chips="chips" @pick="pick">
+          <template #trigger>
+            <button type="button" class="dt-btn dt-btn-ghost dt-btn-sm has-icon dt-filter-add dt-filter-trigger">
+              <PhPlus :size="14" aria-hidden="true" />
+              {{ i18n.t('filter.addFilter') }}
+            </button>
+          </template>
+        </ColumnPicker>
+      </template>
+    </FilterBar>
+
     <div v-if="req.errorKind.value === 'stale' && req.updatedAt.value" class="dt-strip" role="status">
       <PhWarning :size="16" aria-hidden="true" />
       <span>{{ i18n.t('state.stale', { time: clock(req.updatedAt.value) }) }}</span>
@@ -447,7 +601,10 @@ defineExpose({ refresh: req.refresh })
       :row-count="total ?? -1"
       :row-index-offset="(footerPage.number - 1) * footerPage.size"
       :sort="sortMap"
+      :filtered-columns="filteredColumns"
+      :labels="labels"
       sortable
+      @header-filter="pick"
       @row-click="(row, e) => emit('row-click', row as Row, e)"
       @row-enter="(row) => emit('row-open', row as Row)"
       @sort="onSort"
@@ -477,11 +634,19 @@ defineExpose({ refresh: req.refresh })
           </template>
         </StateMessage>
         <StateMessage
-          v-else-if="bodyState === 'noResultsSearch'"
-          kind="noResultsSearch"
-          :title="i18n.t('state.noResultsSearch', { entity, q: search })"
+          v-else-if="bodyState === 'noResults'"
+          :kind="search ? 'noResultsSearch' : 'noResults'"
+          :title="noResultsTitle"
         >
-          <button type="button" class="dt-btn" @click="setSearch('')">{{ i18n.t('state.clearSearch') }}</button>
+          <button v-if="filters.length === 1" type="button" class="dt-btn" @click="removeChip(filters[0]!.column)">
+            {{ i18n.t('state.removeFilter', { column: headerOf(filters[0]!.column) }) }}
+          </button>
+          <button v-else-if="filters.length" type="button" class="dt-btn" @click="clearFilters">
+            {{ i18n.t('state.clearAllFilters') }}
+          </button>
+          <button v-if="search" type="button" class="dt-btn" @click="setSearch('')">
+            {{ i18n.t('state.clearSearch') }}
+          </button>
         </StateMessage>
         <StateMessage v-else-if="bodyState === 'noRowsOnPage'" kind="noRowsOnPage" :title="i18n.t('page.noneOnPage')">
           <button type="button" class="dt-btn" @click="goTo(page.number - 1)">{{ i18n.t('page.previousPage') }}</button>
@@ -516,5 +681,8 @@ defineExpose({ refresh: req.refresh })
     />
     <span class="dt-sr-only" aria-live="polite">{{ polite }}</span>
     <span class="dt-sr-only" aria-live="assertive">{{ assertive }}</span>
+    <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
+      {{ tooltip.text.value }}
+    </div>
   </div>
 </template>

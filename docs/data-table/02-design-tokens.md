@@ -181,7 +181,7 @@ Dark değerleri (siyah bazlı, daha yoğun):
 | Footer | min 48 px, padding 8 × 12 |
 | Bulk bar | padding 6, buton 32 px, alt kenardan 64 px (footer'ın üstü), yatay ortalı |
 | Dialog | 460 px (DataSheet'te hatalı satır listeli onay 480; import 560) |
-| Popover genişlikleri | Views 300–330 · Column picker 264–280 · Display ve Columns drill-in 300–320 · More 236 · Date 520 · Değer editörleri 296–300 · Operatör menüsü 220 · Sütun menüsü 248 · Satır menüsü 268 · “+N more” 340 · Save view menüsü 320 · Görünüm satırı ⋯ 200 · Açılan toolbar araması 240 |
+| Popover genişlikleri | Views 300–330 · Column picker 264–280 · Display ve Columns drill-in 300–320 · More 236 · Date 520 · Değer editörleri 296–300 · Operatör menüsü 220 · Sütun menüsü 248 · Satır menüsü 268 · Save view menüsü 320 · Görünüm satırı ⋯ 200 · Açılan toolbar araması 240 |
 | Sheet formül çubuğu | 36 px; ad kutusu 240 px; `fx` 40 px |
 | Sheet durum çubuğu | min 36 px, `--dt-surface-2` |
 

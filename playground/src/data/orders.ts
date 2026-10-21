@@ -41,11 +41,40 @@ export const orderColumns: Array<ColumnDef<Order>> = [
     ],
   },
   { id: 'customer', header: 'Customer', type: 'string' },
-  { id: 'status', header: 'Status', type: 'select', options: statusOptions, width: 124 },
+  {
+    id: 'status',
+    header: 'Status',
+    type: 'select',
+    options: statusOptions,
+    width: 124,
+    suggested: true,
+    filterNoun: { one: 'status', other: 'statuses' },
+  },
   { id: 'produced', header: 'Produced', type: 'percentage', display: 'bar', width: 176 },
-  { id: 'owner', header: 'Owner', type: 'user', accessor: (r) => r.owner?.id ?? null, options: owners },
+  {
+    id: 'owner',
+    header: 'Owner',
+    type: 'user',
+    accessor: (r) => r.owner?.id ?? null,
+    options: owners,
+    suggested: true,
+    filterNoun: { one: 'person', other: 'people' },
+  },
   { id: 'dueAt', header: 'Due date', type: 'date', overdue: (r) => r.status !== 'done' },
   { id: 'value', header: 'Value', type: 'currency', currency: 'TRY' },
+  {
+    id: 'plant',
+    header: 'Plant',
+    type: 'select',
+    options: [
+      { value: 'Gebze', label: 'Gebze', tone: 'teal' },
+      { value: 'Dilovası', label: 'Dilovası', tone: 'violet' },
+    ],
+    hidden: true,
+    suggested: true,
+    filterNoun: { one: 'plant', other: 'plants' },
+  },
+  { id: 'createdAt', header: 'Created', type: 'datetime', relative: true, hidden: true },
 ]
 
 export async function loadOrders(size = 500): Promise<Order[]> {

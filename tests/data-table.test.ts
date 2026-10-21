@@ -30,6 +30,7 @@ const columns: Array<ColumnDef<Order>> = [
   { id: 'status', header: 'Status', type: 'select', options: [{ value: 'done', label: 'Done' }] },
   { id: 'value', header: 'Value', type: 'currency', currency: 'TRY' },
   { id: 'dueAt', header: 'Due date', type: 'date' },
+  { id: 'urgent', header: 'Urgent', type: 'boolean' },
 ]
 
 beforeAll(mockLayout)
@@ -80,8 +81,8 @@ describe('sunucu modu: talep akışı ve durumlar', () => {
     const w = await mountServer()
     const r = last(w)
     expect(r.reason).toBe('initial')
-    expect(r.query.columns).toEqual(['number', 'product.name', 'status', 'value', 'dueAt'])
-    expect(r.query.fields).toEqual(['id', 'number', 'product.name', 'status', 'value', 'dueAt'])
+    expect(r.query.columns).toEqual(['number', 'product.name', 'status', 'value', 'dueAt', 'urgent'])
+    expect(r.query.fields).toEqual(['id', 'number', 'product.name', 'status', 'value', 'dueAt', 'urgent'])
     expect(r.query.page).toEqual({ number: 1, size: 100 })
     expect(w.findAll('.dt-row-skeleton')).toHaveLength(12)
     expect(footer(w)).toBe('Loading…')
@@ -198,7 +199,7 @@ describe('sunucu modu: talep akışı ve durumlar', () => {
     )!
     hide.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await flush()
-    expect(w.findAll('[role="columnheader"]')).toHaveLength(4)
+    expect(w.findAll('[role="columnheader"]')).toHaveLength(5)
     await vi.advanceTimersByTimeAsync(500)
     expect(requests(w)).toHaveLength(n)
     w.unmount()
@@ -298,7 +299,10 @@ describe('toolbar, tercihler, kısayollar', () => {
     })
     await flush()
     expect(w2.get('.dt').attributes('data-density')).toBe('compact')
-    await w2.get('.dt-toolbar .dt-btn.has-icon').trigger('click')
+    await w2
+      .findAll('.dt-toolbar button')
+      .find((b) => b.text() === 'Display')!
+      .trigger('click')
     await flush()
     const pop = document.querySelector('.dt-display')!
     expect(pop.textContent).toContain('Saved for you only')
@@ -344,11 +348,156 @@ describe('toolbar, tercihler, kısayollar', () => {
     await label('product.name').trigger('keydown', { key: 'ArrowRight', altKey: true, shiftKey: true })
     await flush()
     const ids = w.findAll('[role="columnheader"]').map((h) => h.attributes('data-col'))
-    expect(ids).toEqual(['number', 'status', 'product.name', 'value', 'dueAt'])
+    expect(ids).toEqual(['number', 'status', 'product.name', 'value', 'dueAt', 'urgent'])
     expect(document.activeElement).toBe(label('product.name').element)
     await label('product.name').trigger('keydown', { key: 'ArrowDown' })
     await flush()
     expect(document.activeElement).toBe(w.get('.dt-row[data-index="0"]').element)
+    w.unmount()
+  })
+})
+
+describe('filtreler (04)', () => {
+  const chip = (w: W, col: string) => w.find(`.dt-chip[data-col="${col}"]`)
+  /** Çip parçaları boşlukla: "Status is any of Planned, On hold". */
+  const chipText = (w: W, col: string) =>
+    [...chip(w, col).element.querySelectorAll('.dt-chip-body > span')].map((e) => e.textContent?.trim()).join(' ')
+  const pop = () => document.querySelector<HTMLElement>('.dt-chip-pop')
+  const openPicker = async (w: W) => {
+    await w.get('.dt-toolbar .dt-filter-trigger').trigger('click')
+    await flush()
+  }
+  const pickColumn = async (w: W, header: string) => {
+    await openPicker(w)
+    const item = [...document.querySelectorAll<HTMLElement>('.dt-picker-item')].find((el) =>
+      el.textContent?.includes(header),
+    )!
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flush()
+  }
+  const check = async (label: string) => {
+    const row = [...pop()!.querySelectorAll<HTMLElement>('.dt-option')].find((el) => el.textContent?.includes(label))!
+    row.querySelector<HTMLInputElement>('input')!.click()
+    await flush()
+  }
+
+  it('picker → eksik çip + editör; D2: ikinci seçim aynı çipi açar; değer seçilmeden kapanınca çip kalkar', async () => {
+    const w = await mountServer({}, { rows: rows.slice(0, 5) })
+    const n = requests(w).length
+    await pickColumn(w, 'Status')
+    expect(chip(w, 'status').exists()).toBe(true)
+    expect(chip(w, 'status').classes()).toContain('is-incomplete')
+    expect(chipText(w, 'status')).toBe('Status is Select…')
+    expect(pop()).not.toBeNull()
+    expect(requests(w)).toHaveLength(n) // eksik çip sorguya girmez
+    expect(w.find('.dt-filter-trigger .dt-counter').exists()).toBe(false)
+    await pickColumn(w, 'Status')
+    expect(w.findAll('.dt-chip')).toHaveLength(1)
+    // Editörü değer seçmeden kapat → çip kaldırılır.
+    const bar = w.findComponent({ name: 'FilterBar' })
+    bar.vm.$emit('update:editing', null)
+    await flush()
+    expect(w.findAll('.dt-chip')).toHaveLength(0)
+    w.unmount()
+  })
+
+  it('seçenek editörü anında uygular: sorgu, sayaç, tekil/çoğul etiket, header filtre işareti; operatör değişiminde değer korunur', async () => {
+    const w = await mountServer({}, { rows: rows.slice(0, 5) })
+    await pickColumn(w, 'Status')
+    await check('Done')
+    expect(last(w).reason).toBe('query')
+    expect(last(w).query.filters).toEqual([{ column: 'status', op: 'in', value: ['done'] }])
+    expect(last(w).query.page.number).toBe(1)
+    expect(w.get('.dt-filter-trigger .dt-counter').text()).toBe('1')
+    expect(chipText(w, 'status')).toBe('Status is Done')
+    expect(w.find('.dt-head-cell[data-col="status"] .dt-head-filtered').exists()).toBe(true)
+    expect(w.get('[aria-live="polite"]').text()).toBe('Filter added: Status Done')
+    // Operatör: in → not_in değeri korur; is_empty değeri siler ve anında uygulanır.
+    const fc = w.findComponent({ name: 'FilterChip' })
+    fc.vm.$emit('update:chip', { column: 'status', op: 'not_in', value: ['done'] })
+    await flush()
+    expect(chipText(w, 'status')).toBe('Status is not Done')
+    fc.vm.$emit('update:chip', { column: 'status', op: 'is_empty' })
+    await flush()
+    expect(last(w).query.filters).toEqual([{ column: 'status', op: 'is_empty' }])
+    expect(chip(w, 'status').find('.dt-chip-value').exists()).toBe(false)
+    w.unmount()
+  })
+
+  it('boolean doğrudan "is Yes"; × çipi kaldırır ve duyurur; Clear all', async () => {
+    const w = await mountServer({}, { rows: rows.slice(0, 5) })
+    await pickColumn(w, 'Urgent')
+    expect(chipText(w, 'urgent')).toBe('Urgent is Yes')
+    expect(last(w).query.filters).toEqual([{ column: 'urgent', op: 'eq', value: true }])
+    await chip(w, 'urgent').get('.dt-chip-body').trigger('click')
+    expect(last(w).query.filters).toEqual([{ column: 'urgent', op: 'eq', value: false }])
+    await chip(w, 'urgent').get('.dt-chip-remove').trigger('click')
+    await flush()
+    expect(w.findAll('.dt-chip')).toHaveLength(0)
+    expect(last(w).query.filters).toEqual([])
+    expect(w.get('[aria-live="polite"]').text()).toBe('Urgent filter removed')
+    w.unmount()
+  })
+
+  it('istemci modu: No results başlığı, Remove “Status” / Clear all filters; F kısayolu picker’ı açar', async () => {
+    const w = await mountClient()
+    await pickColumn(w, 'Status')
+    await check('Done')
+    expect(footer(w)).toBe('Rows 1–16')
+    const fc = w.findComponent({ name: 'FilterChip' })
+    fc.vm.$emit('update:chip', { column: 'status', op: 'in', value: ['nope'] })
+    await flush()
+    expect(w.get('.dt-state').text()).toContain('No orders match this filter')
+    expect(w.get('.dt-state button').text()).toBe('Remove “Status”')
+    w.findComponent({ name: 'FilterBar' }).vm.$emit('update:editing', null)
+    await flush()
+    await pickColumn(w, 'Product')
+    w.findAllComponents({ name: 'FilterChip' })[1]!.vm.$emit('update:chip', {
+      column: 'product.name',
+      op: 'contains',
+      value: 'Pump',
+    })
+    await flush()
+    expect(w.get('.dt-state').text()).toContain('No orders match these 2 filters')
+    await w.get('.dt-state button').trigger('click')
+    await flush()
+    expect(w.findAll('.dt-chip')).toHaveLength(0)
+    expect(footer(w)).toBe('Rows 1–40')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f' }))
+    await flush()
+    expect(document.querySelector('.dt-picker')).not.toBeNull()
+    w.unmount()
+  })
+
+  it('metin editörü 250 ms sonra uygular, Enter kapatır; sayı aralığı + para birimi', async () => {
+    const w = await mountServer({}, { rows: rows.slice(0, 5) })
+    await pickColumn(w, 'Product')
+    const input = pop()!.querySelector<HTMLInputElement>('.dt-editor-text input')!
+    input.value = 'pump'
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(300)
+    await flush()
+    expect(last(w).query.filters).toEqual([{ column: 'product.name', op: 'contains', value: 'pump' }])
+    expect(chipText(w, 'product.name')).toBe('Product contains “pump”')
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flush()
+    expect(pop()).toBeNull()
+
+    await pickColumn(w, 'Value')
+    const [min, max] = [...pop()!.querySelectorAll<HTMLInputElement>('.dt-editor-number input')]
+    min!.value = '100000'
+    min!.dispatchEvent(new Event('input', { bubbles: true }))
+    max!.value = '250,000'
+    max!.dispatchEvent(new Event('input', { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(300)
+    await flush()
+    expect(last(w).query.filters.at(-1)).toEqual({
+      column: 'value',
+      op: 'between',
+      value: [100000, 250000],
+      currency: 'TRY',
+    })
+    expect(chipText(w, 'value')).toBe('Value is between 100K – 250K TRY')
     w.unmount()
   })
 })

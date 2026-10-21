@@ -75,16 +75,18 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 **Kapsam:** filtre modeli (18 operatör, op'a göre `FilterCondition`), column picker, çip (gövde + ×; popover: operatör + değer), tipe göre değer editörleri (`core/editors` — sheet'te de kullanılır), operatör değişiminde değer korunumu, uygulama zamanlaması, değer özetleri, filtre satırı taşma kuralları (+N, Show all), arama (250 ms), istemci modu `filterFn`/`globalFilterFn`.
 
 **Kabul kriterleri**
-- [ ] Bir sütun için ikinci çip oluşturulamaz; picker'da Filtered bölümü mevcut çipi açar (D2).
-- [ ] AND/OR, grup, iç içe koşul arayüzü yok (D1); toolbar'da facet çipi yok (D26).
-- [ ] Eksik çip sorguya ve sayaca girmez; değer seçilmeden kapanırsa kaldırılır.
-- [ ] Her tip için 03'teki operatör listesi; `is empty / is not empty` hepsinde; `in` tek değerde "is", çoklu değerde "is any of".
-- [ ] Operatör değişiminde değer yalnızca aynı şekil grubunda korunur (`in ↔ not_in`, `contains ↔ starts_with`); boş/boş değil değersiz (tip bazlı testler).
-- [ ] `currency` filtresinde para birimi ikinci çip; değer düz sayı.
-- [ ] Değer özetleri 04 §3 ile birebir; 2 satırı aşan çipler +N'e taşınır; düzenlenen çip her zaman görünür.
-- [ ] Tarih hazır aralıkları `{ preset }` olarak gider; `'@me'` aynen gider.
-- [ ] Arama çip üretmez, görünümü "edited" yapmaz; uzaktan öneri yok.
-- [ ] Filtre/arama değişiminde sayfa 1'e döner, seçim temizlenir (D19).
+- [x] Bir sütun için ikinci çip oluşturulamaz; picker'da Filtered bölümü mevcut çipi açar (D2).
+- [x] AND/OR, grup, iç içe koşul arayüzü yok (D1); toolbar'da facet çipi yok (D26).
+- [x] Eksik çip sorguya ve sayaca girmez; değer seçilmeden kapanırsa kaldırılır.
+- [x] Her tip için 03'teki operatör listesi; `is empty / is not empty` hepsinde; `in` tek değerde "is", çoklu değerde "is any of".
+- [x] Operatör değişiminde değer yalnızca aynı şekil grubunda korunur (`in ↔ not_in`, `contains ↔ starts_with`); boş/boş değil değersiz (tip bazlı testler).
+- [x] `currency` filtresinde para birimi ikinci çip; değer düz sayı.
+- [x] Değer özetleri 04 §3 ile birebir; filtre satırı tek satır, sığmayan çipler yatay kayar (D29); düzenlenen çip görünür alana kaydırılır.
+- [x] Tarih hazır aralıkları `{ preset }` olarak gider; `'@me'` aynen gider.
+- [x] Arama çip üretmez, görünümü "edited" yapmaz; uzaktan öneri yok.
+- [x] Filtre/arama değişiminde sayfa 1'e döner, seçim temizlenir (D19).
+
+**Notlar (uygulama):** model `core/filters/model.ts` (operatörler, şekil grupları, `resolvePreset`, istemci `matches`, `summarize`); editörler `core/editors/` (sheet'te yeniden kullanılacak); `FilterChip` / `ColumnPicker` (reka Listbox) / `FilterBar` (tek satır, yatay kayma, D29). Kararlar: kişi listesinde **Unassigned** `is_empty` ile değişimlidir (boş değer `in` listesinde taşınamaz); `boolean` çipinde `is empty`'ye arayüzden ulaşılmaz (popover yok); `'@me'` istemci modunda eşleşmez (sunucu çözer); hazır aralıklar istemci modunda tarayıcı saatiyle çözülür; `currency` fonksiyon olan sütunda para birimi listesi yüklü satırlardan türer. Telefon filtre alt sayfası Faz 7.
 
 ## Faz 3b — Görünümler ve tercihler
 

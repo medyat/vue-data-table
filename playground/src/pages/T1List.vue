@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// T1 · List screen (Faz 2): sunucu modu — sahte Laravel API'si (/api/orders), arama, sıralama, sayfalama, Count total,
-// Display, ⋯ (Refresh / Export / Import / Print / Auto-refresh), birincil aksiyon. URL: ?delay=800 ?fail=1 ?failAfter=1 ?size=500
+// T1/T2 · List screen (Faz 2–3a): sunucu modu — sahte Laravel API'si (/api/orders), arama, sıralama, sayfalama, Count total,
+// filtreler (JSON `filters`), Display, ⋯ (Refresh / Export / Import / Print / Auto-refresh), birincil aksiyon. URL: ?delay=800 ?fail=1 ?failAfter=1 ?size=500
 import { PhPlus } from '@phosphor-icons/vue'
 import { DataTable, type CountRequest, type TableError, type TableRequest } from '@swors/data-table'
 import { ref } from 'vue'
@@ -15,6 +15,7 @@ let calls = 0
 
 async function onRequest({ query, signal }: TableRequest) {
   const q = new URLSearchParams({ page: String(query.page.number), size: String(query.page.size), q: query.search })
+  if (query.filters.length) q.set('filters', JSON.stringify(query.filters))
   const s = query.sort[0]
   if (s) {
     q.set('sort', s.column)

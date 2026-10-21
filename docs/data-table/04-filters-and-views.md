@@ -111,6 +111,7 @@ Sunucu, `columns` listesinde `filterable` olmayan bir sütun veya tipine uymayan
 
 - Üst: **operatör seçici** (`Order value [is between ▾]`) her tipte; seçenek tiplerinde ayrıca arama kutusu (“Search statuses”, “Search people”).
 - Gövde tipe göre: seçenek listesi (checkbox + rozet, hover'da sağda **Only** = yalnızca bunu seç), takvim + hazır aralıklar (520 px), iki sayı alanı + “and” + para birimi segmented (`currency` sütunu), metin alanı (uzaktan öneri yok, D3), kişi listesi (**Me · {ad}** en üstte, ardından **Unassigned**, ayırıcı, diğerleri).
+- Kişi listesinde **Unassigned** `is_empty` operatörüyle değişimlidir: işaretlenince çip “Owner is empty” olur, kaldırılınca `in` listesine döner (boş değer `in` dizisinde taşınamaz).
 - Alt bilgi: solda durum (“2 selected”, “Bounds included”, “Presets stay relative…”), sağda **Clear** — değeri siler, çip açık ve eksik kalır.
 
 ### Uygulama zamanı
@@ -143,21 +144,14 @@ Sunucu, `columns` listesinde `filterable` olmayan bir sütun veya tipine uymayan
 ## 4. Filtre satırı
 
 - **Yalnızca en az bir çip varken** görünür. Toolbar ile tablo arasında; padding 8 × 12, çip aralığı 6.
-- Sıra: çipler → **Add filter** (ghost, `+` ikonu) → sağa yaslı aksiyonlar.
-- Sağda **Clear all** — tüm çipleri kaldırır; **ilk satırın sağ üstüne sabittir**, çipler sarılsa da yer değiştirmez. Görünüm kaydetme aksiyonları filtre satırında değil, görünüm menüsündedir (D27, §7).
+- Sıra: çipler → **Add filter** (ghost, `+` ikonu) → sağa yaslı aksiyonlar. Add filter kayan alanın dışındadır: çipler sığarken son çipin yanında durur, taşınca sağda Clear all'un yanında kalır.
+- Sağda **Clear all** — tüm çipleri kaldırır; satırın sağına sabittir, çipler kaysa da yer değiştirmez. Görünüm kaydetme aksiyonları filtre satırında değil, görünüm menüsündedir (D27, §7).
 
-### Taşma
+### Taşma (D29)
 
-| Durum | Davranış |
-|---|---|
-| Tek satıra sığıyor | Normal |
-| 2 satıra kadar | Çipler alt satıra sarılır |
-| 2 satırdan fazla | İkinci satırın sonunda **`+N more`** ve Add filter kalır; sığmayan çipler `+N`'e taşınır |
-| `+N more` tıklanınca | Popover: “N more filters”, her gizli çip bir satır (`Alan · operatör · değer`, sağda hover'da `×` ile kaldırma), satıra tıklayınca o çipin editörü açılır. Altta **Show all filters** → satır sınırı kalkar, `+N`'in yerinde **Show fewer** belirir. Sınırsız durum filtreler değişene kadar sürer. |
-| Düzenlenen / yeni eklenen çip | Her zaman görünür: gerekiyorsa son görünür çip `+N`'e itilir |
-| Telefon (< 640 px) | Tek satır, yatay kayar, sağ kenarda solma (fade). Sarma ve `+N` yok. Çip 32 px, iki parça: **alan + değer** (operatör gösterilmez; tam ifade alt sayfada). Uygulanmış çiplerden sonra `suggested` sütunlar için `Owner · Any` biçiminde boş çipler. Çipe dokunmak **Filters** alt sayfasını açar (§9). |
+Filtre satırı **tek satırdır**; çipler sarılmaz, `+N more` yoktur. Sığmayan çipler yatay kayar (kaydırma çubuğu gizli), kayacak içerik varken sağ kenarda solma (fade); düzenlenen ve yeni eklenen çip görünür alana kaydırılır. **Add filter** ve **Clear all** kayan alanın dışındadır, satırın sağında sabit kalır. Telefonda aynı satır (< 640 px): çip 32 px, iki parça (**alan + değer**, operatör gösterilmez; tam ifade alt sayfada); uygulanmış çiplerden sonra `suggested` sütunlar için `Owner · Any` biçiminde boş çipler; çipe dokunmak **Filters** alt sayfasını açar (§9).
 
-Ölçüm `ResizeObserver` ile yapılır; çip genişlikleri değer özeti uygulandıktan sonra hesaplanır. Ölçüm her yeniden boyutlanmada ve çip değişiminde, bir animasyon karesinde bir kez.
+Gerekçe: D2 çip sayısını filtrelenebilir sütun sayısıyla sınırlar; ölçüm, iki geçişli yerleşim ve gizli çip listesi bu sınırlı durum için fazla karmaşıktı.
 
 ---
 

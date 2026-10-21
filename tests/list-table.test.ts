@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { defineComponent, nextTick, ref } from 'vue'
 import { useListTable } from '../src/list/useListTable'
-import type { ColumnDef, SortRule } from '../src/types'
+import type { ColumnDef, FilterCondition, SortRule } from '../src/types'
 
 interface R {
   id: number
@@ -32,17 +32,29 @@ function setup(mode: 'client' | 'server' = 'client', rows: R[] = data) {
   const page = ref({ number: 1, size: 2 })
   const search = ref('')
   const hasMore = ref<boolean | undefined>(undefined)
+  const filters = ref<FilterCondition[]>([])
   const rowsRef = ref(rows)
   let api!: ReturnType<typeof useListTable<R>>
   mount(
     defineComponent({
       setup() {
-        api = useListTable<R>({ columns, rows: rowsRef, rowKey: 'id', mode, locale: 'tr', sort, page, search, hasMore })
+        api = useListTable<R>({
+          columns,
+          rows: rowsRef,
+          rowKey: 'id',
+          mode,
+          locale: 'tr',
+          sort,
+          filters,
+          page,
+          search,
+          hasMore,
+        })
         return () => null
       },
     }),
   )
-  return { api, sort, page, search, hasMore, rowsRef }
+  return { api, filters, sort, page, search, hasMore, rowsRef }
 }
 const ids = (rows: R[]) => rows.map((r) => r.id)
 
@@ -131,5 +143,31 @@ describe('sunucu modu', () => {
     search.value = 'zzz'
     await nextTick()
     expect(ids(api.rows.value)).toEqual([1, 2]) // yerel işlem yok
+  })
+})
+
+describe('istemci modu: sütun filtreleri (04 §1)', () => {
+  it('koşullar AND ile süzer, arama ile birleşir; sunucu modunda süzmez', async () => {
+    const { api, filters, search } = setup()
+    filters.value = [{ column: 'qty', op: 'gte', value: 7 }]
+    await nextTick()
+    expect(api.total.value).toBe(3) // 10, 7, 7
+    filters.value = [
+      { column: 'qty', op: 'gte', value: 7 },
+      { column: 'due', op: 'within', value: { from: '2026-10-02', to: '2026-10-03' } },
+    ]
+    await nextTick()
+    expect(api.rows.value.map((r) => r.id)).toEqual([4, 5])
+    search.value = 'bakır'
+    await nextTick()
+    expect(api.rows.value.map((r) => r.id)).toEqual([5])
+    filters.value = [{ column: 'name', op: 'is_empty' }]
+    search.value = ''
+    await nextTick()
+    expect(api.rows.value.map((r) => r.id)).toEqual([4])
+    const server = setup('server')
+    server.filters.value = [{ column: 'qty', op: 'gte', value: 7 }]
+    await nextTick()
+    expect(server.api.rows.value).toHaveLength(5)
   })
 })

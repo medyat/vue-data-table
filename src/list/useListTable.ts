@@ -16,8 +16,9 @@ import { computed, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
 import { TYPE_SPECS } from '../core/cells/specs'
 import { readPath } from '../core/columns/readPath'
 import { getFormat } from '../core/format'
+import { matches } from '../core/filters/model'
 import type { ColumnDef } from '../types/columns'
-import type { SortRule } from '../types/query'
+import type { FilterCondition, SortRule } from '../types/query'
 
 export const MAX_SORT = 3
 
@@ -40,6 +41,8 @@ export interface ListTableOptions<Row extends object> {
   mode: MaybeRefOrGetter<'client' | 'server'>
   locale: MaybeRefOrGetter<string>
   sort: Ref<SortRule[]>
+  /** Tam (eksik olmayan) koşullar; istemci modunda sütun başına `filterFn` (04 §1). */
+  filters?: Ref<FilterCondition[]>
   /** 1 tabanlı (Laravel simplePaginate). */
   page: Ref<{ number: number; size: number }>
   search: Ref<string>
@@ -86,6 +89,9 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
         accessorFn: d.accessor ?? ((row: Row) => readPath(row, id)),
         enableSorting: d.sortable ?? TYPE_SPECS[d.type].sortable,
         enableGlobalFilter: isSearchable(d),
+        enableColumnFilter: d.filterable ?? TYPE_SPECS[d.type].filterable,
+        filterFn: (row, columnId, cond: FilterCondition) =>
+          matches(cond, row.getValue(columnId), { locale: locale.value }),
         sortFn: (a, b, columnId) => cmp(a.getValue(columnId), b.getValue(columnId)),
         sortUndefined: 1,
       }
@@ -98,6 +104,7 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
     sorting: o.sort.value.map((s) => ({ id: s.column, desc: s.dir === 'desc' })),
     pagination: { pageIndex: o.page.value.number - 1, pageSize: o.page.value.size },
     globalFilter: normalizedSearch.value,
+    columnFilters: (o.filters?.value ?? []).map((f) => ({ id: f.column, value: f })),
   }))
   const searchableIds = computed(() => new Set(defs.value.filter(isSearchable).map((d) => d.id as string)))
 
@@ -124,6 +131,7 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
     onSortingChange: () => {},
     onPaginationChange: () => {},
     onGlobalFilterChange: () => {},
+    onColumnFiltersChange: () => {},
   })
 
   /** Sayfadaki satırlar (istemci: süzülmüş + sıralı + dilimlenmiş; sunucu: verilen). */

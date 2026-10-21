@@ -3,6 +3,7 @@ export type HeaderAction =
   | 'sort-asc'
   | 'sort-desc'
   | 'sort-clear'
+  | 'filter'
   | 'pin-left'
   | 'pin-right'
   | 'unpin'

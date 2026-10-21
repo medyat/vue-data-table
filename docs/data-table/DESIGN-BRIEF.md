@@ -216,7 +216,7 @@ Türkçe metinler İngilizceden ~%30 uzundur: sabit genişlikli buton yoktur, to
 
 ### 4.8 Bileşen ölçüleri (sık kullanılanlar)
 
-Toolbar padding 10 × 12, kontroller 32 px · filtre satırı 8 × 12, çip 28 px · buton 32 / 28 / 24 px · icon button 28 (24) · checkbox 16 px, seçim sütunu 40 px · menü öğesi 32 (iki satırlı 44) · footer min 48 px · bulk bar padding 6, buton 32, alt kenardan 64 px · dialog 460 (DataSheet hata listeli onay 480, import 560) · popover genişlikleri: Views 300–330, Column picker 264–280, Display/Columns 300–320, More 236, tarih 520, değer editörleri 296–300, operatör menüsü 220, sütun menüsü 248, satır menüsü 268, “+N more” 340.
+Toolbar padding 10 × 12, kontroller 32 px · filtre satırı 8 × 12, çip 28 px · buton 32 / 28 / 24 px · icon button 28 (24) · checkbox 16 px, seçim sütunu 40 px · menü öğesi 32 (iki satırlı 44) · footer min 48 px · bulk bar padding 6, buton 32, alt kenardan 64 px · dialog 460 (DataSheet hata listeli onay 480, import 560) · popover genişlikleri: Views 300–330, Column picker 264–280, Display/Columns 300–320, More 236, tarih 520, değer editörleri 296–300, operatör menüsü 220, sütun menüsü 248, satır menüsü 268.
 
 ---
 
@@ -308,7 +308,7 @@ Retry = aynı talebin yeniden yayılması; otomatik yeniden deneme yoktur. 401/4
 
 | Öğe | Kullanım | Kullanılmayan yer |
 |---|---|---|
-| **Popover** (10 px yarıçap, 120 ms) | Filtre değeri, operatör, görünüm menüsü, Display, Columns paneli, column picker, `+N more`, hücre JSON/uzun metin kartı | Kaydetmeyi gerektiren formlar |
+| **Popover** (10 px yarıçap, 120 ms) | Filtre değeri, operatör, görünüm menüsü, Display, Columns paneli, column picker, hücre JSON/uzun metin kartı | Kaydetmeyi gerektiren formlar |
 | **Menü** (`role="menu"`) | Header ⋯, satır ⋯, More ⋯, hücre ⋯, sheet sağ tık | Değer seçimi (o combobox'tır) |
 | **Dialog** (460 px, odak tuzağı) | Save as new view; görünüm silme onayı; DataSheet hata/ayrılma/discard onayları; Import (560 px) | Filtre düzenleme, sütun yönetimi (dialog yok, D22), toplu aksiyon onayı (uygulamanın) |
 | **Bottom sheet** (telefon, 18 px üst yarıçap) | < 640 px'te tüm popover'lar; Filters | Masaüstü |
@@ -404,7 +404,7 @@ Filtre değildir: çip üretmez, sayaca girmez, görünüme kaydedilmez, görün
 
 **Değer özeti** (çip satırı kaymadan önce değer kısalır): uzun tek değer ≤ 180 px + tooltip; 2 değer virgülle; 3+ sayılır (“3 statuses”, sütunun `filterNoun`'u; yoksa “3 values”); kişiler 3 avatar + “3 people”; sayı aralığı `100K – 250K TRY`; tek uç `≥ 100K`; tarih `Oct 12 – 24` / “Last 30 days”.
 
-**Filtre satırı:** çipler → **Add filter** (ghost, +) → sağda **Clear all** (ilk satırın sağ üstüne sabit; görünüm kaydetme aksiyonları görünüm menüsündedir, D27). Taşma: 2 satıra kadar sarar; fazlası ikinci satırın sonunda **+N more** (popover 340 px: gizli çipler satır satır, satıra tıklamak editörü açar; altta Show all filters ↔ Show fewer). Düzenlenen/yeni çip her zaman görünür. Telefonda tek satır yatay kayar, çip iki parça (alan + değer), dokunma Filters alt sayfasını açar.
+**Filtre satırı:** çipler → **Add filter** (ghost, +) → sağda **Clear all** (satırın sağına sabit; görünüm kaydetme aksiyonları görünüm menüsündedir, D27). Taşma (D29): tek satır, sarma ve `+N more` yok; sığmayan çipler yatay kayar, sağ kenarda solma; Add filter kayan alanın dışında, taşınca sağda; düzenlenen/yeni çip görünür alana kaydırılır. Telefonda aynı satır, çip iki parça (alan + değer), dokunma Filters alt sayfasını açar.
 
 ### 6.6 Sıralama [Karar]
 
@@ -891,7 +891,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### T2 · Filtreleme deneyimi
 - **Oku:** 5.7, 6.4–6.5, 4.7.
-- **Tasarla:** column picker (Filtered / Suggested / All columns), çip anatomisi ve 5 durumu, değer popover'ları: seçenek listesi (Status), kişi listesi (Owner, Me/Unassigned), sayı aralığı + para birimi (Value), tarih (takvim + hazır aralıklar, 520 px), metin (Product), boolean (popover yok); operatör seçici; filtre satırı taşması (+N more popover'ı, Show all); değer özetleri (3 statuses, 100K – 250K TRY, Oct 12 – 24, 3 people).
+- **Tasarla:** column picker (Filtered / Suggested / All columns), çip anatomisi ve 5 durumu, değer popover'ları: seçenek listesi (Status), kişi listesi (Owner, Me/Unassigned), sayı aralığı + para birimi (Value), tarih (takvim + hazır aralıklar, 520 px), metin (Product), boolean (popover yok); operatör seçici; filtre satırı taşması (tek satır, yatay kayma); değer özetleri (3 statuses, 100K – 250K TRY, Oct 12 – 24, 3 people).
 - **Etkileşim:** seçeneklerin anında uygulanması; operatör değişiminde değer korunumu/eksik çip; `is empty` değer parçasının gizlenmesi; Esc davranışı.
 
 ### T3 · Görünüm yönetimi
