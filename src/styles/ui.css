@@ -42,6 +42,15 @@
   background: var(--dt-ink);
   opacity: 0.92;
 }
+.dt-btn-danger {
+  background: var(--dt-danger);
+  border-color: var(--dt-danger);
+  color: var(--dt-on-danger);
+}
+.dt-btn-danger:hover {
+  background: var(--dt-danger-hover);
+  border-color: var(--dt-danger-hover);
+}
 .dt-btn-ghost {
   height: 28px;
   padding: 0 8px;
@@ -391,4 +400,73 @@
   .dt-switch-thumb {
     transition: none;
   }
+}
+
+/* Dialog (02 §6 handoff): 460, dolgu 20, yarıçap 14, --dt-shadow-dialog; arkada --dt-scrim. Başlık 16/600, gövde 13 text-2. */
+.dt-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--dt-scrim);
+  z-index: 50;
+}
+.dt-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  padding: 20px;
+  border-radius: var(--dt-radius-dialog);
+  background: var(--dt-surface);
+  color: var(--dt-text);
+  box-shadow: var(--dt-shadow-dialog);
+  font-family: var(--dt-font);
+  font-size: 13px;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  outline: none;
+  z-index: 51;
+}
+.dt-dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.dt-dialog-body {
+  margin: 4px 0 0;
+  color: var(--dt-text-2);
+  line-height: 1.45;
+}
+.dt-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.dt-dialog-confirm .dt-dialog-actions {
+  margin-top: 20px;
+}
+.dt-field {
+  display: block;
+  margin-top: 16px;
+}
+.dt-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.dt-field .dt-input {
+  display: flex;
+}
+.dt-field-error {
+  display: block;
+  margin-top: 6px;
+  color: var(--dt-r-fg);
+  font-size: 12.5px;
+}
+.dt-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
 }

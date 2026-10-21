@@ -30,6 +30,7 @@
   --dt-scrim: rgba(15,17,22,.28);
   --dt-danger: #C42626;
   --dt-danger-hover: #AE1F1F;
+  --dt-on-danger: #FFFFFF;
   --dt-switch-knob: #FFFFFF;
   --dt-swatch-line: rgba(16,24,40,.12);
   --dt-live-halo: rgba(44,157,90,.18);
@@ -124,6 +125,7 @@
   --dt-scrim: rgba(0,0,0,.55);
   --dt-danger: #C42626;
   --dt-danger-hover: #AE1F1F;
+  --dt-on-danger: #FFFFFF;
   --dt-switch-knob: #FFFFFF;
   --dt-swatch-line: rgba(255,255,255,.16);
   --dt-live-halo: rgba(61,184,115,.2);

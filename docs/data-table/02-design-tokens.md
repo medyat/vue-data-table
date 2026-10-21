@@ -40,6 +40,7 @@ Faz 0'daki token testi `tokens.css`'i bu dokümandaki tablolarla karşılaştır
 | `--dt-sk` / `--dt-sk-hi` | `#EDEFF2` / `#F7F8FA` | `#1C1E23` / `#25282E` | Skeleton parıltısı |
 | `--dt-scrim` | `rgba(15,17,22,.28)` | `rgba(0,0,0,.55)` | Dialog / bottom sheet arkası |
 | `--dt-danger` / `--dt-danger-hover` | `#C42626` / `#AE1F1F` | aynı | Yıkıcı birincil buton (“Cancel 3 orders”, “Discard changes”), metni `#FFFFFF` |
+| `--dt-on-danger` | `#FFFFFF` | `#FFFFFF` | Yıkıcı birincil buton metni |
 | `--dt-switch-knob` | `#FFFFFF` | `#FFFFFF` | Switch topuzu |
 | `--dt-swatch-line` | `rgba(16,24,40,.12)` | `rgba(255,255,255,.16)` | `color` hücresindeki renk karesinin kenarı |
 | `--dt-live-halo` | `rgba(44,157,90,.18)` | `rgba(61,184,115,.2)` | Footer “Live” noktasının halesi |

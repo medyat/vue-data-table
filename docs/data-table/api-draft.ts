@@ -407,17 +407,12 @@ export interface ViewPatch {
   columns?: Partial<ColumnLayout>
 }
 
-/**
- * Tek görünüm tipi. system: kodla tanımlı, değiştirilemez (Duplicate, Set as default).
- * personal: yalnızca sahibine. shared: adapter `capabilities.share` destekliyorsa ekip görünümü.
- */
+/** Tek görünüm tipi (D4, D30). system: kodla tanımlı, değiştirilemez (Duplicate, Set as default). personal: yalnızca sahibine. */
 export interface View {
   id: string
   name: string
-  kind: 'system' | 'personal' | 'shared'
+  kind: 'system' | 'personal'
   state: ViewPatch
-  /** Paylaşılan görünümde yazma yetkisi yoksa true. */
-  readonly?: boolean
   /** Ekranın varsayılanı (system içinde en fazla bir tane). Kullanıcı varsayılanı tercihlerde (`defaultViewId`). */
   default?: boolean
   updatedAt?: IsoDate
@@ -427,11 +422,9 @@ export interface View {
 
 export interface ViewsAdapter {
   list: (tableId: TableId) => Promise<View[]>
-  create: (tableId: TableId, input: { name: string; state: ViewState; kind?: 'personal' | 'shared' }) => Promise<View>
-  update: (tableId: TableId, id: string, patch: { name?: string; state?: ViewState; kind?: 'personal' | 'shared' }) => Promise<View>
+  create: (tableId: TableId, input: { name: string; state: ViewState }) => Promise<View>
+  update: (tableId: TableId, id: string, patch: { name?: string; state?: ViewState }) => Promise<View>
   remove: (tableId: TableId, id: string) => Promise<void>
-  /** share yoksa "shared" seçeneği arayüzde görünmez. */
-  capabilities?: { share?: boolean }
 }
 
 /** Tarayıcıya kaydeden hazır adapter. `scope` zorunludur (uygulama/kiracı anahtarı); scope değişince eski veri taşınmaz. */
@@ -441,7 +434,7 @@ export interface Preferences {
   density: Density
   verticalLines: boolean
   pageSize: number
-  /** Kullanıcının "Set as default" seçtiği görünüm (system veya personal/shared). */
+  /** Kullanıcının "Set as default" seçtiği görünüm (system veya personal). */
   defaultViewId: string | null
 }
 
@@ -576,7 +569,7 @@ export interface DataTableProps<Row> extends CommonProps<Row> {
   fields?: string[]
   /** Yeni görünen sütunun yolu son talebin `fields`'inde yoksa `reason: 'columns'` talebi (400 ms birleştirme). Varsayılan true. */
   requestOnColumnChange?: boolean
-  /** Kodla tanımlı görünümler (kind: 'system'); adapter'daki personal/shared görünümlerle birleştirilir. */
+  /** Kodla tanımlı görünümler (kind: 'system'); adapter'daki kişisel görünümlerle birleştirilir. */
   views?: View[]
   /** auto: yapılandırılana göre yuvalar; minimal: yalnızca arama + `#toolbar-end`; false: toolbar yok. Varsayılan 'auto'. */
   toolbar?: 'auto' | 'minimal' | false
@@ -609,6 +602,7 @@ export interface DataTableEmits<Row> {
   'row-open': { row: Row; href: string; event: MouseEvent }
   /** Etkileşimli hedef, metin seçimi ve değiştirici tuş dışındaki satır tıklamaları (`rowClick` değerinden bağımsız). */
   'row-click': { row: Row; event: MouseEvent }
+  /** Açılışta (varsayılan görünüm) ve her görünüm değişiminde; uygulama isterse URL'ini yazar (D25). */
   'view-change': { id: string; kind: View['kind'] }
   /** More › Export. Dosyayı uygulama üretir. */
   export: { format: 'csv' | 'xlsx'; query: QueryWithoutPage; selection: Row[]; visibleColumns: string[] }

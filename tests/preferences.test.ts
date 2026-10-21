@@ -5,7 +5,7 @@ import { defineComponent } from 'vue'
 import { createLocalStoragePreferences } from '../src/core/adapters/localStorage'
 import { usePreferences } from '../src/core/preferences/usePreferences'
 
-const defaults = { density: 'standard' as const, verticalLines: false, pageSize: 100 }
+const defaults = { density: 'standard' as const, verticalLines: false, pageSize: 100, defaultViewId: null }
 
 function setup(adapter: ReturnType<typeof createLocalStoragePreferences> | null) {
   let api!: ReturnType<typeof usePreferences>
@@ -39,8 +39,15 @@ describe('usePreferences', () => {
     expect(p.prefs.pageSize).toBe(250)
     p.set({ verticalLines: true })
     expect(adapter.get('orders')).toEqual({ pageSize: 250, verticalLines: true })
+    p.set({ defaultViewId: 'v1' })
     p.reset()
-    expect(adapter.get('orders')).toMatchObject(defaults)
+    // Display › Reset ekran ayarlarını döndürür; varsayılan görünüm seçimi kalır (04 §8 notu).
+    expect(adapter.get('orders')).toEqual({
+      density: 'standard',
+      verticalLines: false,
+      pageSize: 100,
+      defaultViewId: 'v1',
+    })
   })
   it('Promise dönen adapter ve hata atan set tabloyu bozmaz', async () => {
     const adapter = {

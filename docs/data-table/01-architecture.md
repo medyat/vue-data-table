@@ -175,7 +175,7 @@ app.use(createDataTable({ locale: 'tr', viewsAdapter, preferences }))
 
 | Parça | Zorunlu mu | Görev |
 |---|---|---|
-| `viewsAdapter` | hayır (yoksa yalnızca `views` prop'undaki görünümler; kaydetme yok) | personal/shared görünümleri listele / oluştur / güncelle / sil; `capabilities.share` |
+| `viewsAdapter` | hayır (yoksa yalnızca `views` prop'undaki görünümler; kaydetme yok) | kişisel görünümleri listele / oluştur / güncelle / sil (paylaşım yok, D30) |
 | `preferences` | hayır (yoksa tercihler oturumluk; arayüz “kaydedildi” demez) | yoğunluk, dikey çizgiler, sayfa boyutu, varsayılan görünüm id'si — `tableId` başına |
 | `createLocalStorageViews({ scope })`, `createLocalStoragePreferences({ scope })` | hazır adapter'lar | tarayıcıda saklar; `scope` zorunlu, değişince eski veri taşınmaz |
 | DataSheet `lookupKeys`, `parseFile` | hayır | callback prop'ları; HTTP ve Excel ayrıştırma uygulamada |

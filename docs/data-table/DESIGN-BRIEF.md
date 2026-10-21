@@ -445,15 +445,14 @@ Görünüm = filtre + sıralama + sütun düzeni. Yoğunluk, çizgiler, arama, s
 |---|---|---|---|
 | **System** (“Built in”) | Ürün ekibi, kodda | Herkes | Duplicate, Set as default |
 | **Personal** (“Only you”) | Kullanıcı | Yalnızca sahibi | Save changes, Rename, Duplicate, Set as default, Delete |
-| **Shared** (“Team”) | Kullanıcı; yalnızca uygulama paylaşımı destekliyorsa | Ekip | Personal ile aynı; yazma yetkisi yoksa yalnızca Duplicate, Set as default |
 
 Kaydetme deposu yoksa yalnızca kod görünümleri vardır ve kaydetme aksiyonları gizlenir.
 
-**Görünüm menüsü** (`V`, 300–330 px): üstte **Find a view…**; bölümler System views / My views / Shared views; aktif kalın; varsayılanın sağında soluk `Default`; düzenlenmişin sağında nokta + `Edited`; satır `⋯` → Rename · Duplicate · Set as default · ─ · Delete (türe göre); altta **New view**. Manage views ekranı ve görünüm sekmeleri yoktur.
+**Görünüm menüsü** (`V`, 300–330 px): üstte **Find a view…**; bölümler System views / My views (paylaşılan görünüm yok, D30); aktif kalın; varsayılanın sağında soluk `Default`; düzenlenmişin sağında nokta + `Edited`; satır `⋯` → Rename · Duplicate · Set as default · ─ · Delete (türe göre); altta **New view**. Manage views ekranı ve görünüm sekmeleri yoktur.
 
 **Düzenlenmiş durum:** mevcut durum kayıtlıdan farklıysa görünüm adı yanında nokta + “Edited”; görünüm menüsünün en üstünde kaydetme bölümü (D27): ““Gebze · this week” edited” etiketi, **Save changes** (`⌘S`) · **Save as new view…** · **Discard changes**. Filtre satırında gösterge yoktur. System görünüm üzerine yazılamaz: ““Late orders” edited” + **Save as my view…** (`⌘S`) + Discard changes. Kaydedilmemiş değişiklik oturum boyunca görünüm başına bellekte kalır: başka görünüme geçip dönünce düzenleme yerinde durur; toast yok.
 
-**Save as new view** dialog'u (460 px): başlık, alt metin (“It appears under My views. Only you can see it.” / paylaşımda “Team”), **Name** (otomatik odak; Duplicate'ten “{ad} copy”; 60 karakter; aynı türde benzersiz), özet (Filters `Plant · Created · Owner` · Sort `Due date ↑` · Columns `8 of 14 · Order pinned`), **Make this my default view**, varsa **Share with my team**; Cancel / **Save view**.
+**Save as new view** dialog'u (460 px): başlık, alt metin (“It appears under My views. Only you can see it.”), **Name** (otomatik odak; Duplicate'ten “{ad} copy”; 60 karakter; aynı türde benzersiz), özet (Filters `Plant · Created · Owner` · Sort `Due date ↑` · Columns `8 of 14 · Order pinned`), **Make this my default view**; Cancel / **Save view**.
 
 **Varsayılan görünüm:** kullanıcının Set as default'u (tercih) → kodda `default` olan → ilk system view. **Silme:** onay dialog'u (“Delete “{name}”?” · Cancel · **Delete**), anında silinir, Undo yok.
 
@@ -795,7 +794,7 @@ export const orderColumns: ColumnDef<Order>[] = [
 
 ### 9.5 Görünüm ve tercih saklama [Karar D4, D5]
 
-- `View { id, name, kind, state }`; görünüm durumu = filtreler + sıralama + sütun düzeni (sıra, görünürlük, genişlikler, sabitleme). Kodla tanımlı system görünümler `views` prop'uyla; personal/shared görünümler uygulamanın `viewsAdapter`'ıyla (list/create/update/remove; paylaşım yeteneği bildirilir). Hazır tarayıcı deposu `createLocalStorageViews({ scope })`.
+- `View { id, name, kind, state }`; görünüm durumu = filtreler + sıralama + sütun düzeni (sıra, görünürlük, genişlikler, sabitleme). Kodla tanımlı system görünümler `views` prop'uyla; kişisel görünümler uygulamanın `viewsAdapter`'ıyla (list/create/update/remove; paylaşım yok, D30). Hazır tarayıcı deposu `createLocalStorageViews({ scope })`.
 - Tercihler (yoğunluk, çizgiler, sayfa boyutu, varsayılan görünüm) `preferences` adapter'ıyla ekran başına; yoksa oturumluk.
 - Plugin: `app.use(createDataTable({ locale, viewsAdapter, preferences }))` bir kez; tablo başına `tableId`.
 
@@ -896,7 +895,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### T3 · Görünüm yönetimi
 - **Oku:** 6.9–6.10, 5.7.
-- **Tasarla:** görünüm menüsü (Find a view, System / My / Shared bölümleri, Default ve Edited işaretleri, satır ⋯ menüsü, New view); düzenlenmiş durum (nokta + Edited; menünün üstünde Save changes / Save as new view… / Discard changes; system görünümde “Save as my view…”); Save as new view dialog'u (ad, özet, default ve share checkbox'ları); silme onayı; Display popover'ı (Density, Columns ›, Sort ›, çizgiler, Saved for you only, Reset).
+- **Tasarla:** görünüm menüsü (Find a view, System / My bölümleri, Default ve Edited işaretleri, satır ⋯ menüsü, New view); düzenlenmiş durum (nokta + Edited; menünün üstünde Save changes / Save as new view… / Discard changes; system görünümde “Save as my view…”); Save as new view dialog'u (ad, özet, default ve share checkbox'ları); silme onayı; Display popover'ı (Density, Columns ›, Sort ›, çizgiler, Saved for you only, Reset).
 
 ### T4 · Sütun başlıkları ve sütun yönetimi
 - **Oku:** 6.6–6.8.
@@ -953,7 +952,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 | Terim | Anlamı |
 |---|---|
 | Çip (chip) | Filtre satırındaki tek filtre: `alan · operatör · değer · ×` |
-| Görünüm (view) | Kaydedilmiş filtre + sıralama + sütun düzeni; system / personal / shared |
+| Görünüm (view) | Kaydedilmiş filtre + sıralama + sütun düzeni; system / personal (D30) |
 | Tercih | Yoğunluk, çizgiler, sayfa boyutu, varsayılan görünüm; ekran başına kişisel |
 | Talep (request) | Sunucu modunda paketin yaydığı sorgu |
 | Snapshot | Footer'ın gösterdiği, başarıyla yüklenmiş son sayfa bilgisi |

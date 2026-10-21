@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // T1 · List screen (Faz 2–3a; T2 filtreleme aynı ekranda): sunucu modu — sahte Laravel API'si (/api/orders), arama, sıralama,
 // sayfalama, Count total, filtreler (JSON `filters`), Display, ⋯ (Refresh / Export / Import / Print / Auto-refresh), birincil aksiyon.
+// Görünümler: sistem görünümleri `orderViews`, kişisel görünümler plugin'deki localStorage adapter'ında (T3: ekip senaryosu).
 // Sunucu senaryosu başlıktaki seçimle ya da URL ile: ?delay=800 ?fail=1 ?failAfter=1 ?size=500
 import { PhPlus } from '@phosphor-icons/vue'
 import { DataTable, type CountRequest, type TableError, type TableRequest } from '@swors/data-table'
 import { ref } from 'vue'
-import { orderColumns, type Order } from '../data/orders'
+import { orderColumns, orderViews, type Order } from '../data/orders'
 
 const rows = ref<Order[]>([])
 const hasMore = ref(false)
@@ -73,6 +74,7 @@ async function onCount({ query, signal }: CountRequest) {
       :auto-refresh="30"
       :page-size="Number(params.get('size') ?? 100)"
       :columns="orderColumns"
+      :views="orderViews"
       :rows="rows"
       :has-more="hasMore"
       :total="total"

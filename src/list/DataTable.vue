@@ -1,6 +1,7 @@
 <script setup lang="ts" generic="Row extends object">
-// DataTable (05) — Faz 2: toolbar, ızgara, footer, durumlar, veri akışı (`@request`), sıralama, sayfalama, sütun yönetimi,
-// tercihler. Paket veri çekmez (D18): sorguyu yayar, `rows`/`hasMore`/`loading`/`error` alır. Seçim ve satır menüsü Faz 4.
+// DataTable (05) — Faz 2–3b: toolbar, ızgara, footer, durumlar, veri akışı (`@request`), sıralama, sayfalama, sütun yönetimi,
+// tercihler, filtreler, görünümler. Paket veri çekmez (D18): sorguyu yayar, `rows`/`hasMore`/`loading`/`error` alır.
+// Seçim ve satır menüsü Faz 4.
 import { PhCircleNotch, PhFunnel, PhPlus, PhWarning } from '@phosphor-icons/vue'
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { optionLabel } from '../core/cells/format'
@@ -20,7 +21,12 @@ import StateMessage from '../core/states/StateMessage.vue'
 import DisplayPopover from '../core/toolbar/DisplayPopover.vue'
 import MoreMenu from '../core/toolbar/MoreMenu.vue'
 import Toolbar from '../core/toolbar/Toolbar.vue'
-import type { ColumnDef, Density, Plural, TableId } from '../types'
+import ConfirmDialog from '../core/ui/ConfirmDialog.vue'
+import { nameError, type NameError } from '../core/views/model'
+import { useViews } from '../core/views/useViews'
+import ViewDialog from '../core/views/ViewDialog.vue'
+import ViewMenu from '../core/views/ViewMenu.vue'
+import type { ColumnDef, Density, Plural, TableId, View, ViewPatch, ViewState } from '../types'
 import type {
   CountRequest,
   FilterCondition,
@@ -67,6 +73,8 @@ const props = withDefaults(
     pageSizes?: number[]
     /** Saniye. Verilmezse More menüsünde Auto-refresh görünmez. */
     autoRefresh?: number
+    /** Kodla tanımlı görünümler (kind: 'system'); adapter'daki kişisel görünümlerle birleştirilir (04 §7). */
+    views?: View[]
   }>(),
   {
     rowKey: 'id',
@@ -77,6 +85,7 @@ const props = withDefaults(
     toolbar: 'auto',
     pageSize: 100,
     pageSizes: () => [50, 100, 250, 500],
+    views: () => [],
   },
 )
 const emit = defineEmits<{
@@ -88,6 +97,7 @@ const emit = defineEmits<{
   export: [payload: { format: 'csv' | 'xlsx'; query: QueryWithoutPage; selection: Row[]; visibleColumns: string[] }]
   import: []
   print: [payload: { query: QueryWithoutPage; visibleColumns: string[] }]
+  'view-change': [payload: { id: string; kind: View['kind'] }]
 }>()
 defineSlots<{
   empty?: () => unknown
@@ -111,6 +121,7 @@ const pref = usePreferences(() => props.tableId, ctx.preferences, {
   density: 'standard',
   verticalLines: false,
   pageSize: props.pageSize,
+  defaultViewId: null,
 })
 const density = computed<Density>(() => props.density ?? pref.prefs.density)
 
@@ -216,6 +227,105 @@ const query = computed<TableQuery>(() => ({
 const queryWithoutPage = (): QueryWithoutPage => {
   const { search, filters, sort, columns, fields } = query.value
   return { search, filters, sort, columns, fields }
+}
+
+// Ekran okuyucu bölgeleri (08 §5); görünüm/filtre/sıralama duyuruları buraya yazar.
+const polite = ref('')
+const assertive = ref('')
+
+// Görünümler (04 §7, D4, D5): görünüm = filtre + sıralama + sütun düzeni; uygulama tek adımda (aynı tick) → tek talep.
+const current = (): ViewState => ({ filters: filters.value, sort: sort.value, columns: layout.state.value })
+const applyView = (p: ViewPatch) => {
+  chips.value = (p.filters ?? []).map((f) => ({ ...f }))
+  editing.value = null
+  sort.value = p.sort ?? []
+  layout.apply(p.columns)
+  goTo(1)
+}
+const vw = useViews({
+  tableId: () => props.tableId,
+  system: () => props.views,
+  adapter: ctx.viewsAdapter,
+  locale: () => ctx.locale,
+  defaultViewId: () => pref.prefs.defaultViewId,
+  setDefaultViewId: (id) => pref.set({ defaultViewId: id }),
+  prefsReady: pref.ready,
+  current,
+  apply: applyView,
+  onChange: (v) => {
+    emit('view-change', { id: v.id, kind: v.kind })
+    polite.value = i18n.t('sr.view', { name: v.name })
+  },
+})
+const viewMenuOpen = ref(false)
+const viewSummary = (s: ViewState) => {
+  const first = s.sort[0]
+  const more = s.sort.length > 1 ? ` +${s.sort.length - 1}` : ''
+  const pinned = [...s.columns.pinned.left, ...s.columns.pinned.right].map(headerOf).join(', ')
+  return {
+    filters: s.filters.map((f) => headerOf(f.column)).join(' · ') || i18n.t('common.empty'),
+    sort: first ? `${headerOf(first.column)} ${first.dir === 'asc' ? '↑' : '↓'}${more}` : i18n.t('common.empty'),
+    columns: [
+      i18n.t('views.columnsSummary', { shown: s.columns.visible.length, total: props.columns.length }),
+      ...(pinned ? [i18n.t('views.pinnedSummary', { name: pinned })] : []),
+    ].join(' · '),
+  }
+}
+const resolveState = (v: View): ViewState => ({
+  filters: v.state.filters ?? [],
+  sort: v.state.sort ?? [],
+  columns: layout.resolve(v.state.columns),
+})
+interface ViewDialogState {
+  mode: 'create' | 'rename'
+  name: string
+  state: ViewState
+  summary: ReturnType<typeof viewSummary> | null
+  view?: View
+  /** Mevcut düzenleme yeni görünüme taşınır (Save as new / New view); Duplicate'te aktif görünümün taslağı kalır. */
+  fromCurrent: boolean
+}
+const viewDialog = ref<ViewDialogState | null>(null)
+const viewDialogOpen = computed({
+  get: () => !!viewDialog.value,
+  set: (o: boolean) => {
+    if (!o) viewDialog.value = null
+  },
+})
+const confirmDelete = ref<View | null>(null)
+/** Save as new view / Save as my view / New view: mevcut durum, ad boş. Duplicate: kaynağın kayıtlı durumu, "{ad} copy". */
+const openSaveAs = (view?: View) => {
+  const state = view ? resolveState(view) : current()
+  viewDialog.value = {
+    mode: 'create',
+    name: view ? i18n.t('views.copyName', { name: view.name }) : '',
+    state,
+    summary: viewSummary(state),
+    view,
+    fromCurrent: !view,
+  }
+}
+const openRename = (view: View) =>
+  (viewDialog.value = { mode: 'rename', name: view.name, state: current(), summary: null, view, fromCurrent: false })
+const validateViewName = (name: string): NameError | null => {
+  const d = viewDialog.value
+  return nameError(name, vw.all.value, ctx.locale, d?.mode === 'rename' ? d.view?.id : undefined)
+}
+const onViewDialogSave = (input: { name: string; makeDefault: boolean }) => {
+  const d = viewDialog.value
+  if (!d) return
+  if (d.mode === 'rename' && d.view) void vw.rename(d.view.id, input.name)
+  else
+    void vw.create({
+      name: input.name,
+      state: d.state,
+      makeDefault: input.makeDefault,
+      fromCurrent: d.fromCurrent,
+    })
+}
+const removeView = () => {
+  const v = confirmDelete.value
+  if (v) void vw.remove(v.id)
 }
 
 const list = useListTable<Row>({
@@ -349,8 +459,6 @@ watch(
   () => grid.value?.scrollToTop(),
 )
 const setPageSize = (size: number) => pref.set({ pageSize: size })
-const polite = ref('')
-const assertive = ref('')
 // Her filtre değişikliğinde sayfa 1, gövde başa (04 §3); ekran okuyucuya eklenen/kaldırılan filtre (08 §5).
 watch(
   () => JSON.stringify(filters.value),
@@ -417,7 +525,7 @@ const displayOn = {
   'columns-all': (visible: boolean) => {
     for (const c of layout.panel.value) if (!c.pinned && c.canHide) layout.setVisible(c.id, visible)
   },
-  'columns-reset': () => layout.reset(),
+  'columns-reset': () => layout.reset(vw.active.value?.state.columns),
   'sort-dir': (column: string, dir: 'asc' | 'desc') => {
     sort.value = sort.value.map((s) => (s.column === column ? { column, dir } : s))
     goTo(1)
@@ -434,7 +542,8 @@ const onExport = (format: 'csv' | 'xlsx') =>
 const onPrint = () => emit('print', { query: queryWithoutPage(), visibleColumns: visibleColumns.value })
 const copyErrorId = () => void navigator.clipboard?.writeText(errorInfo.value.id ?? '')
 
-// Kısayollar (08 §3): `/` arama, `R` yenile; Alt←/→ sayfa (her zaman). Kapsam sayfa; odak metin alanındayken kapalı.
+// Kısayollar (08 §3): `/` arama, `F` filtre, `V` görünüm, `R` yenile, `⌘S` görünümü kaydet; Alt←/→ sayfa (her zaman).
+// Kapsam sayfa; tek harfliler odak metin alanındayken kapalı.
 const onKey = (e: KeyboardEvent) => {
   if (e.defaultPrevented) return
   if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
@@ -444,6 +553,13 @@ const onKey = (e: KeyboardEvent) => {
       e.preventDefault()
       goTo(next)
     }
+    return
+  }
+  if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
+    if (!props.shortcuts || !vw.edited.value || !ctx.viewsAdapter || viewDialog.value) return
+    e.preventDefault()
+    if (vw.writable(vw.active.value)) void vw.saveChanges()
+    else openSaveAs()
     return
   }
   const target = e.target instanceof Element ? e.target : null
@@ -457,6 +573,9 @@ const onKey = (e: KeyboardEvent) => {
   } else if ((e.key === 'r' || e.key === 'R') && listens('onRequest')) {
     e.preventDefault()
     req.refresh()
+  } else if ((e.key === 'v' || e.key === 'V') && vw.hasViews.value && props.toolbar === 'auto') {
+    e.preventDefault()
+    viewMenuOpen.value = true
   }
 }
 onMounted(() => window.addEventListener('keydown', onKey))
@@ -508,6 +627,27 @@ defineExpose({ refresh: req.refresh })
       :has-more="hasMore"
       @update:search="setSearch"
     >
+      <template v-if="vw.hasViews.value && toolbar === 'auto'" #view>
+        <ViewMenu
+          v-model:open="viewMenuOpen"
+          :sections="vw.sections.value"
+          :active="vw.active.value"
+          :edited="vw.edited.value"
+          :has-draft="vw.hasDraft"
+          :default-id="pref.prefs.defaultViewId"
+          :can-save="!!ctx.viewsAdapter"
+          :can-write="vw.writable(vw.active.value)"
+          @select="vw.select"
+          @save-changes="vw.saveChanges()"
+          @save-as="openSaveAs()"
+          @discard="vw.discard()"
+          @new="openSaveAs()"
+          @rename="openRename"
+          @duplicate="openSaveAs"
+          @set-default="(id) => pref.set({ defaultViewId: id })"
+          @delete="(v) => (confirmDelete = v)"
+        />
+      </template>
       <template #filter="{ iconOnly }">
         <ColumnPicker v-model:open="pickerOpen" :columns="columns" :chips="chips" @pick="pick">
           <template #trigger>
@@ -684,5 +824,23 @@ defineExpose({ refresh: req.refresh })
     <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
       {{ tooltip.text.value }}
     </div>
+    <ViewDialog
+      v-if="viewDialog"
+      v-model:open="viewDialogOpen"
+      :mode="viewDialog.mode"
+      :name="viewDialog.name"
+      :summary="viewDialog.summary"
+      :validate="validateViewName"
+      @save="onViewDialogSave"
+    />
+    <ConfirmDialog
+      :open="!!confirmDelete"
+      :title="i18n.t('views.delete.title', { name: confirmDelete?.name ?? '' })"
+      :body="i18n.t('views.delete.body')"
+      :confirm-label="i18n.t('views.delete')"
+      danger
+      @update:open="(o) => !o && (confirmDelete = null)"
+      @confirm="removeView"
+    />
   </div>
 </template>

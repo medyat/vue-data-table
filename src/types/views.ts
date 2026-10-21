@@ -16,17 +16,12 @@ export interface ViewPatch {
   columns?: Partial<ColumnLayout>
 }
 
-/**
- * Tek görünüm tipi. system: kodla tanımlı, değiştirilemez (Duplicate, Set as default).
- * personal: yalnızca sahibine. shared: adapter `capabilities.share` destekliyorsa ekip görünümü.
- */
+/** Tek görünüm tipi (D4, D30). system: kodla tanımlı, değiştirilemez (Duplicate, Set as default). personal: yalnızca sahibine. */
 export interface View {
   id: string
   name: string
-  kind: 'system' | 'personal' | 'shared'
+  kind: 'system' | 'personal'
   state: ViewPatch
-  /** Paylaşılan görünümde yazma yetkisi yoksa true. */
-  readonly?: boolean
   /** Ekranın varsayılanı (system içinde en fazla bir tane). Kullanıcı varsayılanı tercihlerde (`defaultViewId`). */
   default?: boolean
   updatedAt?: IsoDate
@@ -36,22 +31,16 @@ export interface View {
 
 export interface ViewsAdapter {
   list: (tableId: TableId) => Promise<View[]>
-  create: (tableId: TableId, input: { name: string; state: ViewState; kind?: 'personal' | 'shared' }) => Promise<View>
-  update: (
-    tableId: TableId,
-    id: string,
-    patch: { name?: string; state?: ViewState; kind?: 'personal' | 'shared' },
-  ) => Promise<View>
+  create: (tableId: TableId, input: { name: string; state: ViewState }) => Promise<View>
+  update: (tableId: TableId, id: string, patch: { name?: string; state?: ViewState }) => Promise<View>
   remove: (tableId: TableId, id: string) => Promise<void>
-  /** share yoksa "shared" seçeneği arayüzde görünmez. */
-  capabilities?: { share?: boolean }
 }
 
 export interface Preferences {
   density: Density
   verticalLines: boolean
   pageSize: number
-  /** Kullanıcının "Set as default" seçtiği görünüm (system veya personal/shared). */
+  /** Kullanıcının "Set as default" seçtiği görünüm (system veya personal). */
   defaultViewId: string | null
 }
 

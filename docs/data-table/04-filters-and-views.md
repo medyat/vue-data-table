@@ -185,20 +185,22 @@ Gerekçe: D2 çip sayısını filtrelenebilir sütun sayısıyla sınırlar; öl
 
 ## 7. Görünümler
 
-### Tek tip, üç tür (D4)
+### Tek tip, iki tür (D4, D30)
 
 ```ts
-interface View { id; name; kind: 'system' | 'personal' | 'shared'; state: ViewPatch; readonly?; default?; updatedAt?; v? }
+interface View { id; name; kind: 'system' | 'personal'; state: ViewPatch; default?; updatedAt?; v? }
 ```
 
-| | `system` | `personal` | `shared` |
-|---|---|---|---|
-| Kim tanımlar | Ürün ekibi, ekranla birlikte kodda (`views` prop'u) | Kullanıcı | Kullanıcı; yalnızca `viewsAdapter.capabilities.share` destekliyorsa |
-| Kim görür | Herkes | Yalnızca sahibi | Ekip (adapter belirler); yazma yetkisi yoksa `readonly` |
-| İzin verilen | Duplicate, Set as default | Save changes, Rename, Duplicate, Set as default, Delete | Aynı (readonly ise yalnızca Duplicate, Set as default) |
-| Yasak | Rename, üzerine yazma, silme | — | — |
-| Sıralama | Kodda verilen sıra | Ada göre (yerel ayar karşılaştırması) | Ada göre |
-| Saklama | Kod | `viewsAdapter` | `viewsAdapter` |
+| | `system` | `personal` |
+|---|---|---|
+| Kim tanımlar | Ürün ekibi, ekranla birlikte kodda (`views` prop'u) | Kullanıcı |
+| Kim görür | Herkes | Yalnızca sahibi |
+| İzin verilen | Duplicate, Set as default | Save changes, Rename, Duplicate, Set as default, Delete |
+| Yasak | Rename, üzerine yazma, silme | — |
+| Sıralama | Kodda verilen sıra | Ada göre (yerel ayar karşılaştırması) |
+| Saklama | Kod | `viewsAdapter` |
+
+Paylaşılan (ekip) görünüm yoktur (D30): ekipçe kullanılacak bir görünüm `views` prop'unda system view olarak tanımlanır.
 
 `viewsAdapter` yoksa yalnızca `views` prop'undaki görünümler vardır ve tüm kaydetme aksiyonları gizlenir. Hazır adapter: `createLocalStorageViews({ scope })` (tarayıcıda, `scope` zorunlu).
 
@@ -244,10 +246,10 @@ Sütun kimlikleri sabit tutulmalı. Kayıtlı bir görünümde artık var olmaya
 
 ### Görünüm menüsü (kısayol `V`)
 
-- Tetik: toolbar'ın en solunda görünüm adı (600 ağırlık) + düzenlenmişse `--dt-accent` 6 px nokta + “Edited” etiketi. Hiç görünüm yoksa (ne `views` ne adapter) tetik görünmez.
+- Tetik: toolbar'ın en solunda görünüm adı (600 ağırlık) + düzenlenmişse `--dt-accent` 6 px nokta + “Edited” etiketi. Hiç görünüm yoksa (ne `views` ne adapter) tetik görünmez. Görünüm var ama hiçbiri aktif değilse (yalnızca kişisel görünümler, varsayılan seçilmemiş) tetik `views.title` (“Views”) yazar.
 - **Kaydetme bölümü** (yalnızca aktif görünüm düzenlenmişse, menünün en üstünde; D27): etiket ““{ad}” edited”; **Save changes** (`⌘S`; alt satır “Updates “{ad}””) · **Save as new view…** (alt satır “Keeps “{ad}” unchanged”) · **Discard changes**. System görünümde **Save as my view…** (`⌘S`) + Discard changes. `viewsAdapter` yoksa yalnızca Discard changes. Ayırıcıdan sonra arama ve bölümler.
-- Popover 300–330 px: üstte **Find a view…** araması; **System views** (`Built in`), **My views** (`Only you`) ve varsa **Shared views** (`Team`) bölümleri; aktif görünüm kalın; varsayılan görünümün sağında soluk `Default`; düzenlenmiş olanın sağında nokta + `Edited`.
-- Satır menüsü `⋯` → Rename · Duplicate · Set as default · ayırıcı · Delete (türün izin verdiği kadarı).
+- Popover 300–330 px: üstte **Find a view…** araması; **System views** (`Built in`) ve **My views** (`Only you`) bölümleri; aktif görünüm kalın; varsayılan görünümün sağında soluk `Default`; düzenlenmiş olanın sağında nokta + `Edited`.
+- Satır menüsü `⋯` → Rename · Duplicate · Set as default · ayırıcı · Delete (türün izin verdiği kadarı). Rename, Save as new view dialog'unun yalnızca ad alanıyla açılmış halidir (başlık “Rename”, düğme “Save”).
 - Altta **New view** (mevcut durumla Save as new view dialog'unu açar).
 - **Manage views** ekranı ve görünüm sekmeleri v1'de yoktur.
 
@@ -256,7 +258,7 @@ Sütun kimlikleri sabit tutulmalı. Kayıtlı bir görünümde artık var olmaya
 - Görünüm, mevcut `ViewState` kayıtlı `state`'ten farklıysa **edited** olur. Karşılaştırma normalize edilmiş durum üzerinden: eksik çipler hariç, `in` değerleri sırasız, sütun genişliklerinde ±2 px tolerans.
 - Göstergeler: toolbar'da görünüm adının yanında nokta + “Edited”; menüde satırında nokta + “Edited”. Filtre satırında gösterge yoktur (D27); filtre olmadan yalnızca sıralama/sütun değiştiyse de kaydetme görünüm menüsündendir.
 - **Discard changes** (görünüm menüsü) → kayıtlı duruma döner (filtre + sıralama + sütunlar).
-- **Save changes** (`⌘S`; personal/shared) kayıtlı görünümü günceller; **Save as new view…** aşağıdaki dialog'u açar.
+- **Save changes** (`⌘S`; personal) kayıtlı görünümü günceller; **Save as new view…** aşağıdaki dialog'u açar.
 - **System view** düzenlenmişse üzerine yazılamaz: etiket ““Late orders” edited”, menüde **Save as my view…** (`⌘S`) + Discard changes.
 - Kaydedilmemiş değişiklik **bellekte, oturum boyu, görünüm başına** tutulur: başka görünüme geçip dönünce düzenleme yerinde durur; toast yok, otomatik atma yok. Sayfa yenilenince gider (kalıcı çalışma kopyası yoktur).
 
@@ -265,14 +267,14 @@ Sütun kimlikleri sabit tutulmalı. Kayıtlı bir görünümde artık var olmaya
 - 460 px. Başlık “Save as new view”, alt metin “It appears under My views. Only you can see it.”
 - **Name** — boş açılır, otomatik odak; Duplicate'ten açıldıysa “{ad} copy” dolu ve seçili gelir. Zorunlu, en fazla 60 karakter, aynı türde benzersiz (büyük/küçük harf duyarsız). Hata metni alanın altında.
 - Özet (salt okunur): Filters `Plant · Created · Owner` · Sort `Due date ↑` · Columns `8 of 14 · Order pinned`.
-- **Make this my default view** checkbox; adapter `share` destekliyorsa **Share with my team** checkbox (alt metin “Team” olur).
+- **Make this my default view** checkbox.
 - Cancel / **Save view** (birincil, mürekkep). Enter kaydeder. Kayıt sonrası yeni görünüm aktif olur.
 
 ### Varsayılan görünüm
 
 Ekran açılırken görünüm seçimi sırası:
 
-1. Kullanıcının **Set as default** ile seçtiği görünüm (`preferences.defaultViewId`; system, personal veya shared).
+1. Kullanıcının **Set as default** ile seçtiği görünüm (`preferences.defaultViewId`; system veya personal).
 2. `views` içinde `default: true` olan system view.
 3. İlk system view; hiç görünüm yoksa tablonun varsayılan durumu.
 
@@ -298,7 +300,7 @@ Sütun gizleme/gösterme, sıra (menü ve klavye; D22), genişlik ve sabitleme g
 | Rows per page | 100 | aynı |
 | Varsayılan görünüm (`defaultViewId`) | yok | aynı |
 
-`preferences` adapter'ı yoksa (plugin'e verilmemişse) tercihler oturumluktur; arayüz “Saved for you only” notunu göstermez. Hazır adapter: `createLocalStoragePreferences({ scope })`. Display popover'ının altındaki **Reset** bu tercihleri varsayılana döndürür.
+`preferences` adapter'ı yoksa (plugin'e verilmemişse) tercihler oturumluktur; arayüz “Saved for you only” notunu göstermez. Hazır adapter: `createLocalStoragePreferences({ scope })`. Display popover'ının altındaki **Reset** yoğunluk, çizgiler ve sayfa boyutunu varsayılana döndürür; varsayılan görünüm seçimi görünüm menüsünden (Set as default) yönetilir ve Reset'ten etkilenmez.
 
 ---
 

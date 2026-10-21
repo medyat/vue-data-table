@@ -63,14 +63,14 @@ Seçicinin 4 px altında, solda hizalı.
 
 1. **Kaydetme bölümü** (yalnızca görünüm düzenlenmişse): etiket “"Gebze · this week" edited” (28 px); öğeler: **Save changes** (alt satır “Updates "Gebze · this week"”, sağda `⌘S` kbd), **Save as new view…** (alt satır “Keeps "…" unchanged”), **Discard changes**. Alt satırlı öğe 44 px, alt satır 12 `--dt-text-3`. System görünümde: **Save as my view…** (`⌘S`) + Discard changes.
 2. Ayırıcı, **Find a view…** (32).
-3. Bölümler (etiket solda, sağda soluk “Built in / Only you / Team”): System views · My views · Shared views. Satır 32: ad (aktifse 600), düzenlenmişse nokta + “Edited”, varsayılansa “Default” etiketi; hover'da sağda 24 px ⋯.
+3. Bölümler (etiket solda, sağda soluk “Built in / Only you”): System views · My views (Shared views D30 ile kaldırıldı). Satır 32: ad (aktifse 600), düzenlenmişse nokta + “Edited”, varsayılansa “Default” etiketi; hover'da sağda 24 px ⋯.
 4. Ayırıcı, **New view** (`Plus`, `--dt-text-2`).
 
 **Satır menüsü** (200, satırın 8 px sağında): Rename · Duplicate · Set as default · ayırıcı · Delete (`--dt-r-fg`). System görünümde yalnızca Duplicate ve Set as default (`views.systemNote`).
 
 ### 4.2 Dialog'lar
 
-- **Save as new view** (460): başlık + “It appears under My views. Only you can see it.”; Name input (odaklı, önerilen ad “Gebze · on hold this week”); özet kutusu (`--dt-surface-2`, yarıçap 8, dolgu 12, 72 px etiket sütunu: Filters / Sort / Columns, 12.5); iki checkbox (Make this my default view, Share with my team); Cancel · **Save view**.
+- **Save as new view** (460): başlık + “It appears under My views. Only you can see it.”; Name input (odaklı, önerilen ad “Gebze · on hold this week”); özet kutusu (`--dt-surface-2`, yarıçap 8, dolgu 12, 72 px etiket sütunu: Filters / Sort / Columns, 12.5); checkbox (Make this my default view; Share with my team D30 ile kaldırıldı); Cancel · **Save view**.
 - **Delete view** (460, `alertdialog`): “Delete "Dilovası · next week"?” + “This can't be undone.”; Cancel (ilk odak) · **Delete** (danger).
 
 ### 4.3 Display (308)

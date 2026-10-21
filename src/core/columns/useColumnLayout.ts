@@ -85,22 +85,26 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     }),
   )
 
-  const initialState = computed(() => {
-    const l = layout.value
-    const start = l?.pinned?.left ?? defs.value.filter((d) => d.pinned === 'left').map((d) => d.id as string)
-    const end = l?.pinned?.right ?? defs.value.filter((d) => d.pinned === 'right').map((d) => d.id as string)
+  /** Görünümden gelen düzen → TanStack durumu (04 §7): bilinmeyen sütun atlanır; `visible` varsa beyaz listedir; gizlenemeyen hep açık. */
+  const known = (ids: string[] | undefined) => ids?.filter((id) => defById.value.has(id))
+  const stateOf = (l: Partial<ColumnLayout> | undefined) => {
+    const start = known(l?.pinned?.left) ?? defs.value.filter((d) => d.pinned === 'left').map((d) => d.id as string)
+    const end = known(l?.pinned?.right) ?? defs.value.filter((d) => d.pinned === 'right').map((d) => d.id as string)
     const visibility: Record<string, boolean> = {}
     for (const d of defs.value) {
       const id = d.id as string
-      visibility[id] = l?.visible ? l.visible.includes(id) : !d.hidden
+      visibility[id] = d.alwaysVisible || d.primary || (l?.visible ? l.visible.includes(id) : !d.hidden)
     }
+    const sizing: Record<string, number> = {}
+    for (const [id, w] of Object.entries(l?.widths ?? {})) if (defById.value.has(id)) sizing[id] = w
     return {
       columnPinning: { start, end },
       columnVisibility: visibility,
-      columnOrder: l?.order ?? [],
-      columnSizing: l?.widths ?? {},
+      columnOrder: known(l?.order) ?? [],
+      columnSizing: sizing,
     }
-  })
+  }
+  const initialState = computed(() => stateOf(layout.value))
 
   const table = useTable<Features, Row>({
     features,
@@ -202,12 +206,38 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     table.setColumnOrder(ids)
   }
 
-  const reset = () => {
-    const s = initialState.value
+  const apply = (l?: Partial<ColumnLayout>) => {
+    const s = stateOf(l)
     table.setColumnOrder(s.columnOrder)
     table.setColumnVisibility(s.columnVisibility)
     table.setColumnPinning(s.columnPinning)
     table.setColumnSizing(s.columnSizing)
+  }
+  /** Verilmezse `layout` seçeneğine (o da yoksa sütun tanımlarına) döner. */
+  const reset = (l: Partial<ColumnLayout> | undefined = layout.value) => apply(l)
+
+  /** Etkin düzen (görünüme yazılan biçim): sıra, görünürler, yalnızca değiştirilmiş genişlikler, sabitler. */
+  const state = computed<ColumnLayout>(() => {
+    const p = table.atoms.columnPinning.get()
+    return {
+      order: table
+        .getOrderColumnsFn()(table.getAllLeafColumns())
+        .map((c) => c.id),
+      visible: table.getVisibleLeafColumns().map((c) => c.id),
+      widths: { ...table.atoms.columnSizing.get() },
+      pinned: { left: [...p.start], right: [...p.end] },
+    }
+  })
+  /** Bir düzen yamasının uygulanmadan hesaplanan tam hali (Duplicate özeti, 04 §7). */
+  const resolve = (l?: Partial<ColumnLayout>): ColumnLayout => {
+    const s = stateOf(l)
+    const ids = defs.value.map((d) => d.id as string)
+    return {
+      order: [...s.columnOrder, ...ids.filter((id) => !s.columnOrder.includes(id))],
+      visible: ids.filter((id) => s.columnVisibility[id]),
+      widths: s.columnSizing,
+      pinned: { left: s.columnPinning.start, right: s.columnPinning.end },
+    }
   }
 
   const resizing = computed(() => {
@@ -224,6 +254,9 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     counts,
     move,
     reset,
+    apply,
+    state,
+    resolve,
     colsVar,
     offsetVars,
     minWidth,

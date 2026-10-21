@@ -31,7 +31,6 @@ describe('createLocalStorageViews', () => {
     expect(u.state).toEqual(state)
     await a.remove('orders', v.id)
     expect(await a.list('orders')).toEqual([])
-    expect(a.capabilities?.share).toBe(false)
   })
   it('bozuk kayıt boş liste sayılır', async () => {
     localStorage.setItem('dt:a:views:orders', '{nope')

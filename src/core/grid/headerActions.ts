@@ -12,6 +12,4 @@ export type HeaderAction =
   | 'move-right'
   | 'hide'
 
-const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
-/** `⌥⇧←` / `Alt+Shift+←` (08 §3 · kbd gösterimi platforma göre). */
-export const MOVE_KBD = { left: mac ? '⌥⇧←' : 'Alt+Shift+←', right: mac ? '⌥⇧→' : 'Alt+Shift+→' }
+export { MOVE_KBD } from '../interaction/kbd'

@@ -1,6 +1,6 @@
 // Production orders örneği (T1): sütun tanımları feature'ın columns.ts dosyasında yaşar (D21). Veri sahte API'den.
 import { PhArrowSquareOut, PhCopy } from '@phosphor-icons/vue'
-import type { ColumnDef, OptionDef, UserOption } from '@swors/data-table'
+import type { ColumnDef, OptionDef, UserOption, View } from '@swors/data-table'
 import type { Order } from '../../server/mock-api.ts'
 
 export type { Order }
@@ -75,6 +75,29 @@ export const orderColumns: Array<ColumnDef<Order>> = [
     filterNoun: { one: 'plant', other: 'plants' },
   },
   { id: 'createdAt', header: 'Created', type: 'datetime', relative: true, hidden: true },
+]
+
+/** Ekranla birlikte kodda tanımlı görünümler (04 §7, D4): system; kullanıcı görünümleri adapter'dan gelir. */
+export const orderViews: View[] = [
+  { id: 'all', name: 'All orders', kind: 'system', state: {}, default: true },
+  {
+    id: 'late',
+    name: 'Late orders',
+    kind: 'system',
+    state: {
+      filters: [
+        { column: 'dueAt', op: 'within', value: { preset: 'overdue' } },
+        { column: 'status', op: 'not_in', value: ['done'] },
+      ],
+      sort: [{ column: 'dueAt', dir: 'asc' }],
+    },
+  },
+  {
+    id: 'on-hold',
+    name: 'On hold',
+    kind: 'system',
+    state: { filters: [{ column: 'status', op: 'in', value: ['on_hold'] }], sort: [{ column: 'dueAt', dir: 'asc' }] },
+  },
 ]
 
 export async function loadOrders(size = 500): Promise<Order[]> {

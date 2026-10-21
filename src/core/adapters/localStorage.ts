@@ -60,7 +60,7 @@ export function createLocalStorageViews(options: { scope: string }): ViewsAdapte
       const view: View = {
         id: newId(),
         name: input.name,
-        kind: input.kind ?? 'personal',
+        kind: 'personal',
         state: input.state,
         updatedAt: now(),
       }
@@ -75,7 +75,6 @@ export function createLocalStorageViews(options: { scope: string }): ViewsAdapte
         ...views[i]!,
         ...(patch.name !== undefined && { name: patch.name }),
         ...(patch.state !== undefined && { state: patch.state }),
-        ...(patch.kind !== undefined && { kind: patch.kind }),
         updatedAt: now(),
       }
       views[i] = next
@@ -88,8 +87,6 @@ export function createLocalStorageViews(options: { scope: string }): ViewsAdapte
         read(tableId).filter((v) => v.id !== id),
       )
     },
-    // Tarayıcı deposu kullanıcıya özeldir; ekip görünümü sunucu adapter'ı ister.
-    capabilities: { share: false },
   }
 }
 

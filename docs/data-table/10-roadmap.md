@@ -91,19 +91,21 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 ## Faz 3b — Görünümler ve tercihler
 
 **Tasarım:** T3.
-**Kapsam:** `View` / `ViewPatch` / `ViewState`, `views` prop'u + `viewsAdapter` birleşimi, görünüm menüsü (kind'e göre bölümler, `shared` yalnızca `capabilities.share`), düzenlenmiş durum (bellekte oturum boyu görünüm başına, Save/Reset), Save as new view dialog'u, varsayılan görünüm (`preferences.defaultViewId`), silme onayı, görünüm uygulaması (`batch()` tek bildirim), `columns.visible` beyaz liste kuralı.
+**Kapsam:** `View` / `ViewPatch` / `ViewState`, `views` prop'u + `viewsAdapter` birleşimi, görünüm menüsü (kind'e göre bölümler; `shared` türü D30 ile kaldırıldı), düzenlenmiş durum (bellekte oturum boyu görünüm başına, Save/Reset), Save as new view dialog'u, varsayılan görünüm (`preferences.defaultViewId`), silme onayı, görünüm uygulaması (`batch()` tek bildirim), `columns.visible` beyaz liste kuralı.
 
 **Kabul kriterleri**
-- [ ] Görünüm = filtre + sıralama + sütun düzeni; arama ve yoğunluk "edited" yapmaz (D5).
-- [ ] System view düzenlenince yalnızca Save as my view…; Rename/Delete yok.
-- [ ] Kaydetme aksiyonları (Save changes `⌘S` / Save as new view… / Discard changes) görünüm menüsünün en üstünde; filtre satırında “View edited · Reset · Save view” yok (D27).
-- [ ] `viewsAdapter` yoksa kaydetme aksiyonları gizli; adapter `share` desteklemiyorsa "shared" seçeneği yok.
-- [ ] Varsayılan görünüm sırası: kullanıcı varsayılanı (tercih) → system `default` → ilk system view.
-- [ ] Görünüm değiştirince önceki görünümün kaydedilmemiş değişiklikleri oturum boyu kalır (toast yok); sayfa yenilenince gider.
-- [ ] Silme onay dialog'u ister, anında `remove`; Undo yok.
-- [ ] Görünümde olmayan sütun sessizce atlanır; `columns.visible` tanımlıysa yeni sütun gizli.
-- [ ] Görünüm uygulaması tek talep üretir (`batch()`).
-- [ ] `createLocalStorageViews({ scope })` scope'suz çağrılamaz; scope değişince eski veri görünmez.
+- [x] Görünüm = filtre + sıralama + sütun düzeni; arama ve yoğunluk "edited" yapmaz (D5).
+- [x] System view düzenlenince yalnızca Save as my view…; Rename/Delete yok.
+- [x] Kaydetme aksiyonları (Save changes `⌘S` / Save as new view… / Discard changes) görünüm menüsünün en üstünde; filtre satırında “View edited · Reset · Save view” yok (D27).
+- [x] `viewsAdapter` yoksa kaydetme aksiyonları gizli. *(Paylaşım D30 ile kaldırıldı: `shared` türü, `capabilities.share` ve Share with my team yok.)*
+- [x] Varsayılan görünüm sırası: kullanıcı varsayılanı (tercih) → system `default` → ilk system view.
+- [x] Görünüm değiştirince önceki görünümün kaydedilmemiş değişiklikleri oturum boyu kalır (toast yok); sayfa yenilenince gider.
+- [x] Silme onay dialog'u ister, anında `remove`; Undo yok.
+- [x] Görünümde olmayan sütun sessizce atlanır; `columns.visible` tanımlıysa yeni sütun gizli.
+- [x] Görünüm uygulaması tek talep üretir (`batch()`). *(Ayrı bir `batch()` API'si yok: filtre, sıralama, sütun düzeni ve sayfa aynı tick'te yazılır, talep izleyicisi bir kez çalışır.)*
+- [x] `createLocalStorageViews({ scope })` scope'suz çağrılamaz; scope değişince eski veri görünmez. *(Faz 0'da yazıldı; test `tests/plugin.test.ts`.)*
+
+**Notlar (uygulama):** `core/views/useViews` görünüm listesini, aktif görünümü ve taslakları tutar; "edited" karşılaştırması görünüm uygulandıktan sonra okunan etkin durumla yapılır (kısmi `ViewPatch`'in tamamlanmış hali), karşılaştırma `core/views/model.sameState`. `useColumnLayout.apply/state/resolve` sütun düzenini görünümden yazar ve okur; Display › Columns › Reset aktif görünümün kayıtlı düzenine döner. Rename için ayrı tasarım yok: Save as new view dialog'u ad alanıyla açılır (başlık Rename, düğme Save). Hiç aktif görünüm yokken (yalnızca kişisel görünümler var, varsayılan seçilmemiş) seçici `views.title` ("Views") yazar. `view-change` açılışta da yayılır (uygulama URL'ini yazabilir, D25). Kullanıcı varsayılanı adapter'dan gelen bir görünümse ve liste asenkron geliyorsa açılışta iki talep olur (önce system default, liste gelince kullanıcı varsayılanı). Display › Reset `defaultViewId`'yi silmez (görünüm menüsünden yönetilir). Satır `⋯` düğmesinde Enter/Space Listbox'a ulaşmaz (aksi halde satır seçilirdi). Playground: T1 system görünümleri + localStorage adapter; T3 hazır kişisel görünümler (bellek içi adapter, kullanıcı varsayılanı).
 
 ## Faz 4 — Seçim, bulk bar, satır etkileşimleri
 

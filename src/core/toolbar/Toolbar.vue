@@ -49,6 +49,7 @@ defineExpose({
 
 <template>
   <div ref="el" class="dt-toolbar" :class="`is-${size}`" role="toolbar">
+    <slot name="view" />
     <template v-if="search !== null">
       <button
         v-if="size !== 'full' && !searchOpen && !search"

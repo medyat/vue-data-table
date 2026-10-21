@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import DataTable from '../src/list/DataTable.vue'
-import type { ColumnDef, PreferencesAdapter, TableRequest } from '../src/types'
+import type { ColumnDef, PreferencesAdapter, TableRequest, View, ViewsAdapter } from '../src/types'
 import { flush, mockLayout } from './helpers/dom'
 
 interface Order {
@@ -498,6 +498,292 @@ describe('filtreler (04)', () => {
       currency: 'TRY',
     })
     expect(chipText(w, 'value')).toBe('Value is between 100K – 250K TRY')
+    w.unmount()
+  })
+})
+
+describe('görünümler (04 §7)', () => {
+  const sys: View[] = [
+    { id: 'all', name: 'All orders', kind: 'system', state: {}, default: true },
+    {
+      id: 'late',
+      name: 'Late orders',
+      kind: 'system',
+      state: {
+        filters: [{ column: 'status', op: 'in', value: ['done'] }],
+        sort: [{ column: 'dueAt', dir: 'asc' }],
+        columns: { visible: ['number', 'status', 'dueAt'], pinned: { left: ['number'], right: [] } },
+      },
+    },
+  ]
+  /** Bellek içi adapter: `views` dizisi test tarafından okunur. */
+  const memoryAdapter = (initial: View[] = []) => {
+    const views = [...initial]
+    const adapter: ViewsAdapter & { views: View[] } = {
+      views,
+      list: async () => [...views],
+      create: async (_t, input) => {
+        const v: View = {
+          id: `v${views.length + 1}`,
+          name: input.name,
+          kind: 'personal',
+          state: input.state,
+        }
+        views.push(v)
+        return v
+      },
+      update: async (_t, id, patch) => {
+        const i = views.findIndex((v) => v.id === id)
+        views[i] = { ...views[i]!, ...(patch.name && { name: patch.name }), ...(patch.state && { state: patch.state }) }
+        return views[i]!
+      },
+      remove: async (_t, id) => {
+        views.splice(
+          views.findIndex((v) => v.id === id),
+          1,
+        )
+      },
+    }
+    return adapter
+  }
+  const mountViews = async (opts: {
+    adapter?: ViewsAdapter | null
+    prefs?: PreferencesAdapter | null
+    props?: Record<string, unknown>
+  }) => {
+    const { DATA_TABLE_KEY, createContext } = await import('../src/core/plugin')
+    const ctx = createContext({ viewsAdapter: opts.adapter ?? undefined, preferences: opts.prefs ?? undefined })
+    const w = mount(DataTable<Order>, {
+      props: { tableId: 'orders', columns, rows, views: sys, ...opts.props },
+      global: { provide: { [DATA_TABLE_KEY as symbol]: ctx } },
+      attachTo: document.body,
+    })
+    await flush()
+    await vi.advanceTimersByTimeAsync(1) // adapter.list() zinciri
+    await flush()
+    return w
+  }
+  const trigger = (w: W) => w.get('.dt-view-trigger')
+  const menu = () => document.querySelector<HTMLElement>('.dt-views')
+  const openMenu = async (w: W) => {
+    if (menu()) return
+    await trigger(w).trigger('click')
+    await flush()
+  }
+  const row = (name: string) =>
+    [...menu()!.querySelectorAll<HTMLElement>('.dt-view-row')].find((r) => r.textContent?.includes(name))
+  const pickView = async (w: W, name: string) => {
+    await openMenu(w)
+    row(name)!
+      .querySelector<HTMLElement>('.dt-view-item')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flush()
+  }
+  const menuButton = (text: string) =>
+    [...menu()!.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes(text))
+  const rowAction = async (w: W, name: string, item: string) => {
+    await openMenu(w)
+    const more = row(name)!.querySelector<HTMLElement>('.dt-view-more')!
+    more.focus()
+    more.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+    await flush()
+    const el = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (e) => e.textContent?.trim() === item,
+    )!
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flush()
+    await vi.advanceTimersByTimeAsync(1)
+    await flush()
+  }
+  const sortBy = async (w: W, col: string) => {
+    await w.get(`.dt-head-cell[data-col="${col}"] .dt-head-label`).trigger('click')
+    await flush()
+  }
+  const dialog = () => document.querySelector<HTMLElement>('.dt-view-dialog')
+  const submitDialog = async (name?: string) => {
+    const input = dialog()!.querySelector<HTMLInputElement>('input[type="text"]')!
+    if (name !== undefined) {
+      input.value = name
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+    dialog()!
+      .querySelector('form')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    await flush()
+  }
+
+  it('açılış: system default; tercih varsa o; görünüm seçimi tek talep (filtre + sıralama + sütunlar); view-change', async () => {
+    const w = await mountViews({ props: { mode: 'server', onRequest: () => {} } })
+    expect(trigger(w).text()).toBe('All orders')
+    expect(w.emitted('view-change')?.[0]?.[0]).toEqual({ id: 'all', kind: 'system' })
+    const n = requests(w).length
+    await pickView(w, 'Late orders')
+    expect(requests(w)).toHaveLength(n + 1)
+    expect(last(w).reason).toBe('query')
+    expect(last(w).query.filters).toEqual([{ column: 'status', op: 'in', value: ['done'] }])
+    expect(last(w).query.sort).toEqual([{ column: 'dueAt', dir: 'asc' }])
+    expect(last(w).query.columns).toEqual(['number', 'status', 'dueAt'])
+    expect(trigger(w).text()).toBe('Late orders')
+    expect(w.find('.dt-chip[data-col="status"]').exists()).toBe(true)
+    expect(w.emitted('view-change')?.at(-1)?.[0]).toEqual({ id: 'late', kind: 'system' })
+    w.unmount()
+
+    const w2 = await mountViews({
+      prefs: { get: () => ({ defaultViewId: 'late' }), set: () => {} },
+      props: { mode: 'server', onRequest: () => {} },
+    })
+    expect(requests(w2)).toHaveLength(1)
+    expect(requests(w2)[0]!.query.filters).toHaveLength(1)
+    expect(trigger(w2).text()).toBe('Late orders')
+    w2.unmount()
+  })
+
+  it('düzenlenince Edited + kaydetme bölümü (system: Save as my view…); Discard geri alır; taslak görünüm başına oturum boyu kalır', async () => {
+    const w = await mountViews({ adapter: memoryAdapter() })
+    await sortBy(w, 'product.name')
+    expect(trigger(w).text()).toContain('Edited')
+    expect(trigger(w).attributes('aria-label')).toBe('View All orders, edited')
+    await openMenu(w)
+    expect(menu()!.textContent).toContain('“All orders” edited')
+    expect(menuButton('Save as my view…')).toBeTruthy()
+    expect(menuButton('Save changes')).toBeUndefined()
+    menuButton('Discard changes')!.click()
+    await flush()
+    expect(trigger(w).text()).not.toContain('Edited')
+    expect(w.get('.dt-head-cell[data-col="product.name"]').attributes('aria-sort')).toBeUndefined()
+    // Taslak: All orders düzenle → Late'e geç → geri dön.
+    await sortBy(w, 'product.name')
+    await pickView(w, 'Late orders')
+    expect(trigger(w).text()).toBe('Late orders')
+    await openMenu(w)
+    expect(row('All orders')!.textContent).toContain('Edited')
+    expect(row('Late orders')!.textContent).not.toContain('Edited')
+    await pickView(w, 'All orders')
+    expect(trigger(w).text()).toContain('Edited')
+    expect(w.get('.dt-head-cell[data-col="product.name"]').attributes('aria-sort')).toBe('ascending')
+    w.unmount()
+  })
+
+  it('⌘S: system → Save as new view dialog (ad doğrulama, varsayılan checkbox); personal → Save changes; yeni görünüm aktif', async () => {
+    const adapter = memoryAdapter()
+    const set = vi.fn()
+    const w = await mountViews({ adapter, prefs: { get: () => ({}), set } })
+    await sortBy(w, 'product.name')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true }))
+    await flush()
+    expect(dialog()).toBeTruthy()
+    expect(dialog()!.textContent).toContain('Only you can see it')
+    await submitDialog()
+    expect(dialog()!.textContent).toContain('Enter a name.')
+    await submitDialog('x'.repeat(61))
+    expect(dialog()!.textContent).toContain('60 characters')
+    dialog()!.querySelector<HTMLInputElement>('.dt-check-row input')!.click()
+    await submitDialog('Mine')
+    await flush()
+    expect(dialog()).toBeNull()
+    expect(adapter.views).toHaveLength(1)
+    expect(adapter.views[0]).toMatchObject({ name: 'Mine', kind: 'personal' })
+    expect(adapter.views[0]!.state.sort).toEqual([{ column: 'product.name', dir: 'asc' }])
+    expect(set).toHaveBeenCalledWith('orders', { defaultViewId: 'v1' })
+    expect(trigger(w).text()).toBe('Mine')
+    await openMenu(w)
+    expect(row('Mine')!.textContent).toContain('Default')
+    expect(menu()!.textContent).toContain('My views')
+    await submitDialogClose(w)
+    // Aynı adla ikinci kişisel görünüm: taken.
+    await sortBy(w, 'product.name') // desc → edited
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true }))
+    await flush()
+    expect(dialog()).toBeNull() // personal: doğrudan Save changes
+    expect(adapter.views[0]!.state.sort).toEqual([{ column: 'product.name', dir: 'desc' }])
+    expect(trigger(w).text()).not.toContain('Edited')
+    await openMenu(w)
+    menuButton('New view')!.click()
+    await vi.advanceTimersByTimeAsync(1)
+    await flush()
+    await submitDialog('mine')
+    expect(dialog()!.textContent).toContain('already have a view')
+    w.unmount()
+  })
+  const submitDialogClose = async (w: W) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await flush()
+    void w
+  }
+
+  it('Rename, Duplicate ("{ad} copy" seçili), Delete onayı → remove; aktif silinince varsayılana dönülür', async () => {
+    const adapter = memoryAdapter([
+      { id: 'p1', name: 'Mine', kind: 'personal', state: { sort: [{ column: 'value', dir: 'desc' }] } },
+    ])
+    const w = await mountViews({ adapter })
+    await rowAction(w, 'Mine', 'Rename')
+    expect(dialog()!.textContent).toContain('Rename')
+    expect(dialog()!.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('Mine')
+    await submitDialog('Renamed')
+    expect(adapter.views[0]!.name).toBe('Renamed')
+    await rowAction(w, 'Renamed', 'Duplicate')
+    const input = dialog()!.querySelector<HTMLInputElement>('input[type="text"]')!
+    expect(input.value).toBe('Renamed copy')
+    expect(dialog()!.textContent).toContain('Value ↓')
+    await submitDialog()
+    expect(adapter.views.map((v) => v.name)).toEqual(['Renamed', 'Renamed copy'])
+    expect(trigger(w).text()).toBe('Renamed copy')
+    expect(w.get('.dt-head-cell[data-col="value"]').attributes('aria-sort')).toBe('descending')
+    await rowAction(w, 'Renamed copy', 'Delete')
+    const alert = document.querySelector<HTMLElement>('[role="alertdialog"]')!
+    expect(alert.textContent).toContain('Delete “Renamed copy”?')
+    expect(document.activeElement?.textContent?.trim()).toBe('Cancel')
+    ;[...alert.querySelectorAll<HTMLElement>('button')].find((b) => b.textContent?.trim() === 'Delete')!.click()
+    await flush()
+    expect(adapter.views.map((v) => v.name)).toEqual(['Renamed'])
+    expect(trigger(w).text()).toBe('All orders')
+    w.unmount()
+  })
+
+  it('adapter yoksa yalnızca Discard ve Set as default; New view yok', async () => {
+    const w = await mountViews({ adapter: null })
+    await sortBy(w, 'product.name')
+    await openMenu(w)
+    expect(menuButton('Discard changes')).toBeTruthy()
+    expect(menuButton('Save as my view…')).toBeUndefined()
+    expect(menuButton('New view')).toBeUndefined()
+    w.unmount()
+  })
+
+  it('columns.visible beyaz liste; bilinmeyen sütun atlanır; Columns › Reset görünümün düzenine döner ve Edited kalkar', async () => {
+    const views: View[] = [
+      {
+        id: 'v',
+        name: 'Narrow',
+        kind: 'system',
+        state: { columns: { visible: ['status', 'product.name'], order: ['zzz', 'status', 'product.name', 'number'] } },
+      },
+    ]
+    const w = await mountViews({ props: { views } })
+    const ids = () => w.findAll('[role="columnheader"]').map((h) => h.attributes('data-col'))
+    expect(ids()).toEqual(['number', 'status', 'product.name']) // primary hep görünür; zzz yok
+    await w
+      .findAll('.dt-toolbar button')
+      .find((b) => b.text() === 'Display')!
+      .trigger('click')
+    await flush()
+    const pop = document.querySelector<HTMLElement>('.dt-display')!
+    ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes('Columns'))!.click()
+    await flush()
+    ;[
+      ...[...pop.querySelectorAll<HTMLElement>('.dt-col-row')]
+        .find((r) => r.textContent?.includes('Product'))!
+        .querySelectorAll('button'),
+    ]
+      .at(-1)!
+      .click()
+    await flush()
+    expect(ids()).toEqual(['number', 'status'])
+    expect(trigger(w).text()).toContain('Edited')
+    ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-action')].find((b) => b.textContent?.trim() === 'Reset')!.click()
+    await flush()
+    expect(ids()).toEqual(['number', 'status', 'product.name'])
+    expect(trigger(w).text()).not.toContain('Edited')
     w.unmount()
   })
 })
