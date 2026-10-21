@@ -95,4 +95,43 @@ body {
   display: flex;
   flex-direction: column;
 }
+.pg-page {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+.pg-scroll {
+  overflow: auto;
+}
+.pg-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.pg-title h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.pg-crumb {
+  color: var(--dt-text-3);
+}
+.pg-crumb-sep {
+  color: var(--dt-line-3);
+}
+.pg-sub {
+  margin: -8px 0 16px;
+  color: var(--dt-text-2);
+}
+.pg-group h2 {
+  margin: 20px 0 8px;
+  font-size: 14px;
+}
+.pg-fixed {
+  flex: none;
+}
 </style>

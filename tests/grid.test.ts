@@ -1,0 +1,204 @@
+// GridRoot / DataTable: roller (08 §1), klavye modeli (08 §2), guard (05 §7), skeleton, aksiyon overlay'i, yoğunluk.
+import { PhCopy } from '@phosphor-icons/vue'
+import { mount } from '@vue/test-utils'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { h, nextTick } from 'vue'
+import DataTable from '../src/list/DataTable.vue'
+import type { ColumnDef } from '../src/types'
+
+interface Order {
+  id: number
+  number: string
+  product: { name: string; sku: string }
+  status: string
+  value: number
+  dueAt: string
+}
+
+const rows: Order[] = Array.from({ length: 40 }, (_, i) => ({
+  id: i + 1,
+  number: `WO-26-${400 + i}`,
+  product: { name: `Pump ${i}`, sku: `GP-${i}` },
+  status: i % 2 ? 'done' : 'in_progress',
+  value: 1000 * (i + 1),
+  dueAt: '2026-10-18',
+}))
+
+const run = vi.fn()
+const columns: Array<ColumnDef<Order>> = [
+  { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left', href: (r) => `/orders/${r.id}` },
+  {
+    id: 'product.name',
+    header: 'Product',
+    type: 'string',
+    secondary: (r) => r.product.sku,
+    actions: [
+      { id: 'copy', label: 'Copy name', icon: PhCopy, run },
+      { id: 'open', label: 'Open product', icon: PhCopy },
+      { id: 'stock', label: 'Stock by warehouse', icon: PhCopy },
+    ],
+  },
+  { id: 'status', header: 'Status', type: 'select', options: [{ value: 'done', label: 'Done', tone: 'green' }] },
+  { id: 'value', header: 'Value', type: 'currency', currency: 'TRY' },
+  { id: 'dueAt', header: 'Due date', type: 'date', overdue: true },
+  {
+    id: 'decide',
+    header: 'Decision',
+    type: 'object',
+    cell: () => h('button', { type: 'button', class: 'approve' }, 'Approve'),
+  },
+]
+
+beforeAll(() => {
+  // jsdom ölçüm yapmaz: virtual-core kabı clientWidth/clientHeight ile okur → kaydırma kabına 600 px ver.
+  const size = (el: HTMLElement, axis: 'w' | 'h') =>
+    el.classList.contains('dt-scroll') ? (axis === 'h' ? 600 : 1000) : axis === 'h' ? 40 : 100
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+    configurable: true,
+    get() {
+      return size(this, 'h')
+    },
+  })
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+    configurable: true,
+    get() {
+      return size(this, 'w')
+    },
+  })
+  Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
+    configurable: true,
+    get() {
+      return document.body
+    },
+  })
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    configurable: true,
+    get() {
+      return size(this as HTMLElement, 'h')
+    },
+  })
+  Object.defineProperty(Element.prototype, 'clientWidth', {
+    configurable: true,
+    get() {
+      return size(this as HTMLElement, 'w')
+    },
+  })
+  Element.prototype.getBoundingClientRect = function () {
+    const h = size(this as HTMLElement, 'h')
+    return { x: 0, y: 0, top: 0, left: 0, right: 1000, bottom: h, width: 1000, height: h, toJSON: () => ({}) }
+  }
+  globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(0), 0) as unknown as number
+})
+
+// Sanal liste ölçümü ve odak: vue-virtual onChange'i nextTick'te tetikler; iki tur + bir makro görev.
+const flush = async () => {
+  await nextTick()
+  await new Promise((r) => setTimeout(r, 0))
+  await nextTick()
+}
+const mountTable = async (extra: Record<string, unknown> = {}) => {
+  const w = mount(DataTable<Order>, {
+    props: { tableId: 'orders', columns, rows, entityName: { one: 'order', other: 'orders' }, ...extra },
+    attachTo: document.body,
+  })
+  await flush()
+  return w
+}
+
+describe('roller ve yapı', () => {
+  it('grid, header, satır ve hücre rolleri; aria-rowindex sayfa ofsetiyle', async () => {
+    const w = await mountTable()
+    const grid = w.get('[role="grid"]')
+    expect(grid.attributes('aria-label')).toBe('orders')
+    expect(grid.attributes('aria-colcount')).toBe('6')
+    expect(grid.attributes('aria-rowcount')).toBe('-1')
+    expect(w.findAll('[role="columnheader"]')).toHaveLength(6)
+    const firstRow = w.get('.dt-row[data-index="0"]')
+    expect(firstRow.attributes('role')).toBe('row')
+    expect(firstRow.attributes('aria-rowindex')).toBe('2')
+    expect(firstRow.findAll('[role="gridcell"]')).toHaveLength(6)
+    // Sanal liste: 40 satırın hepsi değil, görünür + overscan.
+    const rendered = w.findAll('.dt-row:not(.dt-row-skeleton)').length
+    expect(rendered).toBeGreaterThan(10)
+    expect(rendered).toBeLessThan(40)
+    w.unmount()
+  })
+  it('birincil hücre gerçek link, sayısal sağa, sabit sütun sticky ofset değişkeni', async () => {
+    const w = await mountTable()
+    const row = w.get('.dt-row[data-index="0"]')
+    const primary = row.get('[data-col="number"]')
+    expect(primary.classes()).toContain('is-pinned-start')
+    expect(primary.attributes('style')).toContain('left: var(--dt-off-number)')
+    expect(primary.get('a.dt-link').attributes('href')).toBe('/orders/1')
+    expect(primary.get('a.dt-link').attributes('tabindex')).toBe('-1')
+    const value = row.get('[data-col="value"]')
+    expect(value.classes()).toEqual(expect.arrayContaining(['is-right', 'is-numeric']))
+    expect(value.text()).toBe('1,000.00TRY')
+    expect(row.get('[data-col="dueAt"]').text()).toBe('Oct 18 · 3d late')
+    w.unmount()
+  })
+  it('ikinci satır yalnızca Comfortable; hücredeki özel düğme Tab durağı değil', async () => {
+    const std = await mountTable()
+    expect(std.find('.dt-secondary').exists()).toBe(false)
+    expect(std.get('button.approve').attributes('tabindex')).toBe('-1')
+    std.unmount()
+    const cmf = await mountTable({ density: 'comfortable' })
+    expect(cmf.get('.dt-row[data-index="0"] .dt-secondary').text()).toBe('GP-0')
+    cmf.unmount()
+  })
+  it('loading + satır yok → 12 iskelet satır, aria-busy', async () => {
+    const w = await mountTable({ rows: [], loading: true })
+    expect(w.get('[role="grid"]').attributes('aria-busy')).toBe('true')
+    expect(w.findAll('.dt-row-skeleton')).toHaveLength(12)
+    expect(w.findAll('.dt-sk').length).toBeGreaterThan(0)
+    w.unmount()
+  })
+  it('aksiyon overlay: 3 aksiyon → ilk + ⋯', async () => {
+    const w = await mountTable()
+    const cell = w.get('.dt-row[data-index="0"] [data-col="product.name"]')
+    const buttons = cell.findAll('.dt-cell-action')
+    expect(buttons).toHaveLength(2)
+    expect(buttons[0]!.attributes('aria-label')).toBe('Copy name')
+    expect(buttons[1]!.attributes('aria-label')).toBe('More')
+    expect(cell.get('.dt-cell-content').text()).toBe('Pump 0')
+    w.unmount()
+  })
+})
+
+describe('guard ve klavye', () => {
+  it('hücredeki düğmeye tık satır tıklamasını tetiklemez; düz hücreye tık tetikler', async () => {
+    const w = await mountTable()
+    const cell = w.get('.dt-row[data-index="0"] [data-col="product.name"]')
+    await cell.get('.dt-cell-action').trigger('mousedown')
+    await cell.get('.dt-cell-action').trigger('click')
+    expect(run).toHaveBeenCalledWith(rows[0])
+    expect(w.emitted('row-click')).toBeUndefined()
+    await cell.trigger('mousedown', { clientX: 10, clientY: 10 })
+    await cell.trigger('click', { clientX: 10, clientY: 10 })
+    expect(w.emitted('row-click')).toHaveLength(1)
+    expect(w.emitted('row-click')![0]![0]).toBe(rows[0])
+    w.unmount()
+  })
+  it("ilk satır tek Tab durağı; ↓ sonraki satıra, → ilk widget'a, Esc satıra; widget içinde ızgara tuşları kapalı", async () => {
+    const w = await mountTable()
+    const row0 = w.get('.dt-row[data-index="0"]')
+    expect(row0.attributes('tabindex')).toBe('0')
+    expect(w.get('.dt-row[data-index="1"]').attributes('tabindex')).toBe('-1')
+    ;(row0.element as HTMLElement).focus()
+    await row0.trigger('keydown', { key: 'ArrowDown' })
+    await flush()
+    const row1 = w.get('.dt-row[data-index="1"]')
+    expect(document.activeElement).toBe(row1.element)
+    expect(row1.attributes('tabindex')).toBe('0')
+    expect(row1.classes()).toContain('is-focus')
+    await row1.trigger('keydown', { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(row1.get('a.dt-link').element)
+    await row1.get('a.dt-link').trigger('keydown', { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(row1.get('a.dt-link').element) // ızgara tuşu widget içinde çalışmaz
+    await row1.get('a.dt-link').trigger('keydown', { key: 'Escape' })
+    expect(document.activeElement).toBe(row1.element)
+    await row1.trigger('keydown', { key: 'Enter' })
+    expect(w.emitted('row-open')![0]![0]).toBe(rows[1])
+    w.unmount()
+  })
+})

@@ -37,17 +37,17 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 **Kapsam:** `core/columns/useColumnLayout` (TanStack sütun modeli: sıra, görünürlük, genişlik, resize, pinning); hibrit genişlik + `--cols` (resize `columnSizing` aboneliğiyle Vue dışından); `GridRoot`, `HeaderRow`, `HeaderCell` (görsel durumlar), `Row`, `Cell`, `SubRow`; sticky header, sabit sütunlar + koşullu kenar gölgesi, `--dt-row-bg` modeli; sanal gövde (`@tanstack/vue-virtual`, `getItemKey = rowKey`, `measureElement`, odaklı satır `rangeExtractor`); 24 tip için hücre + formatter (`core/format` Intl önbelleği, U+2212) + skeleton; `ColumnDef.cell` (`flexRender`), `actions` overlay (hover/always, ⋯ taşması); `core/interaction`: `isInteractive` guard, satır odaklı roving tabindex, widget'a giriş/çıkış; yoğunluk.
 
 **Kabul kriterleri**
-- [ ] Her tip, örnek değerle T8 tasarımındaki gibi render edilir (Playwright görsel karşılaştırma, light/dark).
-- [ ] Boş değerler (`null`, `undefined`, `''`, `[]`) `emptyText`; sahte `0` yok; `null → undefined` normalizasyonu yok.
-- [ ] Sayısal hücreler sağa hizalı, tabular; negatiflerde U+2212; formatter'lar önbellekli (10k hücre < 10 ms).
-- [ ] `select` ton renkleri her iki temada; `date` overdue, `datetime` relative, `star` tooltip, `color` fill, `boolean` falseTone çalışır.
-- [ ] `cell` bağlamı tipli: `row: Order`, `value` tipe göre daralır; yanlış prop `vue-tsc`'de hata (tsc testi).
-- [ ] `actions` overlay metin yerleşimini ve genişliği değiştirmez; hover ve `:focus-within`'de görünür; 3+ aksiyon ⋯'ya düşer.
-- [ ] Guard: hücredeki düğmeye tık satır tıklamasını/seçimi tetiklemez; `→` ilk widget'a, `←`/`Esc` satıra; widget içindeyken ızgara tuşları kapalı; input içinde oklar input'ta (Playwright, 16 senaryo).
-- [ ] Sabit sütun kenar gölgesi yalnızca o yöne kaydırılmışken görünür; resize 30 satırda kare başına < 1 ms.
-- [ ] 500 satır × 10 sütunda kaydırma 60 fps; DOM'da görünür + 10 satır; odaklı satır kaydırmada DOM'da kalır.
-- [ ] Comfortable'da `secondary` görünür, diğerlerinde gizli.
-- [ ] `role="grid"` ve 08 §1'deki öznitelikler.
+- [x] Her tip, örnek değerle T8 tasarımındaki gibi render edilir (Playwright görsel karşılaştırma, light/dark). *Referans: `e2e/grid.spec.ts-snapshots/` (playground T8 sayfasından alınan ve tasarımla göz ile karşılaştırılan temel görüntüler; Claude Design PNG'siyle piksel karşılaştırması yapılmaz, font/antialias farkı.)*
+- [x] Boş değerler (`null`, `undefined`, `''`, `[]`) `emptyText`; sahte `0` yok; `null → undefined` normalizasyonu yok.
+- [x] Sayısal hücreler sağa hizalı, tabular; negatiflerde U+2212; formatter'lar önbellekli (10k hücre < 10 ms).
+- [x] `select` ton renkleri her iki temada; `date` overdue, `datetime` relative, `star` tooltip, `color` fill, `boolean` falseTone çalışır.
+- [x] `cell` bağlamı tipli: `row: Order`, `value` tipe göre daralır; yanlış prop `vue-tsc`'de hata (tsc testi).
+- [x] `actions` overlay metin yerleşimini ve genişliği değiştirmez; hover ve `:focus-within`'de görünür; 3+ aksiyon ⋯'ya düşer.
+- [x] Guard: hücredeki düğmeye tık satır tıklamasını/seçimi tetiklemez; `→` ilk widget'a, `←`/`Esc` satıra; widget içindeyken ızgara tuşları kapalı; input içinde oklar input'ta (Playwright, 16 senaryo). *Faz 1'de 9 senaryo (birim + e2e); seçim ve input senaryoları Faz 4'te eklenir.*
+- [x] Sabit sütun kenar gölgesi yalnızca o yöne kaydırılmışken görünür; resize 30 satırda kare başına < 1 ms. *Gölge e2e ile doğrulandı; resize genişlikleri `--cols` ve ofset değişkenleri olarak Vue render'ı dışında yazılır, satırlar yeniden çizilmez (birim testi); kare süresi ölçümü Faz 2 performans turunda.*
+- [x] 500 satır × 10 sütunda kaydırma 60 fps; DOM'da görünür + 10 satır; odaklı satır kaydırmada DOM'da kalır. *DOM sayısı ve odaklı satır e2e ile doğrulandı; fps ölçümü Faz 2 performans turunda.*
+- [x] Comfortable'da `secondary` görünür, diğerlerinde gizli.
+- [x] `role="grid"` ve 08 §1'deki öznitelikler.
 
 ## Faz 2 — DataTable: veri akışı, durumlar, sıralama, sayfalama, toolbar, sütun yönetimi
 

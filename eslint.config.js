@@ -48,7 +48,8 @@ export default defineConfig([
   {
     files: ['**/*.vue'],
     languageOptions: { parserOptions: { parser: tseslint.parser } },
-    rules: { 'vue/multi-word-component-names': 'off' },
+    // Tarayıcı global'leri (HTMLElement, MouseEvent …) TS tarafından denetlenir; no-undef .vue'da yanlış pozitif verir.
+    rules: { 'vue/multi-word-component-names': 'off', 'no-undef': 'off' },
   },
   ...boundaryConfigs,
 ])

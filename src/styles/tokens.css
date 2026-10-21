@@ -35,6 +35,8 @@
   --dt-live-halo: rgba(44,157,90,.18);
   --dt-r-line: #F6CFCF;
   --dt-a-line: #F2DDB4;
+  --dt-fill-text-dark: #15171C;
+  --dt-fill-text-light: #FFFFFF;
   --dt-bulk-bg: #15171C;
   --dt-bulk-fg: #F1F2F4;
   --dt-bulk-fg-2: #A3A9B4;
@@ -127,6 +129,8 @@
   --dt-live-halo: rgba(61,184,115,.2);
   --dt-r-line: rgba(240,82,82,.28);
   --dt-a-line: rgba(232,163,42,.26);
+  --dt-fill-text-dark: #15171C;
+  --dt-fill-text-light: #FFFFFF;
   --dt-bulk-bg: #24272E;
   --dt-bulk-fg: #ECEDF0;
   --dt-bulk-fg-2: #9AA0AA;

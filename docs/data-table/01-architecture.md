@@ -53,11 +53,11 @@ src/
   sheet.ts                  # DataSheet (ayrı giriş: @swors/data-table/sheet)
   core/
     columns/                # useColumnLayout (TanStack), genişlik hesabı, --cols
-    cells/                  # 24 tip: hücre, formatter, sortFn, operatörler, editör, genişlik, skeleton
+    cells/                  # 24 tip: specs (hizalama, genişlik, skeleton), format, renderCell, remoteLabels, CellActions
     format/                 # Intl önbelleği, eksi işareti, göreli zaman, liste biçimi
     editors/                # tipe göre değer girişi (filtre çipi ve sheet editörü ortak)
-    grid/                   # GridRoot, HeaderRow, HeaderCell, Row, Cell, SubRow, PinShadow, sanal gövde
-    interaction/            # isInteractive guard, roving odak, satır/hücre klavye yardımcıları
+    grid/                   # GridRoot (sanal gövde, sticky header, sabit sütun gölgesi), HeaderCell, Row (+hücreler), SkeletonRow, useDelegatedTooltip
+    interaction/            # isInteractive guard (isPlainRowClick), useRovingRows (satır odaklı roving tabindex, widget giriş/çıkış)
     filters/                # FilterBar, FilterChip, ColumnPicker, OperatorMenu
     views/                  # ViewMenu, SaveViewDialog, useViews, useEditedState
     toolbar/                # Toolbar yuvaları, DisplayPopover, MoreMenu
@@ -191,6 +191,9 @@ Arayüzlerin tamamı: [api-draft.ts](api-draft.ts).
 - **Sanal satırlar sabit yükseklikte:** yükseklik = yoğunluğun `--dt-row-h` değeri + 1 px kenarlık. Sanal öğe = satır + (açıksa) detay; detay yalnızca görünür aralıkta render edilir, yüksekliği `measureElement` ile ölçülür ve `getItemKey = rowKey` sayesinde unmount'ta önbellekte kalır. Yalnızca odaklı satır `rangeExtractor` ile DOM'da tutulur.
 - **Özel hücre:** `ColumnDef.cell` fonksiyonu vue-table'ın `flexRender`'ı ile çizilir; tipin kabuğu (hizalama, kesme, boş değer, yoğunluk) korunur. Hücre aksiyonları (`actions`) sağ kenarda overlay.
 - **Tema:** paket, `.dark` sınıfına (shadcn-vue varsayılanı) veya `data-theme="dark"` özniteliğine sahip bir ataya göre koyu token'lara geçer.
+- **Tooltip tek ve delegasyonlu:** kesilmiş hücre metni ve `data-dt-tip` taşıyan öğeler için ızgara kökünde tek dinleyici + tek DOM düğümü (400 ms). Hücre başına reka Tooltip örneği sanal listede yüzlerce bileşen demek olurdu; popover, menü ve dialog reka-ui ile.
+- **Satır yüksekliği token'dan:** `--dt-row-h` kökten `getComputedStyle` ile okunur (02 ile tek kaynak); yoğunluk değişince virtualizer `measure()` ile ölçümleri sıfırlar.
+- **Genişlikler Vue dışından:** `--cols` ve sabit sütun ofsetleri (`--dt-off-*`) senkron `watchEffect` ile kök elemana yazılır; resize sırasında satırlar yeniden çizilmez.
 
 ## Performans bütçeleri
 

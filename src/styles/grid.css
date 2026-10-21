@@ -1,0 +1,449 @@
+/* Izgara (05 §2–4, 01 · Render kararları): div ızgarası, satırlar display:grid + var(--cols), sticky header ve sütunlar,
+   --dt-row-bg modeli, sanal satırlar. Ölçüler ve renkler yalnızca token'lardan. */
+
+.dt-grid {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+  outline: none;
+}
+.dt-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* Header ve satırlar aynı track'leri paylaşır; en az genişlik toplam min'lerden, kabı aşarsa yatay kayar. */
+.dt-head,
+.dt-row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  min-width: var(--dt-min-w);
+  box-sizing: border-box;
+}
+.dt-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: var(--dt-head-h);
+  background: var(--dt-surface-2);
+  border-bottom: 1px solid var(--dt-line);
+}
+.dt-body {
+  position: relative;
+  width: 100%;
+  min-width: var(--dt-min-w);
+}
+.dt-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  --dt-row-bg: var(--dt-surface);
+  border-bottom: 1px solid var(--dt-line);
+  outline: none;
+}
+.dt-row:hover {
+  --dt-row-bg: var(--dt-row-hover);
+}
+.dt-row.is-selected {
+  --dt-row-bg: var(--dt-row-selected);
+}
+.dt-row.is-selected:hover {
+  --dt-row-bg: var(--dt-row-selected-hover);
+}
+/* Klavye odağı: 2 px accent iç çerçeve, 3 px yarıçap (05 §4); fareyle gelen odakta çizilmez (08 §2). */
+.dt-row.is-focus::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 2px var(--dt-accent);
+  z-index: 2;
+}
+
+/* Hücre: zemini satırdan alır (sabit hücreler opak kalsın diye zorunlu, 01). */
+.dt-cell,
+.dt-head-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 var(--dt-cell-x);
+  box-sizing: border-box;
+  background: var(--dt-row-bg);
+}
+.dt-head-cell.is-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+/* Hücre dikeyde ortalı (column yönü); hizalama align-items ile. */
+.dt-cell {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  line-height: 1.4;
+}
+.dt-cell.is-right {
+  align-items: flex-end;
+  text-align: right;
+}
+.dt-cell.is-center {
+  align-items: center;
+  text-align: center;
+}
+.dt-cell.is-right .dt-cell-content {
+  text-align: right;
+}
+.dt-cell-content {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dt-cell.is-numeric {
+  font-variant-numeric: tabular-nums;
+}
+.dt-cell.is-primary .dt-cell-content {
+  font-weight: 500;
+}
+
+/* Sabit sütunlar: sticky; kenar gölgesi yalnızca o yöne kaydırılmışken (05 §4). */
+.dt-cell.is-pinned-start,
+.dt-cell.is-pinned-end,
+.dt-head-cell.is-pinned-start,
+.dt-head-cell.is-pinned-end {
+  position: sticky;
+  z-index: 1;
+}
+.dt-head-cell.is-pinned-start,
+.dt-head-cell.is-pinned-end {
+  z-index: 4;
+}
+.dt-grid.is-scrolled-start .is-pinned-start.is-pin-edge {
+  box-shadow: var(--dt-shadow-pin-l);
+  clip-path: inset(0 -16px 0 0);
+}
+.dt-grid.is-scrolled-end .is-pinned-end.is-pin-edge {
+  box-shadow: var(--dt-shadow-pin-r);
+  clip-path: inset(0 0 0 -16px);
+}
+
+/* Header hücresi (05 §4 · Header, T4). */
+.dt-head-cell {
+  --dt-row-bg: var(--dt-surface-2);
+  gap: 2px;
+  font-size: var(--dt-fs-head);
+  font-weight: 500;
+  color: var(--dt-text-2);
+}
+.dt-head-cell.is-numeric {
+  flex-direction: row-reverse;
+}
+.dt-head-sep {
+  position: absolute;
+  right: 0;
+  top: 30%;
+  height: 40%;
+  width: 1px;
+  background: var(--dt-line);
+}
+.dt-head-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  height: 24px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border: 0;
+  border-radius: var(--dt-radius-item);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.dt-head-label.is-static {
+  cursor: default;
+}
+.dt-head-cell:not(.is-static):hover .dt-head-label:not(.is-static) {
+  background: var(--dt-surface-3);
+}
+.dt-head-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dt-head-unit {
+  color: var(--dt-text-3);
+  font-weight: 400;
+}
+.dt-head-cell.is-sorted .dt-head-text {
+  color: var(--dt-text);
+}
+.dt-head-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--dt-text);
+}
+.dt-head-sort .is-desc {
+  transform: rotate(180deg);
+  transition: transform 150ms ease;
+}
+.dt-head-sort-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--dt-radius-xs);
+  background: var(--dt-surface-3);
+  font-size: 11px;
+  font-weight: 600;
+}
+.dt-head-pin {
+  color: var(--dt-text-3);
+  flex: none;
+}
+.dt-head-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dt-radius-item);
+  background: transparent;
+  color: var(--dt-text-3);
+  cursor: pointer;
+}
+.dt-head-icon:hover {
+  background: var(--dt-surface-3);
+  color: var(--dt-text);
+}
+.dt-head-filtered {
+  color: var(--dt-accent-text);
+}
+.dt-head-menu {
+  opacity: 0;
+}
+.dt-head-cell:hover .dt-head-menu,
+.dt-head-cell:focus-within .dt-head-menu,
+.dt-head-menu[aria-expanded='true'] {
+  opacity: 1;
+}
+
+/* Resize tutamacı: kenarda 2 px accent, sürüklerken canlı rozet. */
+.dt-resize {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+  touch-action: none;
+  user-select: none;
+}
+.dt-resize::before {
+  content: '';
+  position: absolute;
+  inset: 0 2px 0 3px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+.dt-resize:hover::before,
+.dt-head-cell.is-resizing .dt-resize::before {
+  background: var(--dt-accent);
+}
+.dt-resize-badge {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--dt-radius-item);
+  background: var(--dt-tip-bg);
+  color: var(--dt-tip-fg);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  box-shadow: var(--dt-shadow-tip);
+}
+
+/* Hücre aksiyonları (03 · actions, T7): satır zemini üzerinde, 12 px solma, hover ve focus-within'de. */
+.dt-cell-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px 0 12px;
+  background: linear-gradient(to right, transparent, var(--dt-row-bg) 12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.dt-row:hover .dt-cell-actions,
+.dt-cell:focus-within .dt-cell-actions,
+.dt-row.is-focus .dt-cell-actions,
+.dt-cell-actions.is-always {
+  opacity: 1;
+  pointer-events: auto;
+}
+.dt-cell-actions.is-always .dt-cell-action {
+  color: var(--dt-text-3);
+}
+.dt-cell-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dt-radius-sm);
+  background: transparent;
+  color: var(--dt-text-2);
+  cursor: pointer;
+}
+.dt-cell-action:hover,
+.dt-cell-action[aria-expanded='true'] {
+  background: var(--dt-surface-3);
+  color: var(--dt-text);
+}
+.dt-cell-action[aria-disabled='true'] {
+  color: var(--dt-line-3);
+  cursor: default;
+}
+.dt-cell-action.is-destructive:hover {
+  color: var(--dt-r-fg);
+}
+
+/* Odak halkası kalıbı (02): widget'lar ve header düğmeleri. */
+.dt-grid.is-keyboard
+  :is(.dt-cell-action, .dt-head-label, .dt-head-icon, .dt-link, .dt-text-expand, button, a[href]):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--dt-row-bg, var(--dt-surface)),
+    0 0 0 4px var(--dt-focus);
+}
+
+/* Skeleton (03): parıltı 1.6 s, sk → sk-hi. */
+.dt-sk {
+  display: inline-block;
+  height: 10px;
+  border-radius: var(--dt-radius-xs);
+  background: linear-gradient(90deg, var(--dt-sk) 0%, var(--dt-sk-hi) 45%, var(--dt-sk) 90%);
+  background-size: 200% 100%;
+  animation: dt-shimmer 1.6s ease-in-out infinite;
+}
+.dt-sk-bar {
+  width: 60%;
+}
+.dt-sk-num {
+  width: 44px;
+}
+.dt-sk-pill {
+  width: 76px;
+  height: 20px;
+  border-radius: var(--dt-radius-pill);
+}
+.dt-sk-circle {
+  width: var(--dt-av);
+  height: var(--dt-av);
+  margin-right: 8px;
+  border-radius: var(--dt-radius-pill);
+}
+.dt-row-skeleton .dt-cell {
+  flex-direction: row;
+  align-items: center;
+}
+@keyframes dt-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt-sk {
+    animation: none;
+  }
+  .dt-head-sort .is-desc,
+  .dt-cell-actions,
+  .dt-resize::before {
+    transition: none;
+  }
+}
+
+/* Tek tooltip (02 · Tooltip). */
+.dt-tip {
+  position: fixed;
+  z-index: 50;
+  max-width: 320px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--dt-radius-item);
+  background: var(--dt-tip-bg);
+  color: var(--dt-tip-fg);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  box-shadow: var(--dt-shadow-tip);
+  pointer-events: none;
+}
+
+/* Menü (02 §6 handoff): reka DropdownMenu içeriği. */
+.dt-menu {
+  min-width: 220px;
+  padding: 4px;
+  border-radius: var(--dt-radius-pop);
+  background: var(--dt-surface);
+  color: var(--dt-text);
+  box-shadow: var(--dt-shadow-pop);
+  font-family: var(--dt-font);
+  font-size: 13px;
+  z-index: 40;
+}
+.dt-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--dt-radius-item);
+  outline: none;
+  cursor: default;
+  user-select: none;
+}
+.dt-menu-item[data-highlighted] {
+  background: var(--dt-surface-3);
+}
+.dt-menu-item[data-disabled] {
+  color: var(--dt-text-3);
+}
+.dt-menu-item.is-destructive {
+  color: var(--dt-r-fg);
+}

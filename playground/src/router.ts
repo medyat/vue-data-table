@@ -1,6 +1,12 @@
+import type { Component } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from './pages/Home.vue'
 import Placeholder from './pages/Placeholder.vue'
+import T1List from './pages/T1List.vue'
+import T7Actions from './pages/T7Actions.vue'
+import T8Cells from './pages/T8Cells.vue'
+
+const REAL: Record<string, Component> = { t1: T1List, t7: T7Actions, t8: T8Cells }
 
 /** DESIGN-BRIEF görev paketleri; her biri bir rota. Sayfa, ilgili fazda gerçek senaryoyla değişir. */
 export const PAGES = [
@@ -23,6 +29,10 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: Home },
-    ...PAGES.map((p) => ({ path: `/${p.id}`, component: Placeholder, props: { title: p.title, phase: p.phase } })),
+    ...PAGES.map((p) => ({
+      path: `/${p.id}`,
+      component: REAL[p.id] ?? Placeholder,
+      props: REAL[p.id] ? undefined : { title: p.title, phase: p.phase },
+    })),
   ],
 })

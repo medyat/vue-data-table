@@ -45,6 +45,7 @@ Faz 0'daki token testi `tokens.css`'i bu dokümandaki tablolarla karşılaştır
 | `--dt-live-halo` | `rgba(44,157,90,.18)` | `rgba(61,184,115,.2)` | Footer “Live” noktasının halesi |
 | `--dt-r-line` | `#F6CFCF` | `rgba(240,82,82,.28)` | Kırmızı şeridin üst kenarı (DataSheet kısmen kaydedildi) |
 | `--dt-a-line` | `#F2DDB4` | `rgba(232,163,42,.26)` | Amber şeridin üst kenarı (stale, satır sınırı) |
+| `--dt-fill-text-dark` / `--dt-fill-text-light` | `#15171C` / `#FFFFFF` | aynı | `color` hücresi `display: fill`: dolgu rengine göre koyu ya da açık yazı (temadan bağımsız) |
 
 ## Renk — koyu yüzer öğeler (bulk bar, toast, tooltip)
 
