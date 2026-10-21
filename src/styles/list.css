@@ -324,3 +324,133 @@
     animation: none;
   }
 }
+
+/* Bulk bar (05 §6, handoff 03 §7): koyu yüzer çubuk, alt kenardan 64 px, ortada, düzeni kaydırmaz; 160 ms yukarı kayar.
+   Telefon düzeni Faz 7. */
+.dt-bulk {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dt-bulk.is-floating {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  padding: 6px;
+  border-radius: var(--dt-radius-card);
+  background: var(--dt-bulk-bg);
+  color: var(--dt-bulk-fg);
+  box-shadow: var(--dt-shadow-float);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 5;
+  animation: dt-bulk-in 160ms ease-out;
+}
+@keyframes dt-bulk-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt-bulk.is-floating {
+    animation: none;
+  }
+}
+.dt-bulk-count {
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.dt-bulk-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--dt-bulk-line);
+}
+.dt-bulk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  border: 0;
+  border-radius: var(--dt-radius-inner);
+  background: transparent;
+  color: var(--dt-bulk-fg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.dt-bulk-btn > svg {
+  color: var(--dt-bulk-fg-2);
+}
+.dt-bulk-btn:hover,
+.dt-bulk-btn[data-state='open'] {
+  background: var(--dt-bulk-hover);
+}
+.dt-bulk-btn:disabled {
+  color: var(--dt-bulk-fg-2);
+  cursor: default;
+}
+.dt-bulk-btn.is-destructive {
+  color: var(--dt-bulk-danger);
+}
+.dt-bulk-btn.dt-bulk-more,
+.dt-bulk-btn.dt-bulk-icon {
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+}
+.dt-bulk-btn.dt-bulk-icon > svg {
+  color: var(--dt-bulk-fg-2);
+}
+.dt-bulk-menu {
+  min-width: 248px;
+}
+/* Toolbar varyantı (T5-04): seçim varken toolbar'ın yerine; yükseklik aynı, altındakiler kımıldamaz. */
+.dt-bulk.is-toolbar {
+  flex: none;
+  gap: 8px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dt-line);
+  background: var(--dt-row-selected);
+}
+.dt-bulk.is-toolbar .dt-bulk-count {
+  padding: 0 4px;
+  font-weight: 600;
+}
+.dt-bulk.is-toolbar .dt-bulk-sep {
+  margin: 0 4px;
+  background: var(--dt-line-2);
+}
+
+/* Toast (handoff 02 §6): 40 px, kartın altında ortada; bulk bar görünürken onun üstünde. Yalnızca "Copied" (Faz 4). */
+.dt-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px 0 12px;
+  border-radius: var(--dt-radius-card);
+  background: var(--dt-bulk-bg);
+  color: var(--dt-bulk-fg);
+  box-shadow: var(--dt-shadow-float);
+  font-size: 13px;
+  font-weight: 600;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 6;
+}
+.dt-toast.is-raised {
+  bottom: 116px;
+}
+.dt-toast > svg {
+  color: var(--dt-g-dot);
+}

@@ -67,17 +67,17 @@ test.describe('T1 · sunucu modu', () => {
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Move left' }).click()
     const ids = await page
-      .locator('[role="columnheader"]')
+      .locator('[role="columnheader"][data-col]')
       .evaluateAll((els) => els.map((e) => e.getAttribute('data-col')))
     expect(ids.indexOf('status')).toBeLessThan(ids.indexOf('customer'))
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Hide column' }).click()
-    await expect(page.locator('[role="columnheader"]')).toHaveCount(7)
+    await expect(page.locator('[role="columnheader"][data-col]')).toHaveCount(7)
     await page.getByRole('button', { name: 'Display' }).click()
     await page.getByRole('button', { name: /^Columns/ }).click()
     await expect(page.locator('.dt-display')).toContainText('7 of 10 shown')
     await page.locator('.dt-col-row.is-hidden', { hasText: 'Status' }).locator('button').click()
-    await expect(page.locator('[role="columnheader"]')).toHaveCount(8)
+    await expect(page.locator('[role="columnheader"][data-col]')).toHaveCount(8)
   })
 
   test('Display: yoğunluk ve dikey çizgiler tercihte kalır (localStorage)', async ({ page }) => {

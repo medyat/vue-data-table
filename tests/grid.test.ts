@@ -66,13 +66,13 @@ describe('roller ve yapı', () => {
     const w = await mountTable()
     const grid = w.get('[role="grid"]')
     expect(grid.attributes('aria-label')).toBe('orders')
-    expect(grid.attributes('aria-colcount')).toBe('6')
+    expect(grid.attributes('aria-colcount')).toBe('7') // 6 sütun + ⋯ sütunu (birincil sütun var)
     expect(grid.attributes('aria-rowcount')).toBe('40') // istemci modunda toplam bilinir
-    expect(w.findAll('[role="columnheader"]')).toHaveLength(6)
+    expect(w.findAll('[role="columnheader"][data-col]')).toHaveLength(6)
     const firstRow = w.get('.dt-row[data-index="0"]')
     expect(firstRow.attributes('role')).toBe('row')
     expect(firstRow.attributes('aria-rowindex')).toBe('2')
-    expect(firstRow.findAll('[role="gridcell"]')).toHaveLength(6)
+    expect(firstRow.findAll('[role="gridcell"][data-col]')).toHaveLength(6)
     // Sanal liste: 40 satırın hepsi değil, görünür + overscan.
     const rendered = w.findAll('.dt-row:not(.dt-row-skeleton)').length
     expect(rendered).toBeGreaterThan(10)
@@ -132,7 +132,7 @@ describe('guard ve klavye', () => {
     await cell.trigger('mousedown', { clientX: 10, clientY: 10 })
     await cell.trigger('click', { clientX: 10, clientY: 10 })
     expect(w.emitted('row-click')).toHaveLength(1)
-    expect(w.emitted('row-click')![0]![0]).toBe(rows[0])
+    expect((w.emitted('row-click')![0]![0] as { row: Order }).row).toBe(rows[0])
     w.unmount()
   })
   it("ilk satır tek Tab durağı; ↓ sonraki satıra, → ilk widget'a, Esc satıra; widget içinde ızgara tuşları kapalı", async () => {
@@ -154,7 +154,8 @@ describe('guard ve klavye', () => {
     await row1.get('a.dt-link').trigger('keydown', { key: 'Escape' })
     expect(document.activeElement).toBe(row1.element)
     await row1.trigger('keydown', { key: 'Enter' })
-    expect(w.emitted('row-open')![0]![0]).toBe(rows[1])
+    expect((w.emitted('row-open')![0]![0] as { row: Order; href: string }).row).toBe(rows[1])
+    expect((w.emitted('row-open')![0]![0] as { href: string }).href).toBe('/orders/2')
     w.unmount()
   })
 })

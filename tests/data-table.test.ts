@@ -199,7 +199,7 @@ describe('sunucu modu: talep akışı ve durumlar', () => {
     )!
     hide.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await flush()
-    expect(w.findAll('[role="columnheader"]')).toHaveLength(5)
+    expect(w.findAll('[role="columnheader"][data-col]')).toHaveLength(5)
     await vi.advanceTimersByTimeAsync(500)
     expect(requests(w)).toHaveLength(n)
     w.unmount()
@@ -347,7 +347,7 @@ describe('toolbar, tercihler, kısayollar', () => {
     expect(w.get('.dt-grid').attributes('style')).not.toBe(before)
     await label('product.name').trigger('keydown', { key: 'ArrowRight', altKey: true, shiftKey: true })
     await flush()
-    const ids = w.findAll('[role="columnheader"]').map((h) => h.attributes('data-col'))
+    const ids = w.findAll('[role="columnheader"][data-col]').map((h) => h.attributes('data-col'))
     expect(ids).toEqual(['number', 'status', 'product.name', 'value', 'dueAt', 'urgent'])
     expect(document.activeElement).toBe(label('product.name').element)
     await label('product.name').trigger('keydown', { key: 'ArrowDown' })
@@ -760,7 +760,7 @@ describe('görünümler (04 §7)', () => {
       },
     ]
     const w = await mountViews({ props: { views } })
-    const ids = () => w.findAll('[role="columnheader"]').map((h) => h.attributes('data-col'))
+    const ids = () => w.findAll('[role="columnheader"][data-col]').map((h) => h.attributes('data-col'))
     expect(ids()).toEqual(['number', 'status', 'product.name']) // primary hep görünür; zzz yok
     await w
       .findAll('.dt-toolbar button')

@@ -38,14 +38,27 @@
   width: 100%;
   min-width: var(--dt-min-w);
 }
-.dt-row {
+/* Sanal öğe = satır + açık detay; mutlak konum öğede, satır akışta (yükseklik token'dan, 02). */
+.dt-item {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
+  min-width: var(--dt-min-w);
+}
+.dt-row {
+  position: relative;
+  width: 100%;
+  height: calc(var(--dt-row-h) + 1px); /* + alt kenarlık; estimateSize ile aynı (02) */
   --dt-row-bg: var(--dt-surface);
   border-bottom: 1px solid var(--dt-line);
   outline: none;
+}
+.dt-row.is-selected {
+  --dt-row-bg: var(--dt-row-selected);
+}
+.dt-row.is-selected:hover {
+  --dt-row-bg: var(--dt-row-selected-hover);
 }
 .dt-row:hover {
   --dt-row-bg: var(--dt-row-hover);
@@ -497,4 +510,119 @@
   .dt-scroll-pill {
     transition: none;
   }
+}
+
+/* `auto` dolgu track'i: orta ile sağ sabit sütunlar arasındaki boşluk; satır zeminini taşır. */
+.dt-cell-fill {
+  padding: 0;
+  min-width: 0;
+}
+
+/* Seçim sütunu (05 §6, T5-01): 40 px, sol sabit; hücrenin tamamı tıklanır. */
+.dt-cell-select,
+.dt-head-select {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+/* ⋯ sütunu (05 §4, D28): 56 px, sağ sabit; her zaman görünür, --dt-text-3, hover --dt-text-2, açıkken --dt-line-2 zemin. */
+.dt-cell-menu,
+.dt-head-menu-col {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.dt-row-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dt-radius-item);
+  background: transparent;
+  color: var(--dt-text-3);
+  cursor: pointer;
+}
+.dt-row:hover .dt-row-more,
+.dt-row-more:focus-visible {
+  color: var(--dt-text-2);
+}
+.dt-row-more[data-state='open'] {
+  background: var(--dt-line-2);
+  color: var(--dt-text);
+}
+.dt-row-menu {
+  width: 268px;
+}
+.dt-menu-item.is-two-line {
+  min-height: 44px;
+}
+.dt-menu-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.dt-menu-sub {
+  color: var(--dt-text-3);
+  font-size: 12px;
+}
+
+/* Expand (05 §7, T6-01): chevron 20 px birincil hücrede ID'nin solunda, açıkken 90°; yoksa boşluk (hizalama). */
+.dt-cell.has-expand {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+.dt-cell-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.dt-expand,
+.dt-expand-space {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.dt-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dt-radius-xs);
+  background: transparent;
+  color: var(--dt-text-3);
+  cursor: pointer;
+}
+.dt-expand:hover {
+  background: var(--dt-surface-3);
+  color: var(--dt-text);
+}
+.dt-expand svg {
+  transition: transform 150ms ease;
+}
+.dt-expand.is-open svg {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt-expand svg {
+    transition: none;
+  }
+}
+/* Alt satır (handoff 03 §8): tam genişlik, surface-2, sol kenar seçim sütununun sağından; içerik uygulamanın. */
+.dt-subrow {
+  position: relative;
+  width: 100%;
+  padding: 12px 12px 12px calc(var(--dt-sel-w, 0px) + var(--dt-cell-x) + 24px);
+  box-sizing: border-box;
+  background: var(--dt-surface-2);
+  border-bottom: 1px solid var(--dt-line);
 }

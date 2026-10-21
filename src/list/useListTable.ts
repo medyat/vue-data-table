@@ -1,12 +1,16 @@
 // Liste satır modeli (01 · TanStack sınırı, D23): istemci modunda arama + sıralama + sayfalama TanStack row model'leriyle;
-// sunucu modunda `manual*` ile satırlar olduğu gibi (işlemi sunucu yapar). Sıralama kuralları 04 §6.
+// sunucu modunda `manual*` ile satırlar olduğu gibi (işlemi sunucu yapar). Sıralama kuralları 04 §6. Seçim ve expand
+// durumu TanStack'te (D23); seçim sayfa kapsamlı (D19).
 import {
   columnFilteringFeature,
   createFilteredRowModel,
   createPaginatedRowModel,
   createSortedRowModel,
+  functionalUpdate,
   globalFilteringFeature,
+  rowExpandingFeature,
   rowPaginationFeature,
+  rowSelectionFeature,
   rowSortingFeature,
   tableFeatures,
   useTable,
@@ -31,6 +35,8 @@ const features = tableFeatures({
   filteredRowModel: createFilteredRowModel(),
   rowPaginationFeature,
   paginatedRowModel: createPaginatedRowModel(),
+  rowSelectionFeature,
+  rowExpandingFeature,
 })
 type Features = typeof features
 
@@ -48,6 +54,12 @@ export interface ListTableOptions<Row extends object> {
   search: Ref<string>
   /** Sunucu modu: sonraki sayfa var mı. */
   hasMore: MaybeRefOrGetter<boolean | undefined>
+  selectable?: MaybeRefOrGetter<boolean>
+  /** Satır anahtarı → seçili (05 §6; TanStack `RowSelectionState`). */
+  rowSelection?: Ref<Record<string, true>>
+  /** Satır anahtarı → açık (05 §7). */
+  expanded?: Ref<Record<string, boolean>>
+  canExpand?: MaybeRefOrGetter<((row: Row) => boolean) | undefined>
 }
 
 const isEmpty = (v: unknown) => v === null || v === undefined || v === ''
@@ -105,6 +117,8 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
     pagination: { pageIndex: o.page.value.number - 1, pageSize: o.page.value.size },
     globalFilter: normalizedSearch.value,
     columnFilters: (o.filters?.value ?? []).map((f) => ({ id: f.column, value: f })),
+    rowSelection: o.rowSelection?.value ?? {},
+    expanded: o.expanded?.value ?? {},
   }))
   const searchableIds = computed(() => new Set(defs.value.filter(isSearchable).map((d) => d.id as string)))
 
@@ -121,6 +135,9 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
     autoResetPageIndex: false,
     enableSortingRemoval: true,
     maxMultiSortColCount: MAX_SORT,
+    enableRowSelection: computed(() => toValue(o.selectable) ?? false),
+    enableExpanding: computed(() => !!o.expanded),
+    getRowCanExpand: (row) => toValue(o.canExpand)?.(row.original) ?? true,
     getColumnCanGlobalFilter: (column) => searchableIds.value.has(column.id),
     globalFilterFn: (row, columnId, filterValue: string) => {
       const v = row.getValue(columnId)
@@ -132,6 +149,14 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
     onPaginationChange: () => {},
     onGlobalFilterChange: () => {},
     onColumnFiltersChange: () => {},
+    onRowSelectionChange: (u) => {
+      if (o.rowSelection) o.rowSelection.value = functionalUpdate(u, o.rowSelection.value)
+    },
+    onExpandedChange: (u) => {
+      if (!o.expanded) return
+      const next = functionalUpdate(u, o.expanded.value)
+      if (next !== true) o.expanded.value = next
+    },
   })
 
   /** Sayfadaki satırlar (istemci: süzülmüş + sıralı + dilimlenmiş; sunucu: verilen). */
@@ -170,5 +195,23 @@ export function useListTable<Row extends object>(o: ListTableOptions<Row>) {
     o.sort.value = dir ? [{ column, dir }] : o.sort.value.filter((s) => s.column !== column)
   }
 
-  return { rows, total, canNext, canPrev, toggleSort, setSort }
+  const rowId = (row: Row) => String(readPath(row, toValue(o.rowKey)))
+  /** Sayfadaki seçili satırlar (D19): yalnızca yüklü satırlar arasından. */
+  const selectedRows = computed<Row[]>(() => {
+    const sel = o.rowSelection?.value ?? {}
+    return rows.value.filter((r) => sel[rowId(r)])
+  })
+
+  return {
+    rows,
+    total,
+    canNext,
+    canPrev,
+    toggleSort,
+    setSort,
+    rowId,
+    selectedRows,
+    /** Header checkbox (05 §6): bu sayfadaki yüklü satırlar. */
+    toggleAllPage: (value: boolean) => table.toggleAllPageRowsSelected(value),
+  }
 }

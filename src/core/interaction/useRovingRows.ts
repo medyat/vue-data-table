@@ -3,8 +3,9 @@
 import { ref, type Ref } from 'vue'
 import { isTextInput } from './isInteractive'
 
+// Seçim kutusu (`X`) ve expand chevron'u (`→`/`←`) kendi tuşlarıyla kullanılır; ilk widget birincil link kalır (08 §2).
 const WIDGET_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="-1"][role]'
+  'a[href], button:not([disabled]):not(.dt-expand), input:not([disabled]):not(.dt-select-box), select:not([disabled]), textarea:not([disabled]), [tabindex="-1"][role]'
 
 export interface RovingOptions {
   count: () => number

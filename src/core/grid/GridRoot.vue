@@ -1,14 +1,16 @@
 <script setup lang="ts">
-// Izgara kökü (05 §2–4, §8, §10; 08 §1–3; brief §5.5): tek kayan alan, sticky header, sabit sütunlar + koşullu kenar gölgesi,
-// sanal satırlar (@tanstack/vue-virtual), satır odaklı klavye, header klavyesi ve sütun menüsü, tek tooltip, kaydırma hapı.
-// Veri çekmez, sütun düzenini dışarıdan (useColumnLayout) alır; satırları olduğu gibi çizer.
+// Izgara kökü (05 §2–4, §6–8, §10; 08 §1–3; brief §5.5): tek kayan alan, sticky header, sabit sütunlar + koşullu kenar gölgesi,
+// sanal satırlar (@tanstack/vue-virtual; öğe = satır + açık detay, ölçülen yükseklik), satır odaklı klavye, header klavyesi ve
+// sütun menüsü, seçim sütunu (40 px) ve ⋯ sütunu (56 px), satır menüsü, kaydırma hapı. Veri çekmez, sütun düzenini dışarıdan
+// (useColumnLayout) alır; seçim/expand durumunu üstten alır ve niyet olarak yayar.
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, watch, watchEffect } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, useId, watch, watchEffect } from 'vue'
 
 // İç bileşen: satır tipi dış bileşende (DataTable) tiplidir; accessor/cell parametreleri karşıt değişken olduğundan burada any.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = any
 import type { Density } from '../../types/core'
+import type { RowAction } from '../../types/list'
 import { RemoteLabels } from '../cells/remoteLabels'
 import type { RenderEnv } from '../cells/renderCell'
 import { TYPE_SPECS } from '../cells/specs'
@@ -47,15 +49,38 @@ const props = withDefaults(
     sortable?: boolean
     /** `ajax`/`user` etiket önbelleği; DataTable filtre çipleriyle paylaşır. */
     labels?: RemoteLabels
+    /** Seçim sütunu (05 §6); durum `selection` (anahtar → seçili). */
+    selectable?: boolean
+    selection?: Record<string, boolean>
+    /** Birincil hücrede chevron + alt satır (05 §7); durum `expanded` (anahtar → açık). */
+    expandable?: boolean
+    expanded?: Record<string, boolean>
+    canExpand?: (row: AnyRow) => boolean
+    /** ⋯ sütunu ve satır menüsü: Open / Copy yerleşik, `rowActions` uygulamanın. */
+    rowMenu?: boolean
+    rowActions?: RowAction[]
+    primaryHref?: (row: AnyRow) => string | undefined
+    primaryLabel?: (row: AnyRow) => string
+    primaryHeader?: string
   }>(),
   { density: 'standard', loading: false, rowCount: -1, rowIndexOffset: 0, sortable: false },
 )
 const emit = defineEmits<{
   'row-click': [row: AnyRow, event: MouseEvent]
-  'row-enter': [row: AnyRow]
+  /** Birincil linke düz sol tık, satırda ↵, menüde Open (05 §7). Native navigasyon dinleyicide durdurulabilir. */
+  'row-open': [row: AnyRow, event: MouseEvent]
+  'select-rows': [ids: string[], value: boolean]
+  'select-page': [value: boolean]
+  'toggle-expand': [id: string, value: boolean]
+  'copy-id': [row: AnyRow]
   sort: [columnId: string, additive: boolean]
   'sort-set': [columnId: string, dir: 'asc' | 'desc' | null]
   'header-filter': [columnId: string]
+}>()
+defineSlots<{
+  notice?: () => unknown
+  state?: () => unknown
+  expanded?: (props: { row: AnyRow; close: () => void }) => unknown
 }>()
 
 const ctx = useDataTableContext()
@@ -67,14 +92,26 @@ const layout = props.layout
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 const density = computed<Density>(() => (coarse && props.density === 'compact' ? 'standard' : props.density))
 
+// Seçim (40) ve ⋯ (56) sütunları düzenin dışında: track'ler başa/sona eklenir, sabit sütun ofsetleri o kadar kayar.
+const SELECT_W = 40
+const MENU_W = 56
+const selW = computed(() => (props.selectable ? SELECT_W : 0))
+const menuW = computed(() => (props.rowMenu ? MENU_W : 0))
 // Genişlikler ve sabit ofsetleri Vue render'ı dışında, senkron (05 · Resize: kare başına < 1 ms).
 watchEffect(
   () => {
     const el = root.value
     if (!el) return
-    el.style.setProperty('--cols', layout.colsVar.value)
-    el.style.setProperty('--dt-min-w', `${layout.minWidth.value}px`)
-    for (const [name, value] of Object.entries(layout.offsetVars.value)) el.style.setProperty(name, value)
+    const cols = [selW.value ? `${selW.value}px` : '', layout.colsVar.value, menuW.value ? `${menuW.value}px` : '']
+    el.style.setProperty('--cols', cols.filter(Boolean).join(' '))
+    el.style.setProperty('--dt-min-w', `${layout.minWidth.value + selW.value + menuW.value}px`)
+    el.style.setProperty('--dt-sel-w', `${selW.value}px`)
+    const startVars = new Set(layout.start.value.map((c) => c.offsetVar))
+    const endVars = new Set(layout.end.value.map((c) => c.offsetVar))
+    for (const [name, value] of Object.entries(layout.offsetVars.value)) {
+      const extra = startVars.has(name) ? selW.value : endVars.has(name) ? menuW.value : 0
+      el.style.setProperty(name, extra ? `${parseFloat(value) + extra}px` : value)
+    }
   },
   { flush: 'sync' },
 )
@@ -107,18 +144,91 @@ const focusHeader = (i: number) => {
   els[Math.max(0, Math.min(els.length - 1, i))]?.focus()
 }
 
+const rowIdAt = (i: number) => layout.rowId(props.rows[i]!)
+const isSelected = (i: number) => !!props.selection?.[rowIdAt(i)]
+const isExpanded = (row: AnyRow) => !!props.expanded?.[layout.rowId(row)]
+const canExpandRow = (row: AnyRow) => !!props.expandable && (props.canExpand?.(row) ?? true)
+const labelOf = (row: AnyRow) => props.primaryLabel?.(row) ?? layout.rowId(row)
+const uid = useId()
+const subrowId = (row: AnyRow) => `${uid}-sub-${layout.rowId(row)}`
+const rowEl = (i: number) => root.value?.querySelector<HTMLElement>(`.dt-row[data-index="${i}"]`) ?? null
+
 const roving = useRovingRows({
   count: () => props.rows.length,
-  rowEl: (i) => root.value?.querySelector<HTMLElement>(`.dt-row[data-index="${i}"]`) ?? null,
+  rowEl,
   scrollToIndex: (i) => virtualizer.value.scrollToIndex(i, { align: 'auto' }),
   pageSize: () => Math.max(1, Math.floor((scrollEl.value?.clientHeight ?? 0) / (rowHeight.value + 1)) - 1),
-  // Uygulamaya satırın ham nesnesi verilir (proxy değil): kimlik karşılaştırmaları çalışsın.
-  onEnter: (i) => {
+  // ↵: birincil linke gerçek tık (tarayıcı gider, `row-open` dinleyicisi durdurabilir); link yoksa açılacak şey yok.
+  onEnter: (i) => rowEl(i)?.querySelector<HTMLElement>('.dt-cell.is-primary a.dt-link')?.click(),
+  // → kapalı detayı açar, açıksa/yoksa widget'lara girer; ← açık detayı kapatır (08 §2).
+  onRight: (i) => {
     const row = props.rows[i]
-    if (row) emit('row-enter', toRaw(row))
+    if (!row || !canExpandRow(row) || isExpanded(row)) return false
+    emit('toggle-expand', layout.rowId(row), true)
+    return true
+  },
+  onLeft: (i) => {
+    const row = props.rows[i]
+    if (!row || !isExpanded(row)) return false
+    emit('toggle-expand', layout.rowId(row), false)
+    return true
   },
   onTop: () => focusHeader(0),
 })
+
+// Seçim klavyesi (05 §6, 08 §3): X seçer/bırakır, ⇧↑/↓ aralığı genişletir, ⌘A sayfadakiler; ⇧F10 / Menü tuşu satır menüsü.
+let anchor = -1
+const idsBetween = (a: number, b: number) => {
+  const [from, to] = a < b ? [a, b] : [b, a]
+  return props.rows.slice(from, to + 1).map((r) => layout.rowId(r))
+}
+const menuIndex = ref(-1)
+const onKeydown = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement
+  const row = target.closest<HTMLElement>('[role="row"][data-index]')
+  if (row && target === row) {
+    const i = Number(row.dataset.index)
+    const mod = e.metaKey || e.ctrlKey
+    if (props.selectable) {
+      if ((e.key === 'x' || e.key === 'X') && !mod && !e.altKey) {
+        e.preventDefault()
+        anchor = i
+        emit('select-rows', [rowIdAt(i)], !isSelected(i))
+        return
+      }
+      if ((e.key === 'a' || e.key === 'A') && mod && !e.shiftKey) {
+        e.preventDefault()
+        emit('select-page', true)
+        return
+      }
+      if (e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault()
+        if (anchor < 0) anchor = i
+        const to = Math.max(0, Math.min(props.rows.length - 1, e.key === 'ArrowDown' ? i + 1 : i - 1))
+        emit('select-rows', idsBetween(anchor, to), true)
+        roving.focusRow(to)
+        return
+      }
+      if (e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End') anchor = -1
+    }
+    if (props.rowMenu && ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu')) {
+      e.preventDefault()
+      menuIndex.value = i
+      return
+    }
+  }
+  roving.onKeydown(e)
+}
+/** Checkbox: ⇧ ile son tıklanan satırla arasındaki aralık aynı değere (05 §6). */
+const onSelect = (i: number, value: boolean, shift: boolean) => {
+  emit('select-rows', shift && anchor >= 0 ? idsBetween(anchor, i) : [rowIdAt(i)], value)
+  anchor = i
+}
+const selectedCount = computed(() =>
+  props.selectable ? props.rows.reduce((n, r) => n + (props.selection?.[layout.rowId(r)] ? 1 : 0), 0) : 0,
+)
+const allSelected = computed(() => props.rows.length > 0 && selectedCount.value === props.rows.length)
+const someSelected = computed(() => selectedCount.value > 0 && !allSelected.value)
 
 const skeleton = computed(() => !!props.skeleton)
 const count = computed(() => (skeleton.value ? 12 : props.rows.length))
@@ -145,6 +255,20 @@ const virtualizer = useVirtualizer(
 )
 const virtualRows = computed(() => virtualizer.value.getVirtualItems())
 const totalSize = computed(() => virtualizer.value.getTotalSize())
+// Açık detay: öğe (satır + alt satır) ölçülür, anahtarla önbellekte kalır; kapanınca satır yüksekliğine döner (05 §7).
+const measureItem = (el: Element | null, index: number) => {
+  if (el && !skeleton.value && isExpanded(props.rows[index])) virtualizer.value.measureElement(el)
+}
+watch(
+  () => new Set(Object.keys(props.expanded ?? {}).filter((k) => props.expanded![k])),
+  (now, before) => {
+    for (const key of before ?? []) {
+      if (now.has(key)) continue
+      const i = props.rows.findIndex((r) => layout.rowId(r) === key)
+      if (i >= 0) virtualizer.value.resizeItem(i, rowHeight.value + 1)
+    }
+  },
+)
 
 // Sabit sütun kenar gölgesi yalnızca o yöne kaydırılmışken (05 §4 · Pinned). Dikey kaydırmada konum hapı (05 §8).
 const scrolledStart = shallowRef(false)
@@ -181,10 +305,18 @@ const onMousedown = (e: MouseEvent) => {
   roving.onMousedown(e)
 }
 const onClick = (e: MouseEvent) => {
-  const rowEl = (e.target as HTMLElement).closest<HTMLElement>('.dt-row[data-index]')
-  if (!rowEl || !isPlainRowClick(e, rowEl, downPoint)) return
+  const target = e.target as HTMLElement
+  const rowEl = target.closest<HTMLElement>('.dt-row[data-index]')
+  if (!rowEl) return
   const row = props.rows[Number(rowEl.dataset.index)]
-  if (row) emit('row-click', toRaw(row), e)
+  if (!row) return
+  // Birincil linke düz sol tık → row-open; değiştirici tuş / orta tık tarayıcıya (D6).
+  const link = target.closest('a.dt-link')
+  if (link && link.closest('.dt-cell.is-primary') && rowEl.contains(link)) {
+    if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) emit('row-open', toRaw(row), e)
+    return
+  }
+  if (isPlainRowClick(e, rowEl, downPoint)) emit('row-click', toRaw(row), e)
 }
 
 const sortOf = (id: string) => props.sort?.get(id)
@@ -257,9 +389,22 @@ const onHeaderNav = (col: LayoutColumn<AnyRow>, to: 'left' | 'right' | 'down') =
   focusHeader(to === 'left' ? i - 1 : i + 1)
 }
 
+// Sayfa/sorgu değişiminde odak: aynı anahtar → aynı indeks → ilk satır (08 §2); ızgaradaysa odak geri verilir.
+// Dizi kimliği değil anahtar dizisi izlenir: seçim değişince satır modeli yeniden hesaplanır ama satırlar aynıdır.
+let lastKeys = props.rows.map((r) => layout.rowId(r))
 watch(
-  () => props.rows.length,
-  () => roving.clamp(),
+  () => props.rows.map((r) => layout.rowId(r)).join('\u0000'),
+  () => {
+    const keys = props.rows.map((r) => layout.rowId(r))
+    const hadFocus = !!root.value && root.value.contains(document.activeElement)
+    const prevKey = lastKeys[roving.focusedIndex.value]
+    const same = prevKey === undefined ? -1 : keys.indexOf(prevKey)
+    if (same >= 0) roving.focusedIndex.value = same
+    else roving.clamp()
+    lastKeys = keys
+    anchor = -1
+    if (hadFocus && keys.length) void nextTick(() => roving.focusRow(roving.focusedIndex.value))
+  },
 )
 // estimateSize değişimi ölçüm önbelleğini yenilemez (virtual-core memo'su count/getItemKey'e bağlı): yoğunluk değişince sıfırla.
 watch(rowHeight, () => virtualizer.value.measure())
@@ -270,6 +415,9 @@ defineExpose({
   scrollToTop: () => {
     if (scrollEl.value) scrollEl.value.scrollTop = 0
   },
+  /** Ölçüm önbelleğini sıfırlar (sorgu/sayfa sonrası açıklar kapanınca, 05 §7). */
+  measure: () => virtualizer.value.measure(),
+  rowEl,
 })
 </script>
 
@@ -288,10 +436,10 @@ defineExpose({
     role="grid"
     :aria-label="label"
     :aria-rowcount="rowCount"
-    :aria-colcount="layout.columns.value.length"
+    :aria-colcount="layout.columns.value.length + (selectable ? 1 : 0) + (rowMenu ? 1 : 0)"
     :aria-busy="loading || dim ? 'true' : undefined"
     :data-density="density"
-    @keydown="roving.onKeydown"
+    @keydown="onKeydown"
     @mousedown="onMousedown"
     @pointerdown="roving.onPointerdown"
     @focusin="roving.onFocusin"
@@ -299,8 +447,24 @@ defineExpose({
   >
     <div ref="scrollEl" class="dt-scroll" @scroll.passive="onScroll">
       <div class="dt-head" role="row" aria-rowindex="1">
+        <div
+          v-if="selectable"
+          class="dt-head-cell dt-head-select is-pinned-start"
+          :class="{ 'is-pin-edge': !layout.start.value.length }"
+          style="left: 0px"
+          role="columnheader"
+        >
+          <input
+            type="checkbox"
+            class="dt-checkbox"
+            :checked="allSelected"
+            :indeterminate="someSelected"
+            :aria-label="ctx.i18n.t('row.selectPageAria')"
+            @click="emit('select-page', !allSelected)"
+          />
+        </div>
         <HeaderCell
-          v-for="col in layout.columns.value"
+          v-for="col in [...layout.start.value, ...layout.center.value]"
           :key="col.id"
           :column="col"
           :sort="sortOf(col.id)?.dir ?? null"
@@ -315,28 +479,88 @@ defineExpose({
           @resize-by="(c, d) => layout.setWidth(c.id, layout.widthOf(c.id) + d)"
           @resize-start="(c, w) => layout.setWidth(c.id, w)"
         />
+        <div class="dt-head-cell dt-cell-fill" role="presentation" aria-hidden="true" />
+        <HeaderCell
+          v-for="col in layout.end.value"
+          :key="col.id"
+          :column="col"
+          :sort="sortOf(col.id)?.dir ?? null"
+          :sort-index="sortOf(col.id)?.index ?? null"
+          :filtered="filteredColumns?.has(col.id) ?? false"
+          :resizing="layout.resizing.value?.id === col.id ? layout.resizing.value.size : null"
+          :sortable="columnSortable(col)"
+          @sort="(c, additive) => emit('sort', c.id, additive)"
+          @filter="(c) => emit('header-filter', c.id)"
+          @action="onHeaderAction"
+          @nav="onHeaderNav"
+          @resize-by="(c, d) => layout.setWidth(c.id, layout.widthOf(c.id) + d)"
+          @resize-start="(c, w) => layout.setWidth(c.id, w)"
+        />
+        <div
+          v-if="rowMenu"
+          class="dt-head-cell dt-head-menu-col is-pinned-end"
+          :class="{ 'is-pin-edge': !layout.end.value.length }"
+          style="right: 0px"
+          role="columnheader"
+        />
       </div>
       <div class="dt-body" role="presentation" :inert="dim || undefined" :style="{ height: `${totalSize}px` }">
-        <template v-for="item in virtualRows" :key="String(item.key)">
-          <SkeletonRow
-            v-if="skeleton"
-            :index="item.index"
-            :columns="layout.columns.value"
-            :style="{ transform: `translateY(${item.start}px)`, height: `${item.size}px` }"
-          />
-          <Row
-            v-else
-            :row="rows[item.index]!"
-            :index="item.index"
-            :row-index="2 + rowIndexOffset + item.index"
-            :columns="layout.columns.value"
-            :env="env"
-            :focused="roving.focusedIndex.value === item.index"
-            :keyboard-focus="roving.keyboard.value"
-            :secondary-visible="density === 'comfortable'"
-            :style="{ transform: `translateY(${item.start}px)`, height: `${item.size}px` }"
-          />
-        </template>
+        <div
+          v-for="item in virtualRows"
+          :key="String(item.key)"
+          :ref="(el) => measureItem(el as Element | null, item.index)"
+          class="dt-item"
+          :data-index="item.index"
+          :style="{ transform: `translateY(${item.start}px)` }"
+        >
+          <SkeletonRow v-if="skeleton" :index="item.index" :columns="layout.columns.value" />
+          <template v-else>
+            <Row
+              :row="rows[item.index]!"
+              :index="item.index"
+              :row-index="2 + rowIndexOffset + item.index"
+              :columns="layout.columns.value"
+              :env="env"
+              :focused="roving.focusedIndex.value === item.index"
+              :keyboard-focus="roving.keyboard.value"
+              :secondary-visible="density === 'comfortable'"
+              :label="labelOf(rows[item.index])"
+              :selectable="selectable"
+              :selected="isSelected(item.index)"
+              :select-edge="!layout.start.value.length"
+              :expandable="expandable"
+              :can-expand="canExpandRow(rows[item.index])"
+              :expanded="isExpanded(rows[item.index])"
+              :subrow-id="subrowId(rows[item.index])"
+              :menu="rowMenu"
+              :menu-open="menuIndex === item.index"
+              :menu-edge="!layout.end.value.length"
+              :row-actions="rowActions"
+              :href="primaryHref?.(rows[item.index])"
+              :primary-header="primaryHeader"
+              @select="(v, shift) => onSelect(item.index, v, shift)"
+              @expand="emit('toggle-expand', rowIdAt(item.index), !isExpanded(rows[item.index]))"
+              @menu-open="(o) => (menuIndex = o ? item.index : -1)"
+              @open="(e) => emit('row-open', toRaw(rows[item.index]), e)"
+              @copy="emit('copy-id', toRaw(rows[item.index]))"
+            />
+            <div
+              v-if="isExpanded(rows[item.index])"
+              :id="subrowId(rows[item.index])"
+              class="dt-subrow"
+              role="row"
+              :aria-rowindex="2 + rowIndexOffset + item.index"
+            >
+              <div role="gridcell" :aria-colspan="layout.columns.value.length">
+                <slot
+                  name="expanded"
+                  :row="toRaw(rows[item.index])"
+                  :close="() => emit('toggle-expand', rowIdAt(item.index), false)"
+                />
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
     <div v-if="refreshing" class="dt-refresh-bar" aria-hidden="true" />

@@ -59,6 +59,10 @@ test.describe('T1 · liste ızgarası', () => {
     await page.keyboard.press('ArrowDown')
     const second = page.locator('.dt-row[data-index="1"]')
     await expect(second).toBeFocused()
+    // T1'de expand açık: kapalı satırda ilk → detayı açar, ikincisi ilk widget'a (birincil link) geçer (08 §2).
+    await page.keyboard.press('ArrowRight')
+    await expect(second).toHaveAttribute('aria-expanded', 'true')
+    await expect(second).toBeFocused()
     await page.keyboard.press('ArrowRight')
     await expect(second.locator('a.dt-link').first()).toBeFocused()
     await page.keyboard.press('ArrowRight')
@@ -190,6 +194,9 @@ test('T8: 24 tip light ve dark görsel referansı', async ({ page }) => {
     await settings(page, 'standard', theme)
     await page.goto('/t8')
     await expect(page.locator('.dt-row').first()).toBeVisible()
+    // Sayfa kendi içinde kayar (pg-scroll): tüm tabloların görünmesi için viewport içerik yüksekliğine açılır.
+    const h = await page.locator('.pg-page').evaluate((el) => el.scrollHeight)
+    await page.setViewportSize({ width: 1280, height: h + 80 })
     await expect(page).toHaveScreenshot(`t8-${theme}.png`, { fullPage: true, maxDiffPixelRatio: 0.01 })
   }
 })

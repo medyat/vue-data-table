@@ -2,11 +2,12 @@
 // DataTable (05) — Faz 2–3b: toolbar, ızgara, footer, durumlar, veri akışı (`@request`), sıralama, sayfalama, sütun yönetimi,
 // tercihler, filtreler, görünümler. Paket veri çekmez (D18): sorguyu yayar, `rows`/`hasMore`/`loading`/`error` alır.
 // Seçim ve satır menüsü Faz 4.
-import { PhCircleNotch, PhFunnel, PhPlus, PhWarning } from '@phosphor-icons/vue'
-import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { PhCheck, PhCircleNotch, PhFunnel, PhPlus, PhWarning } from '@phosphor-icons/vue'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { optionLabel } from '../core/cells/format'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import { TYPE_SPECS } from '../core/cells/specs'
+import { readPath } from '../core/columns/readPath'
 import { useColumnLayout } from '../core/columns/useColumnLayout'
 import ColumnPicker from '../core/filters/ColumnPicker.vue'
 import FilterBar from '../core/filters/FilterBar.vue'
@@ -26,7 +27,19 @@ import { nameError, type NameError } from '../core/views/model'
 import { useViews } from '../core/views/useViews'
 import ViewDialog from '../core/views/ViewDialog.vue'
 import ViewMenu from '../core/views/ViewMenu.vue'
-import type { ColumnDef, Density, Plural, TableId, View, ViewPatch, ViewState } from '../types'
+import type {
+  BulkAction,
+  ColumnDef,
+  Density,
+  ExpandOptions,
+  Plural,
+  RowAction,
+  RowClickMode,
+  TableId,
+  View,
+  ViewPatch,
+  ViewState,
+} from '../types'
 import type {
   CountRequest,
   FilterCondition,
@@ -36,6 +49,7 @@ import type {
   TableQuery,
   TableRequest,
 } from '../types/query'
+import BulkBar from './BulkBar.vue'
 import Footer from './footer/Footer.vue'
 import { isSearchable, useListTable } from './useListTable'
 import { useRequest } from './useRequest'
@@ -75,6 +89,16 @@ const props = withDefaults(
     autoRefresh?: number
     /** Kodla tanımlı görünümler (kind: 'system'); adapter'daki kişisel görünümlerle birleştirilir (04 §7). */
     views?: View[]
+    /** Seçim sütunu; seçim sayfa kapsamlıdır (D19). */
+    selectable?: boolean
+    /** Seçim çubuğu: yüzer (varsayılan) ya da toolbar'ın yerine. */
+    selectionBar?: 'floating' | 'toolbar'
+    bulkActions?: Array<BulkAction<Row>>
+    /** Satır menüsü (⋯, sağ tık, ⇧F10): Open / Copy yerleşik + bunlar. */
+    rowActions?: Array<RowAction<Row>>
+    /** Satır gövdesine tıklama (D6). Varsayılan 'none'. */
+    rowClick?: RowClickMode
+    expand?: boolean | ExpandOptions<Row>
   }>(),
   {
     rowKey: 'id',
@@ -86,14 +110,22 @@ const props = withDefaults(
     pageSize: 100,
     pageSizes: () => [50, 100, 250, 500],
     views: () => [],
+    selectable: false,
+    selectionBar: 'floating',
+    rowClick: 'none',
+    expand: false,
   },
 )
 const emit = defineEmits<{
   /** Sunucu modunda her talep; istemci modunda yalnızca `refresh()`. */
   request: [request: TableRequest]
   count: [request: CountRequest]
-  'row-click': [row: Row, event: MouseEvent]
-  'row-open': [row: Row]
+  /** Etkileşimli hedef, metin seçimi ve değiştirici tuş dışındaki satır tıklamaları (`rowClick`'ten bağımsız). */
+  'row-click': [payload: { row: Row; event: MouseEvent }]
+  /** Birincil linke düz sol tık, satırda ↵, menüde Open, `row-click="open"`. Paket preventDefault yapmaz (05 §7). */
+  'row-open': [payload: { row: Row; href: string; event: MouseEvent }]
+  /** Seçim her değiştiğinde; sayfa kapsamlı yüklü satırlar (D19). */
+  'selection-change': [rows: Row[]]
   export: [payload: { format: 'csv' | 'xlsx'; query: QueryWithoutPage; selection: Row[]; visibleColumns: string[] }]
   import: []
   print: [payload: { query: QueryWithoutPage; visibleColumns: string[] }]
@@ -102,6 +134,10 @@ const emit = defineEmits<{
 defineSlots<{
   empty?: () => unknown
   'toolbar-end'?: (props: { compact: boolean }) => unknown
+  /** Satır detayı; veriyi slot bileşeni çeker (05 §7). */
+  expanded?: (props: { row: Row; close: () => void }) => unknown
+  /** bulkActions yerine özel seçim çubuğu içeriği. */
+  'selection-actions'?: (props: { rows: Row[]; clear: () => void }) => unknown
 }>()
 
 const ctx = useDataTableContext()
@@ -328,6 +364,11 @@ const removeView = () => {
   if (v) void vw.remove(v.id)
 }
 
+// Seçim ve expand (05 §6–7): durum TanStack'te (D23); seçim sayfa kapsamlı (D19), expand anahtarla (refresh'te açık kalır).
+const rowSelection = ref<Record<string, true>>({})
+const expanded = ref<Record<string, boolean>>({})
+const expandOn = computed(() => !!props.expand)
+const canExpandFn = computed(() => (typeof props.expand === 'object' ? props.expand.canExpand : undefined))
 const list = useListTable<Row>({
   columns: () => props.columns,
   rows: () => props.rows,
@@ -339,6 +380,10 @@ const list = useListTable<Row>({
   page,
   search,
   hasMore: () => props.hasMore,
+  selectable: () => props.selectable,
+  rowSelection,
+  expanded,
+  canExpand: () => canExpandFn.value,
 })
 const req = useRequest<Row>({
   mode: () => props.mode,
@@ -538,7 +583,97 @@ const displayOn = {
   reset: () => pref.reset(),
 }
 const onExport = (format: 'csv' | 'xlsx') =>
-  emit('export', { format, query: queryWithoutPage(), selection: [], visibleColumns: visibleColumns.value })
+  emit('export', {
+    format,
+    query: queryWithoutPage(),
+    selection: list.selectedRows.value,
+    visibleColumns: visibleColumns.value,
+  })
+
+// Birincil hücre (D6): link, aria etiketleri ve Copy için metin; ⋯ sütunu birincil sütun ya da rowActions varsa.
+const primaryDef = computed(() => props.columns.find((c) => c.primary))
+const primaryHref = (row: Row) => primaryDef.value?.href?.(row)
+const primaryLabel = (row: Row): string => {
+  const d = primaryDef.value
+  const v = d ? (d.accessor ? d.accessor(row) : readPath(row, d.id as string)) : readPath(row, props.rowKey)
+  return v === null || v === undefined ? '' : String(v)
+}
+const rowMenu = computed(() => !!props.rowActions?.length || !!primaryDef.value)
+const selectedRows = list.selectedRows
+const clearSelection = () => (rowSelection.value = {})
+const selectRows = (ids: string[], value: boolean) => {
+  const next = { ...rowSelection.value }
+  for (const id of ids) {
+    if (value) next[id] = true
+    else delete next[id]
+  }
+  rowSelection.value = next
+}
+// Sayfa, sayfa boyutu, filtre, arama, sıralama → seçim temizlenir, açıklar kapanır (D19, 05 §7); refresh'te korunur.
+watch(
+  () => JSON.stringify([search.value, filters.value, sort.value, page.value]),
+  () => {
+    rowSelection.value = {}
+    expanded.value = {}
+    grid.value?.measure()
+  },
+)
+// Yeni veride olmayan anahtarlar süzülür (05 §12).
+watch(
+  () => props.rows,
+  (rows) => {
+    const ids = new Set(rows.map(list.rowId))
+    const keep = (o: Record<string, boolean>) => Object.fromEntries(Object.entries(o).filter(([id]) => ids.has(id)))
+    if (Object.keys(rowSelection.value).some((id) => !ids.has(id)))
+      rowSelection.value = keep(rowSelection.value) as Record<string, true>
+    if (Object.keys(expanded.value).some((id) => !ids.has(id))) expanded.value = keep(expanded.value)
+  },
+)
+watch(selectedRows, (rows) => {
+  emit('selection-change', rows)
+  if (rows.length) polite.value = i18n.t('selection.selected', { count: rows.length })
+})
+const toggleExpand = (id: string, value: boolean) => {
+  const next = { ...expanded.value }
+  if (value) next[id] = true
+  else delete next[id]
+  expanded.value = next
+  if (!value) return
+  void nextTick(() => {
+    const row = props.rows.find((r) => list.rowId(r) === id)
+    const sub = [
+      ...((grid.value?.$el as HTMLElement | undefined)?.querySelectorAll<HTMLElement>('.dt-subrow') ?? []),
+    ].find((el) => el.id.endsWith(`-sub-${id}`))
+    if (row)
+      polite.value = i18n.t('sr.expanded', {
+        label: primaryLabel(row),
+        count: sub ? sub.querySelectorAll('[role="row"], tr').length : 0,
+      })
+  })
+}
+/** Satır gövdesi (D6): her zaman `row-click`; `rowClick` modu açar ya da detayı açıp kapatır. */
+const onRowClick = (row: Row, event: MouseEvent) => {
+  emit('row-click', { row, event })
+  if (props.rowClick === 'open') {
+    ;(event.target as Element | null)
+      ?.closest('.dt-row')
+      ?.querySelector<HTMLElement>('.dt-cell.is-primary a.dt-link')
+      ?.click()
+  } else if (props.rowClick === 'expand' && expandOn.value && (canExpandFn.value?.(row) ?? true)) {
+    const id = list.rowId(row)
+    toggleExpand(id, !expanded.value[id])
+  }
+}
+const onRowOpen = (row: Row, event: MouseEvent) => emit('row-open', { row, href: primaryHref(row) ?? '', event })
+// Toast: yalnızca "Copied" (handoff 02 §6); bulk aksiyonlar için toast uygulamanındır (D20).
+const toast = ref<string | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+const copyId = (row: Row) => {
+  void navigator.clipboard?.writeText(primaryLabel(row))
+  toast.value = i18n.t('cell.copied')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => (toast.value = null), 2000)
+}
 const onPrint = () => emit('print', { query: queryWithoutPage(), visibleColumns: visibleColumns.value })
 const copyErrorId = () => void navigator.clipboard?.writeText(errorInfo.value.id ?? '')
 
@@ -546,6 +681,14 @@ const copyErrorId = () => void navigator.clipboard?.writeText(errorInfo.value.id
 // Kapsam sayfa; tek harfliler odak metin alanındayken kapalı.
 const onKey = (e: KeyboardEvent) => {
   if (e.defaultPrevented) return
+  const target = e.target instanceof Element ? e.target : null
+  // Esc sırayla: açık popover/menü/dialog (odak içindedir) → seçim (05 §6); metin alanında aramanın Esc'i.
+  if (e.key === 'Escape') {
+    const inLayer = !!target?.closest('[role="menu"], [role="dialog"], [role="alertdialog"], [role="listbox"], .dt-pop')
+    if (!e.defaultPrevented && !inLayer && selectedRows.value.length && !(target && isTextInput(target)))
+      clearSelection()
+    return
+  }
   if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
     if (busy.value) return
     const next = e.key === 'ArrowLeft' ? page.value.number - 1 : page.value.number + 1
@@ -562,7 +705,6 @@ const onKey = (e: KeyboardEvent) => {
     else openSaveAs()
     return
   }
-  const target = e.target instanceof Element ? e.target : null
   if (!props.shortcuts || e.ctrlKey || e.metaKey || e.altKey || (target && isTextInput(target))) return
   if (e.key === '/' && hasSearch.value) {
     e.preventDefault()
@@ -584,6 +726,7 @@ onBeforeUnmount(() => {
   clearTimeout(slowTimer)
   clearTimeout(barTimer)
   clearInterval(autoTimer)
+  clearTimeout(toastTimer)
   countCtl?.abort()
 })
 
@@ -612,13 +755,22 @@ watch(req.errorKind, (k) => {
 const rootEl = ref<HTMLElement | null>(null)
 const tooltip = useDelegatedTooltip(rootEl)
 
-defineExpose({ refresh: req.refresh })
+defineExpose({ refresh: req.refresh, clearSelection })
 </script>
 
 <template>
   <div ref="rootEl" class="dt dt-list" :data-density="density">
+    <BulkBar
+      v-if="selectionBar === 'toolbar' && selectedRows.length && toolbar !== false"
+      variant="toolbar"
+      :rows="selectedRows"
+      :actions="bulkActions ?? []"
+      @clear="clearSelection"
+    >
+      <slot v-if="$slots['selection-actions']" name="selection-actions" :rows="selectedRows" :clear="clearSelection" />
+    </BulkBar>
     <Toolbar
-      v-if="toolbar !== false"
+      v-else-if="toolbar !== false"
       ref="toolbarRef"
       :search="hasSearch ? search : null"
       :search-placeholder="searchPlaceholder"
@@ -744,9 +896,23 @@ defineExpose({ refresh: req.refresh })
       :filtered-columns="filteredColumns"
       :labels="labels"
       sortable
+      :selectable="selectable"
+      :selection="rowSelection"
+      :expandable="expandOn"
+      :expanded="expanded"
+      :can-expand="canExpandFn"
+      :row-menu="rowMenu"
+      :row-actions="rowActions"
+      :primary-href="primaryHref"
+      :primary-label="primaryLabel"
+      :primary-header="primaryDef?.header"
       @header-filter="pick"
-      @row-click="(row, e) => emit('row-click', row as Row, e)"
-      @row-enter="(row) => emit('row-open', row as Row)"
+      @row-click="(row, e) => onRowClick(row as Row, e)"
+      @row-open="(row, e) => onRowOpen(row as Row, e)"
+      @select-rows="selectRows"
+      @select-page="list.toggleAllPage"
+      @toggle-expand="toggleExpand"
+      @copy-id="(row) => copyId(row as Row)"
       @sort="onSort"
       @sort-set="onSortSet"
     >
@@ -797,7 +963,28 @@ defineExpose({ refresh: req.refresh })
           </slot>
         </template>
       </template>
+      <template v-if="$slots.expanded" #expanded="{ row, close }">
+        <slot name="expanded" :row="row as Row" :close="close" />
+      </template>
     </GridRoot>
+    <BulkBar
+      v-if="selectionBar === 'floating' && selectedRows.length"
+      variant="floating"
+      :rows="selectedRows"
+      :actions="bulkActions ?? []"
+      @clear="clearSelection"
+    >
+      <slot v-if="$slots['selection-actions']" name="selection-actions" :rows="selectedRows" :clear="clearSelection" />
+    </BulkBar>
+    <div
+      v-if="toast"
+      class="dt-toast"
+      :class="{ 'is-raised': selectionBar === 'floating' && selectedRows.length }"
+      role="status"
+    >
+      <PhCheck :size="16" aria-hidden="true" />
+      {{ toast }}
+    </div>
 
     <Footer
       :row-count="footerRows"

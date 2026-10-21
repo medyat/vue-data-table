@@ -2,6 +2,7 @@
 import { defineComponent, h, type PropType } from 'vue'
 import { TYPE_SPECS, alignOf } from '../cells/specs'
 import type { LayoutColumn } from '../columns/useColumnLayout'
+import { withFill } from './Row'
 
 const WIDTHS = [72, 58, 80, 64, 55, 76, 61, 69]
 
@@ -18,7 +19,8 @@ export default defineComponent({
       h(
         'div',
         { class: 'dt-row dt-row-skeleton', role: 'row', 'aria-hidden': 'true', style: props.style },
-        props.columns.map((col, i) => {
+        withFill(props.columns, (col) => {
+          const i = props.columns.indexOf(col)
           const shape = TYPE_SPECS[col.def.type].skeleton
           const width = `${WIDTHS[(props.index + i) % WIDTHS.length]}%`
           return h(

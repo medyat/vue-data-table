@@ -113,16 +113,18 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 **Kapsam:** TanStack `rowSelection` (tekli/çoklu, sayfa select-all, ⇧ aralık, `X`), sıfırlama kuralları, `selection-change`, bulk bar (`floating`/`toolbar`), `bulkActions` + `#selection-actions`, `rowActions` menüsü ve sağ tık, `row-click`, birincil link (`row-open`, native modifier davranışı), Expand (TanStack expanding, ölçülen yükseklik, `#expanded`), liste klavye haritası (08 §3).
 
 **Kabul kriterleri**
-- [ ] Satır gövdesine tıklamak varsayılan olarak seçmez ve açmaz (D6); `row-click="open"` ile açar; etkileşimli hedef, metin seçimi ve değiştirici tuşta yok sayılır.
-- [ ] Birincil link düz sol tıkta `row-open` yayar ve dinleyici yoksa tarayıcı gider; ⌘/Ctrl, orta ve sağ tık tarayıcıya bırakılır (Playwright).
-- [ ] Seçim sayfa, sayfa boyutu, filtre, arama ve sıralama değişiminde temizlenir; refresh'te korunur ve sayfada olmayan anahtarlar süzülür; auto-refresh'te eski anahtar kalmaz.
-- [ ] Header checkbox yalnızca bu sayfa; kısmi seçimde `indeterminate`; gerçek checkbox'ta ⇧ aralık çalışır.
-- [ ] Bulk bar düzeni kaydırmaz; en fazla 3 aksiyon + ⋯; `run(rows)` beklenmez, hata yutulmaz; "Select all matching" yok.
-- [ ] Expand: chevron yalnızca `canExpand`'ta; detay yalnızca görünür aralıkta render edilir; yükseklik önbelleği remount'ta zıplatmaz; `query`/`page` sonrası açıklar kapanır ve `virtualizer.measure()` çağrılır.
-- [ ] Önizleme paneli, Preview düğmesi ve `Space` kısayolu yok (D28); satır aksiyon sütunu yalnızca ⋯ (56 px); menüdeki Open hedef satır DOM'da olmasa da `href(row)` ile çalışır.
-- [ ] Odaklı satır sayfa değişiminde aynı anahtar → aynı indeks → ilk satır sırasıyla geri gelir.
-- [ ] 08 §3'teki tüm kısayollar; metin alanındayken tek harfliler devre dışı.
-- [ ] **1.0 sürüm kontrolü:** 05'in tamamı (§11 telefon düzeni hariç — Faz 7) karşılanıyor; T1 tasarımı playground'da birebir.
+- [x] Satır gövdesine tıklamak varsayılan olarak seçmez ve açmaz (D6); `row-click="open"` ile açar; etkileşimli hedef, metin seçimi ve değiştirici tuşta yok sayılır.
+- [x] Birincil link düz sol tıkta `row-open` yayar ve dinleyici yoksa tarayıcı gider; ⌘/Ctrl, orta ve sağ tık tarayıcıya bırakılır (Playwright).
+- [x] Seçim sayfa, sayfa boyutu, filtre, arama ve sıralama değişiminde temizlenir; refresh'te korunur ve sayfada olmayan anahtarlar süzülür; auto-refresh'te eski anahtar kalmaz.
+- [x] Header checkbox yalnızca bu sayfa; kısmi seçimde `indeterminate`; gerçek checkbox'ta ⇧ aralık çalışır.
+- [x] Bulk bar düzeni kaydırmaz; en fazla 3 aksiyon + ⋯; `run(rows)` beklenmez, hata yutulmaz; "Select all matching" yok.
+- [x] Expand: chevron yalnızca `canExpand`'ta; detay yalnızca görünür aralıkta render edilir; yükseklik önbelleği remount'ta zıplatmaz; `query`/`page` sonrası açıklar kapanır ve `virtualizer.measure()` çağrılır.
+- [x] Önizleme paneli, Preview düğmesi ve `Space` kısayolu yok (D28); satır aksiyon sütunu yalnızca ⋯ (56 px); menüdeki Open hedef satır DOM'da olmasa da `href(row)` ile çalışır.
+- [x] Odaklı satır sayfa değişiminde aynı anahtar → aynı indeks → ilk satır sırasıyla geri gelir.
+- [x] 08 §3'teki tüm kısayollar; metin alanındayken tek harfliler devre dışı.
+- [ ] **1.0 sürüm kontrolü:** 05'in tamamı (§11 telefon düzeni hariç — Faz 7) karşılanıyor; T1 tasarımı playground'da birebir. *(Faz 7 ile birlikte kapatılacak: telefon düzeni ve alt sayfalar eksik.)*
+
+**Notlar (uygulama):** Seçim ve expand durumu TanStack `rowSelectionFeature` / `rowExpandingFeature` ile `useListTable`'da; seçim sütunu (40 px) ve ⋯ sütunu (56 px) sütun düzeninin dışındadır, GridRoot `--cols`'un başına/sonuna ekler ve sabit sütun ofsetlerini kaydırır (görünüm ve Columns paneli bunları görmez). Sanal öğe = satır + açık detay (`.dt-item`); yalnızca açık öğeler `measureElement` ile ölçülür, kapanınca `resizeItem` satır yüksekliğine döndürür, sorgu/sayfa değişiminde `measure()`. Satırda `↵`, `row-click="open"` ve menüdeki Open birincil `<a href>`'e gerçek tık üretir: navigasyon ve değiştirici tuş davranışı tarayıcının, `row-open` dinleyicisi `preventDefault` ile durdurur; `href` yoksa `↵` bir şey yapmaz. ⋯ sütunu birincil sütun ya da `rowActions` varsa görünür. Satır ⋯ ve bulk ⋯ düğmelerinde Enter/Space ızgara/Listbox'a ulaşmaz. Toast yalnızca "Copied"; "Dim" satır durumu (işlem süren satır) için API yok, uygulanmadı. Alt satır yatay kaydırmada içerikle birlikte kayar (sticky değil). Playground: T4/T5/T6 ayrı rota değil, T1'in parçası (T2 kararıyla aynı); T1'de satır tıklaması seçimi, `?bar=toolbar` seçim çubuğu varyantı.
 
 ## Faz 5 — DocumentTable
 

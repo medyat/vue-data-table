@@ -19,9 +19,9 @@ Her tasarımın light ve dark artboard'u vardır. Çoğu sayfada light solda, da
 | T1 · List screen | Production orders: normal, seçim, expand, üç yoğunluk, bileşen dili | [03-datatable.md](03-datatable.md), [02-ortak-bilesenler.md](02-ortak-bilesenler.md) |
 | T2 · Filtering | Column picker, Status/Owner/Date/Value/Text editörleri, operatör menüsü, +N more (D29 ile kaldırıldı), çip anatomisi | [03-datatable.md](03-datatable.md) §3 |
 | T3 · Views | Görünüm menüsü, satır menüsü, system görünüm, Save as new view, silme onayı, Display (Shared views ve Share with my team D30 ile kaldırıldı) | [03-datatable.md](03-datatable.md) §4 |
-| T4 · Column headers | Header durumları, sütun menüsü, multi-sort, Columns ve Sort panelleri | [03-datatable.md](03-datatable.md) §5 |
+| T4 · Column headers | Header durumları, sütun menüsü, multi-sort, Columns ve Sort panelleri (playground'da T1 içinde) | [03-datatable.md](03-datatable.md) §5 |
 | T5 · Selection | Checkbox kuralları, floating ve toolbar bulk bar, ⋯ menüsü, uygulamanın onay dialog'u, telefon | [03-datatable.md](03-datatable.md) §7, [04-datatable-telefon.md](04-datatable-telefon.md) |
-| T6 · Row detail | Expand, satır aksiyonları, satır menüsü, “Copied” | [03-datatable.md](03-datatable.md) §8 |
+| T6 · Row detail | Expand, satır aksiyonları, satır menüsü, “Copied” (playground'da T1 içinde; T5 de) | [03-datatable.md](03-datatable.md) §8 |
 | T7 · Cell actions | Hücre aksiyonları (hover/odak), uygulamanın çizdiği hücreler | [03-datatable.md](03-datatable.md) §9 |
 | T8 · Cell types | 24 tip, skeleton biçimleri, 8 ton, yoğunluklar | [02-ortak-bilesenler.md](02-ortak-bilesenler.md) §8 |
 | T9 · States | First load, refreshing, query change, empty, no results (3), error, stale, still loading, no rows on page, footer durumları | [03-datatable.md](03-datatable.md) §10–11 |

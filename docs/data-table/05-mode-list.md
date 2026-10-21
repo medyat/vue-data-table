@@ -196,7 +196,7 @@ Aynı satır, iki derinlik:
 | **Expand** | Alt kayıtlar satırın altında (operasyonlar, sipariş satırları, partiler) | Birincil hücredeki chevron, `→` aç / `←` kapa; `row-click="expand"` | Yerinde kalır |
 | **Open** | Tam detay sayfası | Birincil link (düz tık → `row-open`), satırda `↵`, `row-click="open"`; yeni sekme: ⌘/Ctrl veya orta tık (tarayıcı) ya da `→` ile linke odaklanıp `⌘↵` | Terk edilir |
 
-`row-open { row, href, event }`: paket `preventDefault` yapmaz. Dinleyici yoksa tarayıcı `href`'e gider (tam sayfa). SPA için uygulama `event.preventDefault()` çağırıp `router.push(href)` (Vue Router) veya `router.visit(href)` (Inertia) yapar. Satırda `↵`, satır tıklaması ve menüdeki Open aynı `href(row)` çözümlemesini kullanır; DOM'daki bir öğeye bağımlı değildir.
+`row-open { row, href, event }`: paket `preventDefault` yapmaz. Dinleyici yoksa tarayıcı `href`'e gider (tam sayfa). SPA için uygulama `event.preventDefault()` çağırıp `router.push(href)` (Vue Router) veya `router.visit(href)` (Inertia) yapar. Satırda `↵`, satır tıklaması ve menüdeki Open aynı `href(row)` çözümlemesini kullanır; DOM'daki bir öğeye bağımlı değildir. *(Uygulama: menüdeki Open kendi `<a href>`'idir; `↵` ve satır tıklaması odaklı/tıklanan satırın birincil linkine gerçek tık üretir, böylece navigasyon ve yeni sekme davranışı tarayıcınındır; `href` yoksa açılacak şey yoktur.)*
 
 ### Expand
 

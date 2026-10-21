@@ -23,8 +23,9 @@
   box-sizing: inherit;
 }
 
-/* Liste kartı (05 §2): ebeveynin yüksekliğini doldurur; yalnızca gövde kayar. */
+/* Liste kartı (05 §2): ebeveynin yüksekliğini doldurur; yalnızca gövde kayar. Yüzer bulk bar ve toast karta göre konumlanır. */
 .dt-list {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
