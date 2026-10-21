@@ -73,7 +73,7 @@ Tek harfli kısayollar yalnızca odak bir metin alanında değilken çalışır.
 | `Alt←` / `Alt→` | Önceki / sonraki sayfa | Sayfa |
 | `F6` | Bölgeler arası | Sayfa |
 
-Header'da: `↵`/`Space` sıralar, `⇧↵` ikincil sıralama ekler, `⇧F10` sütun menüsü, `⇧←`/`⇧→` (header odaklıyken) sütun genişliğini 16 px değiştirir, `⌥⇧←`/`⌥⇧→` sütunu taşır. `Alt←`/`Alt→` her zaman sayfa değiştirir.
+Header'a varış: ilk satırda `↑` ilk başlığa odaklanır; başlıklar arası `←`/`→`, `↓` odaklı satıra döner. Header'da: `↵`/`Space` sıralar, `⇧↵` ikincil sıralama ekler, `⇧F10` sütun menüsü, `⇧←`/`⇧→` (header odaklıyken) sütun genişliğini 16 px değiştirir, `⌥⇧←`/`⌥⇧→` sütunu taşır (odak taşınan başlıkta kalır). `Alt←`/`Alt→` her zaman sayfa değiştirir.
 
 Uygulama tek harfli kısayolları `shortcuts={ false }` ile kapatabilir (tarayıcı eklentisi/uygulama çakışmaları için); ok tuşları ve Esc her zaman çalışır.
 

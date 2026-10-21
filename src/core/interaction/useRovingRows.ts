@@ -16,6 +16,8 @@ export interface RovingOptions {
   onEnter?: (index: number) => void
   onRight?: (index: number) => boolean
   onLeft?: (index: number) => boolean
+  /** İlk satırda `↑`: odak başlığa (08 §3 · header klavyesi). */
+  onTop?: () => void
 }
 
 export function useRovingRows(opts: RovingOptions) {
@@ -80,7 +82,8 @@ export function useRovingRows(opts: RovingOptions) {
         break
       case 'ArrowUp':
         e.preventDefault()
-        focusRow(index - 1)
+        if (index === 0 && opts.onTop) opts.onTop()
+        else focusRow(index - 1)
         break
       case 'Home':
         e.preventDefault()

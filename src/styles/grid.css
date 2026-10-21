@@ -409,35 +409,92 @@
   pointer-events: none;
 }
 
-/* Menü (02 §6 handoff): reka DropdownMenu içeriği. */
-.dt-menu {
-  min-width: 220px;
-  padding: 4px;
-  border-radius: var(--dt-radius-pop);
-  background: var(--dt-surface);
-  color: var(--dt-text);
-  box-shadow: var(--dt-shadow-pop);
-  font-family: var(--dt-font);
-  font-size: 13px;
-  z-index: 40;
+/* Faz 2 (05 §8, §10; 08 §3): dikey çizgiler, sorgu değişiminde soluk gövde, yenileme çubuğu, bildirim satırı, kaydırma hapı, header odağı. */
+.dt-grid.has-vlines .dt-cell:not(:last-child) {
+  box-shadow: inset -1px 0 var(--dt-line);
 }
-.dt-menu-item {
+.dt-grid.is-dim .dt-body {
+  opacity: 0.6;
+}
+.dt-refresh-bar {
+  position: absolute;
+  top: var(--dt-head-h);
+  left: 0;
+  right: 0;
+  height: 2px;
+  overflow: hidden;
+  background: var(--dt-accent-soft-2);
+  z-index: 4;
+}
+.dt-refresh-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -32%;
+  width: 32%;
+  background: var(--dt-accent);
+  animation: dt-refresh 1.25s linear infinite;
+}
+@keyframes dt-refresh {
+  to {
+    left: 100%;
+  }
+}
+.dt-notice {
+  position: absolute;
+  top: var(--dt-head-h);
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 8px;
   height: 32px;
-  padding: 0 8px;
-  border-radius: var(--dt-radius-item);
+  padding: 0 var(--dt-cell-x);
+  border-bottom: 1px solid var(--dt-line);
+  background: var(--dt-surface-2);
+  color: var(--dt-text-2);
+  font-size: 12.5px;
+  z-index: 4;
+}
+.dt-scroll-pill {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--dt-radius-pill);
+  background: var(--dt-tip-bg);
+  color: var(--dt-tip-fg);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--dt-shadow-tip);
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+  z-index: 4;
+}
+.dt-scroll-pill.is-visible {
+  opacity: 1;
+}
+.dt-head-label:focus-visible {
   outline: none;
-  cursor: default;
-  user-select: none;
+  box-shadow:
+    0 0 0 2px var(--dt-surface-2),
+    0 0 0 4px var(--dt-focus);
 }
-.dt-menu-item[data-highlighted] {
-  background: var(--dt-surface-3);
+.dt-head-cell.is-menu-open .dt-head-menu {
+  opacity: 1;
 }
-.dt-menu-item[data-disabled] {
-  color: var(--dt-text-3);
-}
-.dt-menu-item.is-destructive {
-  color: var(--dt-r-fg);
+@media (prefers-reduced-motion: reduce) {
+  .dt-refresh-bar::after {
+    animation: none;
+    left: 0;
+    width: 100%;
+  }
+  .dt-scroll-pill {
+    transition: none;
+  }
 }

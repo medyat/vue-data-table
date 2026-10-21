@@ -2,9 +2,10 @@
 import { PhCopy } from '@phosphor-icons/vue'
 import { mount } from '@vue/test-utils'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { h, nextTick } from 'vue'
+import { h } from 'vue'
 import DataTable from '../src/list/DataTable.vue'
 import type { ColumnDef } from '../src/types'
+import { flush, mockLayout } from './helpers/dom'
 
 interface Order {
   id: number
@@ -49,53 +50,8 @@ const columns: Array<ColumnDef<Order>> = [
   },
 ]
 
-beforeAll(() => {
-  // jsdom ölçüm yapmaz: virtual-core kabı clientWidth/clientHeight ile okur → kaydırma kabına 600 px ver.
-  const size = (el: HTMLElement, axis: 'w' | 'h') =>
-    el.classList.contains('dt-scroll') ? (axis === 'h' ? 600 : 1000) : axis === 'h' ? 40 : 100
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
-    configurable: true,
-    get() {
-      return size(this, 'h')
-    },
-  })
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
-    configurable: true,
-    get() {
-      return size(this, 'w')
-    },
-  })
-  Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
-    configurable: true,
-    get() {
-      return document.body
-    },
-  })
-  Object.defineProperty(Element.prototype, 'clientHeight', {
-    configurable: true,
-    get() {
-      return size(this as HTMLElement, 'h')
-    },
-  })
-  Object.defineProperty(Element.prototype, 'clientWidth', {
-    configurable: true,
-    get() {
-      return size(this as HTMLElement, 'w')
-    },
-  })
-  Element.prototype.getBoundingClientRect = function () {
-    const h = size(this as HTMLElement, 'h')
-    return { x: 0, y: 0, top: 0, left: 0, right: 1000, bottom: h, width: 1000, height: h, toJSON: () => ({}) }
-  }
-  globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(0), 0) as unknown as number
-})
+beforeAll(mockLayout)
 
-// Sanal liste ölçümü ve odak: vue-virtual onChange'i nextTick'te tetikler; iki tur + bir makro görev.
-const flush = async () => {
-  await nextTick()
-  await new Promise((r) => setTimeout(r, 0))
-  await nextTick()
-}
 const mountTable = async (extra: Record<string, unknown> = {}) => {
   const w = mount(DataTable<Order>, {
     props: { tableId: 'orders', columns, rows, entityName: { one: 'order', other: 'orders' }, ...extra },
@@ -111,7 +67,7 @@ describe('roller ve yapı', () => {
     const grid = w.get('[role="grid"]')
     expect(grid.attributes('aria-label')).toBe('orders')
     expect(grid.attributes('aria-colcount')).toBe('6')
-    expect(grid.attributes('aria-rowcount')).toBe('-1')
+    expect(grid.attributes('aria-rowcount')).toBe('40') // istemci modunda toplam bilinir
     expect(w.findAll('[role="columnheader"]')).toHaveLength(6)
     const firstRow = w.get('.dt-row[data-index="0"]')
     expect(firstRow.attributes('role')).toBe('row')

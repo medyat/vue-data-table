@@ -1,9 +1,9 @@
 <script setup lang="ts">
-// Izgara kökü (05 §2–4, 08 §1–2, brief §5.5): tek kayan alan, sticky header, sabit sütunlar + koşullu kenar gölgesi,
-// sanal satırlar (@tanstack/vue-virtual), satır odaklı klavye, tek tooltip. Veri çekmez; satırları olduğu gibi çizer.
+// Izgara kökü (05 §2–4, §8, §10; 08 §1–3; brief §5.5): tek kayan alan, sticky header, sabit sütunlar + koşullu kenar gölgesi,
+// sanal satırlar (@tanstack/vue-virtual), satır odaklı klavye, header klavyesi ve sütun menüsü, tek tooltip, kaydırma hapı.
+// Veri çekmez, sütun düzenini dışarıdan (useColumnLayout) alır; satırları olduğu gibi çizer.
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { computed, onMounted, ref, shallowRef, toRaw, watch, watchEffect } from 'vue'
-import type { ColumnDef } from '../../types/columns'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, watch, watchEffect } from 'vue'
 
 // İç bileşen: satır tipi dış bileşende (DataTable) tiplidir; accessor/cell parametreleri karşıt değişken olduğundan burada any.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,56 +12,59 @@ import type { Density } from '../../types/core'
 import { RemoteLabels } from '../cells/remoteLabels'
 import type { RenderEnv } from '../cells/renderCell'
 import { TYPE_SPECS } from '../cells/specs'
-import { useColumnLayout, type LayoutColumn } from '../columns/useColumnLayout'
+import type { ColumnLayoutApi, LayoutColumn } from '../columns/useColumnLayout'
 import { getFormat } from '../format'
 import { isPlainRowClick } from '../interaction/isInteractive'
 import { useRovingRows } from '../interaction/useRovingRows'
 import { useDataTableContext } from '../plugin'
 import HeaderCell from './HeaderCell.vue'
+import type { HeaderAction } from './headerActions'
 import Row from './Row'
 import SkeletonRow from './SkeletonRow'
 import { useDelegatedTooltip } from './useDelegatedTooltip'
 
 const props = withDefaults(
   defineProps<{
-    columns: Array<ColumnDef<AnyRow>>
+    layout: ColumnLayoutApi<AnyRow>
     rows: AnyRow[]
-    rowKey?: string
     density?: Density
     /** role=grid aria-label. */
     label: string
-    /** Satırlar yokken true → 12 iskelet satır (brief §5.6 First load). */
+    /** aria-busy. */
     loading?: boolean
+    /** 12 iskelet satır (First load, 400 ms'yi aşan sorgu değişimi). */
+    skeleton?: boolean
+    /** Sorgu değişimi: eski satırlar soluk + inert (05 §10 · Query change). */
+    dim?: boolean
+    /** Header altında 2 px belirsiz çubuk (Refreshing). */
+    refreshing?: boolean
+    verticalLines?: boolean
     /** aria-rowcount; bilinmiyorsa -1. */
     rowCount?: number
-    /** Sütun id → sıralama (Faz 2'de doldurulur). */
+    /** Sayfa ofseti: aria-rowindex ve kaydırma hapı (05 §8). */
+    rowIndexOffset?: number
     sort?: ReadonlyMap<string, { dir: 'asc' | 'desc'; index: number | null }>
     filteredColumns?: ReadonlySet<string>
     sortable?: boolean
   }>(),
-  { rowKey: 'id', density: 'standard', loading: false, rowCount: -1, sortable: false },
+  { density: 'standard', loading: false, rowCount: -1, rowIndexOffset: 0, sortable: false },
 )
 const emit = defineEmits<{
   'row-click': [row: AnyRow, event: MouseEvent]
   'row-enter': [row: AnyRow]
   sort: [columnId: string, additive: boolean]
-  'header-menu': [columnId: string, event: Event]
+  'sort-set': [columnId: string, dir: 'asc' | 'desc' | null]
   'header-filter': [columnId: string]
 }>()
 
 const ctx = useDataTableContext()
 const root = ref<HTMLElement | null>(null)
 const scrollEl = ref<HTMLElement | null>(null)
+const layout = props.layout
 
 // Dokunmatikte Compact → Standard (02 · Yoğunluk); satır yüksekliği buna göre.
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 const density = computed<Density>(() => (coarse && props.density === 'compact' ? 'standard' : props.density))
-
-const layout = useColumnLayout<AnyRow>({
-  columns: () => props.columns,
-  rows: () => props.rows,
-  rowKey: () => props.rowKey,
-})
 
 // Genişlikler ve sabit ofsetleri Vue render'ı dışında, senkron (05 · Resize: kare başına < 1 ms).
 watchEffect(
@@ -94,6 +97,15 @@ const env = computed<RenderEnv>(() => ({
 }))
 const labels = new RemoteLabels()
 
+const headerLabels = () => [...(root.value?.querySelectorAll<HTMLElement>('.dt-head-label') ?? [])]
+/** Sütunun header ve gövde hücreleri (id'de nokta olabilir: CSS.escape yerine dataset karşılaştırması). */
+const cellsOf = (id: string) =>
+  [...(root.value?.querySelectorAll<HTMLElement>('[data-col]') ?? [])].filter((c) => c.dataset.col === id)
+const focusHeader = (i: number) => {
+  const els = headerLabels()
+  els[Math.max(0, Math.min(els.length - 1, i))]?.focus()
+}
+
 const roving = useRovingRows({
   count: () => props.rows.length,
   rowEl: (i) => root.value?.querySelector<HTMLElement>(`.dt-row[data-index="${i}"]`) ?? null,
@@ -104,9 +116,10 @@ const roving = useRovingRows({
     const row = props.rows[i]
     if (row) emit('row-enter', toRaw(row))
   },
+  onTop: () => focusHeader(0),
 })
 
-const skeleton = computed(() => props.loading && props.rows.length === 0)
+const skeleton = computed(() => !!props.skeleton)
 const count = computed(() => (skeleton.value ? 12 : props.rows.length))
 
 const virtualizer = useVirtualizer(
@@ -132,19 +145,33 @@ const virtualizer = useVirtualizer(
 const virtualRows = computed(() => virtualizer.value.getVirtualItems())
 const totalSize = computed(() => virtualizer.value.getTotalSize())
 
-// Sabit sütun kenar gölgesi yalnızca o yöne kaydırılmışken (05 §4 · Pinned).
+// Sabit sütun kenar gölgesi yalnızca o yöne kaydırılmışken (05 §4 · Pinned). Dikey kaydırmada konum hapı (05 §8).
 const scrolledStart = shallowRef(false)
 const scrolledEnd = shallowRef(false)
+const pill = shallowRef<{ from: number; to: number } | null>(null)
+let pillTimer: ReturnType<typeof setTimeout> | undefined
+let lastTop = 0
 const onScroll = () => {
   const el = scrollEl.value
   if (!el) return
   scrolledStart.value = el.scrollLeft > 0
   scrolledEnd.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+  if (el.scrollTop === lastTop) return
+  lastTop = el.scrollTop
+  const range = virtualizer.value.range
+  if (!range || skeleton.value) return
+  pill.value = { from: props.rowIndexOffset + range.startIndex + 1, to: props.rowIndexOffset + range.endIndex + 1 }
+  clearTimeout(pillTimer)
+  pillTimer = setTimeout(() => (pill.value = null), 900)
 }
+const pillText = computed(() =>
+  pill.value ? ctx.i18n.t('page.scrollPos', { from: pill.value.from, to: pill.value.to }) : '',
+)
 onMounted(() => {
   onScroll()
   if (scrollEl.value && typeof ResizeObserver !== 'undefined') new ResizeObserver(onScroll).observe(scrollEl.value)
 })
+onBeforeUnmount(() => clearTimeout(pillTimer))
 
 // Satır tıklaması: tek guard (05 §7). Sürükleme tespiti için mousedown noktası.
 let downPoint: { x: number; y: number } | null = null
@@ -163,14 +190,11 @@ const sortOf = (id: string) => props.sort?.get(id)
 const columnSortable = (c: LayoutColumn<AnyRow>) =>
   props.sortable && (c.def.sortable ?? TYPE_SPECS[c.def.type].sortable)
 
-/** Çift tık: içeriğe sığdır (görünür satırlar + header). */
+/** Çift tık / menü: içeriğe sığdır (görünür satırlar + header). */
 const fitToContent = (col: LayoutColumn<AnyRow>) => {
   const el = root.value
   if (!el) return
-  const sel = CSS.escape(col.id)
-  const items = [
-    ...el.querySelectorAll<HTMLElement>(`[data-col="${sel}"] .dt-cell-content, [data-col="${sel}"] .dt-head-text`),
-  ]
+  const items = cellsOf(col.id).flatMap((c) => [...c.querySelectorAll<HTMLElement>('.dt-cell-content, .dt-head-text')])
   // Blok eleman hücre genişken onu doldurur; içeriğin gerçek genişliği için geçici max-content (tek reflow: önce yaz, sonra oku).
   // max-width: 100% kesilmiş içeriği hücreye, flex-shrink header metnini düğmeye sıkıştırır; ölçüm için ikisi de kalkar.
   for (const c of items) {
@@ -189,6 +213,46 @@ const fitToContent = (col: LayoutColumn<AnyRow>) => {
   layout.setWidth(col.id, Math.ceil(max) + pad * 2 + 24)
 }
 
+/** Sütun menüsü ve ⌥⇧←/→ (05 §4): sıralama dışındakiler düzenin kendi işi. Taşınan başlığın odağı korunur. */
+const onHeaderAction = (col: LayoutColumn<AnyRow>, action: HeaderAction) => {
+  switch (action) {
+    case 'sort-asc':
+    case 'sort-desc':
+    case 'sort-clear':
+      emit('sort-set', col.id, action === 'sort-clear' ? null : action === 'sort-asc' ? 'asc' : 'desc')
+      return
+    case 'pin-left':
+      layout.pin(col.id, 'start')
+      return
+    case 'pin-right':
+      layout.pin(col.id, 'end')
+      return
+    case 'unpin':
+      layout.pin(col.id, null)
+      return
+    case 'fit':
+      fitToContent(col)
+      return
+    case 'hide':
+      layout.setVisible(col.id, false)
+      return
+    case 'move-left':
+    case 'move-right': {
+      const focused = document.activeElement?.closest<HTMLElement>('.dt-head-cell')?.dataset.col === col.id
+      layout.move(col.id, action === 'move-left' ? -1 : 1)
+      if (focused) void nextTick(() => cellsOf(col.id)[0]?.querySelector<HTMLElement>('.dt-head-label')?.focus())
+    }
+  }
+}
+const onHeaderNav = (col: LayoutColumn<AnyRow>, to: 'left' | 'right' | 'down') => {
+  if (to === 'down') {
+    roving.focusRow(roving.focusedIndex.value)
+    return
+  }
+  const i = layout.columns.value.findIndex((c) => c.id === col.id)
+  focusHeader(to === 'left' ? i - 1 : i + 1)
+}
+
 const tooltip = useDelegatedTooltip(root)
 
 watch(
@@ -198,7 +262,13 @@ watch(
 // estimateSize değişimi ölçüm önbelleğini yenilemez (virtual-core memo'su count/getItemKey'e bağlı): yoğunluk değişince sıfırla.
 watch(rowHeight, () => virtualizer.value.measure())
 
-defineExpose({ focusRow: roving.focusRow, scrollToIndex: (i: number) => virtualizer.value.scrollToIndex(i), layout })
+defineExpose({
+  focusRow: roving.focusRow,
+  scrollToIndex: (i: number) => virtualizer.value.scrollToIndex(i),
+  scrollToTop: () => {
+    if (scrollEl.value) scrollEl.value.scrollTop = 0
+  },
+})
 </script>
 
 <template>
@@ -210,12 +280,14 @@ defineExpose({ focusRow: roving.focusRow, scrollToIndex: (i: number) => virtuali
       'is-scrolled-end': scrolledEnd,
       'is-keyboard': roving.keyboard.value,
       'is-skeleton': skeleton,
+      'is-dim': dim,
+      'has-vlines': verticalLines,
     }"
     role="grid"
     :aria-label="label"
     :aria-rowcount="rowCount"
     :aria-colcount="layout.columns.value.length"
-    :aria-busy="loading ? 'true' : undefined"
+    :aria-busy="loading || dim ? 'true' : undefined"
     :data-density="density"
     @keydown="roving.onKeydown"
     @mousedown="onMousedown"
@@ -235,13 +307,14 @@ defineExpose({ focusRow: roving.focusRow, scrollToIndex: (i: number) => virtuali
           :resizing="layout.resizing.value?.id === col.id ? layout.resizing.value.size : null"
           :sortable="columnSortable(col)"
           @sort="(c, additive) => emit('sort', c.id, additive)"
-          @menu="(c, e) => emit('header-menu', c.id, e)"
           @filter="(c) => emit('header-filter', c.id)"
-          @fit="fitToContent"
+          @action="onHeaderAction"
+          @nav="onHeaderNav"
+          @resize-by="(c, d) => layout.setWidth(c.id, layout.widthOf(c.id) + d)"
           @resize-start="(c, w) => layout.setWidth(c.id, w)"
         />
       </div>
-      <div class="dt-body" role="presentation" :style="{ height: `${totalSize}px` }">
+      <div class="dt-body" role="presentation" :inert="dim || undefined" :style="{ height: `${totalSize}px` }">
         <template v-for="item in virtualRows" :key="String(item.key)">
           <SkeletonRow
             v-if="skeleton"
@@ -253,7 +326,7 @@ defineExpose({ focusRow: roving.focusRow, scrollToIndex: (i: number) => virtuali
             v-else
             :row="rows[item.index]!"
             :index="item.index"
-            :row-index="2 + item.index"
+            :row-index="2 + rowIndexOffset + item.index"
             :columns="layout.columns.value"
             :env="env"
             :focused="roving.focusedIndex.value === item.index"
@@ -264,6 +337,10 @@ defineExpose({ focusRow: roving.focusRow, scrollToIndex: (i: number) => virtuali
         </template>
       </div>
     </div>
+    <div v-if="refreshing" class="dt-refresh-bar" aria-hidden="true" />
+    <div v-if="$slots.notice" class="dt-notice" role="status"><slot name="notice" /></div>
+    <div v-if="$slots.state && !skeleton && rows.length === 0" class="dt-body-state"><slot name="state" /></div>
+    <div class="dt-scroll-pill" :class="{ 'is-visible': pill }" aria-hidden="true">{{ pillText }}</div>
     <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
       {{ tooltip.text.value }}
     </div>

@@ -65,7 +65,7 @@ Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 
 |---|---|
 | ≥ 1024 px | Her şey etiketli |
 | 640 – 1023 px | Search ve Display yalnızca ikon (search ikonu tıklanınca 240 px'e açılır, odakta kalır) |
-| < 640 px | Display `⋯` içine taşınır; `#toolbar-end` içeriği `compact: true` alır (uygulama butonunu ikona indirir, `aria-label` korunur); Filter yalnızca ikon + sayaç |
+| < 640 px | Display `⋯` içine taşınır (menü öğesi; popover `⋯` düğmesine hizalı açılır, alt sayfa biçimi §11); `#toolbar-end` içeriği `compact: true` alır (uygulama butonunu ikona indirir, `aria-label` korunur); Filter yalnızca ikon + sayaç |
 
 ### Display popover (300–312 px)
 

@@ -10,7 +10,7 @@ const settings = (page: Page, density = 'standard', theme = 'light') =>
 test.describe('T1 · liste ızgarası', () => {
   test.beforeEach(async ({ page }) => {
     await settings(page)
-    await page.goto('/t1')
+    await page.goto('/t1?size=500')
     await expect(page.locator('.dt-row[data-index="0"]')).toBeVisible()
   })
 
@@ -111,7 +111,7 @@ test.describe('T1 · liste ızgarası', () => {
 
 test('çift tık: içeriğe sığdır, tekrar edince sabit kalır', async ({ page }) => {
   await settings(page)
-  await page.goto('/t1')
+  await page.goto('/t1?size=500')
   await expect(page.locator('.dt-row[data-index="0"]')).toBeVisible()
   const width = () =>
     page.locator('.dt-head-cell[data-col="customer"]').evaluate((el) => el.getBoundingClientRect().width)
@@ -151,12 +151,18 @@ test('çift tık: içeriğe sığdır, tekrar edince sabit kalır', async ({ pag
 })
 
 test("yoğunluk: Comfortable'da ikinci satır, Compact'ta 32 px satır", async ({ page }) => {
-  await settings(page, 'comfortable')
-  await page.goto('/t1')
+  await settings(page)
+  // Faz 2: T1 yoğunluğu tercihten alır (Display › Density); tercih deposu playground scope'lu localStorage.
+  await page.addInitScript(() =>
+    localStorage.setItem('dt:playground:prefs:production-orders', JSON.stringify({ density: 'comfortable' })),
+  )
+  await page.goto('/t1?size=500')
   await expect(page.locator('.dt-row[data-index="0"] .dt-secondary')).toBeVisible()
   const h52 = await page.locator('.dt-row[data-index="0"]').evaluate((el) => el.getBoundingClientRect().height)
   expect(Math.round(h52)).toBe(53)
-  await page.getByTestId('density').selectOption('compact')
+  await page.getByRole('button', { name: 'Display' }).click()
+  await page.getByRole('button', { name: 'Compact' }).click()
+  await page.keyboard.press('Escape')
   await expect(page.locator('.dt-row[data-index="0"] .dt-secondary')).toHaveCount(0)
   await expect
     .poll(async () =>

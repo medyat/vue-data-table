@@ -172,8 +172,9 @@ const groups: Array<{ title: string; columns: Array<ColumnDef<Sample>>; rows: Sa
     </p>
     <section v-for="g in groups" :key="g.title" class="pg-group">
       <h2>{{ g.title }}</h2>
-      <div class="pg-fixed" :style="{ height: `${4 * 53 + 2}px` }">
+      <div class="pg-fixed" :style="{ height: `${4 * 53 + 2 + 49}px` }">
         <DataTable
+          :toolbar="false"
           :table-id="`t8-${g.title}`"
           :columns="g.columns"
           :rows="g.rows"

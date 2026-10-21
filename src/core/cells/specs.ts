@@ -87,3 +87,32 @@ export const isNumericType = (type: ColumnType): boolean => TYPE_SPECS[type].num
 export function alignOf(def: ColumnDef): 'left' | 'right' | 'center' {
   return def.align ?? TYPE_SPECS[def.type].align
 }
+
+/** Sütun menüsü başlığı (05 §4): tipin 09 `type.*` anahtarı. */
+const TYPE_LABEL: Record<ColumnType, string> = {
+  int: 'number',
+  float: 'number',
+  percentage: 'percentage',
+  star: 'rating',
+  currency: 'currency',
+  string: 'text',
+  text: 'longText',
+  uppercase: 'text',
+  lowercase: 'text',
+  phone: 'phone',
+  color: 'colour',
+  email: 'email',
+  url: 'link',
+  id: 'id',
+  boolean: 'boolean',
+  select: 'option',
+  multiselect: 'options',
+  tags: 'tags',
+  ajax: 'relation',
+  user: 'person',
+  date: 'date',
+  datetime: 'datetime',
+  object: 'object',
+  array: 'list',
+}
+export const typeLabelKey = (type: ColumnType): string => `type.${TYPE_LABEL[type]}`

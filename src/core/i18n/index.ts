@@ -1,9 +1,13 @@
+import type { Plural } from '../../types/core'
 import type { MessageValue, Messages } from '../../types/i18n'
 import { en } from './en'
 import { tr } from './tr'
 
 /** `{name}` düz değer, `{entity.one}` nokta yolu (09 · kurallar). `count` çoğul seçimini de yönetir. */
-export type MessageParams = Record<string, string | number | boolean | null | undefined | Record<string, string>>
+export type MessageParams = Record<
+  string,
+  string | number | boolean | null | undefined | Record<string, string> | Plural
+>
 
 export interface I18n {
   readonly locale: string

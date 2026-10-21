@@ -45,6 +45,42 @@ export interface SortRule {
   dir: 'asc' | 'desc'
 }
 
+export interface TableQuery {
+  search: string
+  filters: FilterCondition[]
+  /** Öncelik sırasıyla, en fazla 3. */
+  sort: SortRule[]
+  /** Sayfa numarası 1'den başlar (Laravel simplePaginate ile aynı). */
+  page: { number: number; size: number }
+  /** Görünür sütun id'leri. */
+  columns: string[]
+  /** Sunucudan istenen alan yolları: görünür sütunların yolları + sütunların `fields`'i + tablonun `fields` prop'u. */
+  fields: string[]
+}
+
+export type QueryWithoutPage = Omit<TableQuery, 'page'>
+
+export type RequestReason = 'initial' | 'query' | 'page' | 'columns' | 'refresh'
+
+/**
+ * `@request` olayının yükü. Paket veri çekmez: uygulama bu sorguyla kendi HTTP'sini atar ve
+ * `rows`, `hasMore`, `loading`, `error` prop'larını günceller. Her yeni talepte öncekinin `signal`'i abort edilir.
+ */
+export interface TableRequest {
+  query: TableQuery
+  reason: RequestReason
+  signal: AbortSignal
+}
+
+/** `countable` tablolarda "Count total" → `@count`; uygulama `total` prop'unu verir. */
+export interface CountRequest {
+  query: QueryWithoutPage
+  signal: AbortSignal
+}
+
+/** `true` genel hata; string mesaj; nesne: mesaj + hata kimliği ("Copy error ID"). */
+export type TableError = boolean | string | { message?: string; id?: string }
+
 export interface ColumnLayout {
   /** Görünür + gizli tüm sütunların sırası. */
   order: string[]

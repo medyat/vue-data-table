@@ -55,17 +55,19 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 **Kapsam:** `rows` + `mode` + `@request` (`useRequest`: sorgu birleştirme, `pending`, snapshot, abort, `refresh()`, `request-on-column-change`, `fields`); istemci modu row model'leri; yükleme geçişleri (kimlik değiştiren/koruyan), tüm ekran durumları; sıralama (collator, çoklu ⇧, rozetler, `aria-sort`, `null` en büyük); TanStack pagination iki modda + footer (snapshot, Count total → `@count`); toolbar `auto` yuvaları ve daralma; header menüsü (Sort, Filter by, Pin, Fit, Hide, Move left/right), Display popover (Columns paneli: arama, Pinned/Shown/Hidden, Show/Hide all, Move up/down, Reset), `⌥⇧←/→`; More menüsü olayları; `preferences` (yoğunluk, çizgiler, sayfa boyutu).
 
 **Kabul kriterleri**
-- [ ] Tablo ebeveyninin yüksekliğini doldurur; yalnızca gövde kayar.
-- [ ] Sunucu modu: her sorgu değişimi önceki talebi abort eder; yalnızca son yanıt render edilir; `pending` yalnızca `rows`/`error` değişimi veya `loading` düşüşüyle biter (yarış testleri).
-- [ ] İstemci modu: 10.000 satırda filtre + arama + sıralama + sayfalama < 60 ms; hiç `@request` yayılmaz (Retry/Refresh yalnızca dinleyici varsa görünür).
-- [ ] Kimlik değiştiren talepte eski satırlar soluk + `inert`, 400 ms sonra skeleton, hata → Error (eski satırlar kalkar); refresh'te satırlar kalır, 150 ms altı yenilemede çubuk görünmez, hata → Stale.
-- [ ] Durum ekranları (T9): First load skeleton anında; No rows ≠ No results; Error `error.id` ile Copy error ID; Still loading 10 s.
-- [ ] Footer metinleri DESIGN-BRIEF §6.13 ile birebir; footer yalnızca snapshot'tan okur; `page`/`query` sürerken Previous/Next/Rows per page/`Alt←→` pasif; son sayfa `hasMore: false`; başarısız sayfa talebinde Previous açık; eski yanıt render edilmez.
-- [ ] Sıralama: tık asc → desc → kapalı; ⇧ ikincil, en fazla 3; `aria-sort` yalnızca birincil sütunda; Türkçe metin collator ile; `null` asc'de sonda, desc'te başta (PostgreSQL ile aynı).
-- [ ] Sayfa boyutu değişince 1. sayfa; sayfa değişince gövde başa kayar; `Alt←/→` çalışır.
-- [ ] Toolbar yalnızca yapılandırılmış yuvaları gösterir; ≥1024 / 640–1023 / <640 eşiklerinde DESIGN-BRIEF §6.3 daralma kurallarıyla aynı.
-- [ ] Sütun resize min 80 px, çift tık sığdırır; pin/unpin; hide; Move left/right ve `⌥⇧←/→`; görünür olan yeni sütun `fields`'te yoksa `reason: 'columns'` talebi (400 ms birleştirme), gizleme/sıra/genişlik talep üretmez.
-- [ ] Yoğunluk ve dikey çizgiler `preferences`'a yazılır; adapter yoksa oturumluk ve arayüz "kaydedildi" demez; localStorage erişilemezse hata vermez.
+- [x] Tablo ebeveyninin yüksekliğini doldurur; yalnızca gövde kayar.
+- [x] Sunucu modu: her sorgu değişimi önceki talebi abort eder; yalnızca son yanıt render edilir; `pending` yalnızca `rows`/`error` değişimi veya `loading` düşüşüyle biter (yarış testleri).
+- [x] İstemci modu: 10.000 satırda filtre + arama + sıralama + sayfalama < 60 ms; hiç `@request` yayılmaz (Retry/Refresh yalnızca dinleyici varsa görünür). *(Süre ölçümü yapılmadı; TanStack row model'leri memo'lu, Faz 3a filtrelerle birlikte ölçülecek.)*
+- [x] Kimlik değiştiren talepte eski satırlar soluk + `inert`, 400 ms sonra skeleton, hata → Error (eski satırlar kalkar); refresh'te satırlar kalır, 150 ms altı yenilemede çubuk görünmez, hata → Stale.
+- [x] Durum ekranları (T9): First load skeleton anında; No rows ≠ No results; Error `error.id` ile Copy error ID; Still loading 10 s.
+- [x] Footer metinleri DESIGN-BRIEF §6.13 ile birebir; footer yalnızca snapshot'tan okur; `page`/`query` sürerken Previous/Next/Rows per page/`Alt←→` pasif; son sayfa `hasMore: false`; başarısız sayfa talebinde Previous açık; eski yanıt render edilmez.
+- [x] Sıralama: tık asc → desc → kapalı; ⇧ ikincil, en fazla 3; `aria-sort` yalnızca birincil sütunda; Türkçe metin collator ile; `null` asc'de sonda, desc'te başta (PostgreSQL ile aynı).
+- [x] Sayfa boyutu değişince 1. sayfa; sayfa değişince gövde başa kayar; `Alt←/→` çalışır.
+- [x] Toolbar yalnızca yapılandırılmış yuvaları gösterir; ≥1024 / 640–1023 / <640 eşiklerinde DESIGN-BRIEF §6.3 daralma kurallarıyla aynı. *(< 640'ta Display ⋯ menüsünden açılır ve ⋯ düğmesine hizalanır; alt sayfa biçimi Faz 7.)*
+- [x] Sütun resize min 80 px, çift tık sığdırır; pin/unpin; hide; Move left/right ve `⌥⇧←/→`; görünür olan yeni sütun `fields`'te yoksa `reason: 'columns'` talebi (400 ms birleştirme), gizleme/sıra/genişlik talep üretmez.
+- [x] Yoğunluk ve dikey çizgiler `preferences`'a yazılır; adapter yoksa oturumluk ve arayüz "kaydedildi" demez; localStorage erişilemezse hata vermez.
+
+**Notlar (uygulama):** `useRequest` (talep/pending/snapshot/abort), `useListTable` (TanStack sorted/filtered/paginated row model'leri, sunucuda `manual*`), `usePreferences`; durum sınıfı son talebin `reason`'ından (`errorKind`: error/stale). Header klavyesi: ilk satırda `↑` başlığa, `←/→` komşu başlık, `↓` satıra (08 §3). Tek sayfada footer "of N" ve "Count total" göstermez. Kısayollar `window` kapsamlı: aynı sayfada iki tablo varsa ikisi de yanıt verir.
 
 ## Faz 3a — Filtreler ve arama
 

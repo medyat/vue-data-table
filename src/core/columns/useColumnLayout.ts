@@ -163,6 +163,53 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     table.getVisibleLeafColumns().reduce((sum, c) => sum + trackMin(trackOf(c, c.getIsPinned() !== false)), 0),
   )
 
+  /** Columns paneli (05 §5): tüm yaprak sütunlar etkin sırada; Pinned / Shown / Hidden bölümleri buradan türer. */
+  const panel = computed(() =>
+    table
+      .getOrderColumnsFn()(table.getAllLeafColumns())
+      .map((c) => {
+        const def = defById.value.get(c.id)!
+        const pinned = c.getIsPinned()
+        return {
+          id: c.id,
+          def,
+          visible: c.getIsVisible(),
+          pinned: pinned === false ? null : pinned,
+          canHide: c.getCanHide(),
+        }
+      }),
+  )
+  const counts = computed(() => ({
+    shown: table.getVisibleLeafColumns().length,
+    total: table.getAllLeafColumns().length,
+  }))
+
+  /** Move left/right (D22: sürükleme yok): aynı sabitleme bölgesindeki görünür komşuyla yer değiştirir. */
+  const move = (id: string, delta: -1 | 1) => {
+    const ordered = table.getOrderColumnsFn()(table.getAllLeafColumns())
+    const at = ordered.findIndex((c) => c.id === id)
+    const me = ordered[at]
+    if (!me) return
+    const region = me.getIsPinned()
+    let j = at + delta
+    while (j >= 0 && j < ordered.length && !(ordered[j]!.getIsVisible() && ordered[j]!.getIsPinned() === region))
+      j += delta
+    const other = ordered[j]
+    if (!other) return
+    const ids = ordered.map((c) => c.id)
+    ids[at] = other.id
+    ids[j] = me.id
+    table.setColumnOrder(ids)
+  }
+
+  const reset = () => {
+    const s = initialState.value
+    table.setColumnOrder(s.columnOrder)
+    table.setColumnVisibility(s.columnVisibility)
+    table.setColumnPinning(s.columnPinning)
+    table.setColumnSizing(s.columnSizing)
+  }
+
   const resizing = computed(() => {
     const id = table.atoms.columnResizing.get().isResizingColumn
     return id ? { id, size: table.getColumn(id)?.getSize() ?? 0 } : null
@@ -173,6 +220,10 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     start,
     center,
     end,
+    panel,
+    counts,
+    move,
+    reset,
     colsVar,
     offsetVars,
     minWidth,

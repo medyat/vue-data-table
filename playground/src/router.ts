@@ -5,8 +5,9 @@ import Placeholder from './pages/Placeholder.vue'
 import T1List from './pages/T1List.vue'
 import T7Actions from './pages/T7Actions.vue'
 import T8Cells from './pages/T8Cells.vue'
+import T9States from './pages/T9States.vue'
 
-const REAL: Record<string, Component> = { t1: T1List, t7: T7Actions, t8: T8Cells }
+const REAL: Record<string, Component> = { t1: T1List, t7: T7Actions, t8: T8Cells, t9: T9States }
 
 /** DESIGN-BRIEF görev paketleri; her biri bir rota. Sayfa, ilgili fazda gerçek senaryoyla değişir. */
 export const PAGES = [

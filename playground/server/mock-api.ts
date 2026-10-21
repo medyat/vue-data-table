@@ -126,10 +126,16 @@ export function mockApi(): Plugin {
         if (url.pathname === '/orders/count') return json(200, { total: matching.length })
         if (url.pathname !== '/orders') return json(404, { message: 'Not found' })
 
-        const sort = q.get('sort') as keyof Order | null
+        const sort = q.get('sort')
         const dir = q.get('dir') === 'desc' ? -1 : 1
+        const get = (o: Order, path: string): unknown =>
+          path.split('.').reduce<unknown>((v, k) => (v as Record<string, unknown> | null)?.[k], o)
         const sorted = sort
-          ? [...matching].sort((a, b) => (a[sort]! > b[sort]! ? dir : a[sort]! < b[sort]! ? -dir : 0))
+          ? [...matching].sort((a, b) => {
+              const x = get(a, sort) as string | number
+              const y = get(b, sort) as string | number
+              return x > y ? dir : x < y ? -dir : 0
+            })
           : matching
         const page = Math.max(1, Number(q.get('page') ?? 1))
         const size = Math.min(500, Math.max(1, Number(q.get('size') ?? 100)))

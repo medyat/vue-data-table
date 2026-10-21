@@ -46,8 +46,21 @@ export function createFormat(locale: string) {
   const decimalFmt = byDp((dp) => nf({ minimumFractionDigits: dp, maximumFractionDigits: dp }))
   const percentFmt = byDp((dp) => nf({ style: 'percent', minimumFractionDigits: dp, maximumFractionDigits: dp }))
 
-  const relativeFormat = () =>
-    cached('r', locale, undefined, () => new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }))
+  const relativeFormat = (style: 'long' | 'short') =>
+    cached('r', locale, { style }, () => new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style }))
+
+  /** "2 hours ago" / "in 3 days"; en büyük anlamlı birim. Footer tazeliği `short` ("14 min. ago"). */
+  const relative = (value: IsoDate | Date, now: Date = new Date(), style: 'long' | 'short' = 'long'): string => {
+    const diffMs = toDate(value).getTime() - now.getTime()
+    const abs = Math.abs(diffMs)
+    const rtf = relativeFormat(style)
+    if (abs < 60_000) return rtf.format(0, 'second')
+    if (abs < 3_600_000) return rtf.format(Math.round(diffMs / 60_000), 'minute')
+    if (abs < DAY_MS) return rtf.format(Math.round(diffMs / 3_600_000), 'hour')
+    if (abs < 30 * DAY_MS) return rtf.format(Math.round(diffMs / DAY_MS), 'day')
+    if (abs < 365 * DAY_MS) return rtf.format(Math.round(diffMs / (30 * DAY_MS)), 'month')
+    return rtf.format(Math.round(diffMs / (365 * DAY_MS)), 'year')
+  }
 
   return {
     locale,
@@ -81,18 +94,7 @@ export function createFormat(locale: string) {
     /** Tam zaman (tooltip): "Oct 17, 2026, 09:42:10 GMT+3". */
     dateTimeFull: (value: IsoDate | Date): string =>
       df({ dateStyle: 'medium', timeStyle: 'long' }).format(toDate(value)),
-    /** "2 hours ago" / "in 3 days"; en büyük anlamlı birim. */
-    relative: (value: IsoDate | Date, now: Date = new Date()): string => {
-      const diffMs = toDate(value).getTime() - now.getTime()
-      const abs = Math.abs(diffMs)
-      const rtf = relativeFormat()
-      if (abs < 60_000) return rtf.format(0, 'second')
-      if (abs < 3_600_000) return rtf.format(Math.round(diffMs / 60_000), 'minute')
-      if (abs < DAY_MS) return rtf.format(Math.round(diffMs / 3_600_000), 'hour')
-      if (abs < 30 * DAY_MS) return rtf.format(Math.round(diffMs / DAY_MS), 'day')
-      if (abs < 365 * DAY_MS) return rtf.format(Math.round(diffMs / (30 * DAY_MS)), 'month')
-      return rtf.format(Math.round(diffMs / (365 * DAY_MS)), 'year')
-    },
+    relative,
     /** Gecikme gün sayısı; gelecekte veya bugünse 0. */
     daysLate: (value: IsoDate | Date, today: Date = new Date()): number =>
       Math.max(0, Math.floor((startOfDay(today) - startOfDay(toDate(value))) / DAY_MS)),
