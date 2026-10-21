@@ -13,7 +13,6 @@ Ortak bir çekirdek (`core/`) üzerinde **üç bileşen**. Üçü de aynı hücr
 | Bileşen | Giriş noktası | Nerede | Özet |
 |---|---|---|---|
 | `DataTable` | `@swors/data-table` | Siparişler, ürünler, müşteriler… modülün ana ekranı | Sayfa yüksekliğini doldurur; sanal satırlar; filtre, görünümler, sayfalama, sayfa kapsamlı seçim, toplu aksiyon, satır detayı. İstemci ya da sunucu modu |
-| `DocumentTable` | `@swors/data-table` | Sipariş, fatura, irsaliye detay sayfası | Yükseklik içeriğe göre; satır detayı (expand) ve toplamlar; toolbar/filtre/sayfalama/sıralama yok |
 | `DataSheet` | `@swors/data-table/sheet` | Ürün kartları, fiyat listeleri (≤ 10.000 satır) | Excel benzeri ızgara; hücre içi düzenleme, yapıştırma, doldurma, geri al, içe aktarma; değişiklikler `@save` ile uygulamaya teslim edilir |
 
 **Paket veri çekmez, kaydetmez.** Uygulama `rows` verir; sunucu modunda `@request` ile sorguyu alır ve kendi HTTP'siyle cevaplar; DataSheet'te `@save` ile değişiklikleri alır ve `applyResult()` ile sonucu bildirir. Paket içinde HTTP, önbellek, otomatik yeniden deneme veya iş mantığı yoktur.
@@ -27,7 +26,6 @@ Ortak bir çekirdek (`core/`) üzerinde **üç bileşen**. Üçü de aynı hücr
 | [03-column-types.md](03-column-types.md) | 24 sütun tipi: hücre görünümü, hizalama, filtre operatörleri, editör; `cell` / `actions` / `editor` ile özelleştirme |
 | [04-filters-and-views.md](04-filters-and-views.md) | Filtre modeli (18 operatör), çip davranışı, arama, sıralama, görünümler, tercihler |
 | [05-mode-list.md](05-mode-list.md) | DataTable: düzen, toolbar, header, sütun yönetimi, seçim, satır etkileşimleri, sayfalama, durumlar, mobil |
-| [06-mode-document.md](06-mode-document.md) | DocumentTable |
 | [07-mode-sheet.md](07-mode-sheet.md) | DataSheet: düzenleme, pano, doldurma, geri al, içe aktarma, kayıt teslimi, Laravel tarifi |
 | [08-accessibility-keyboard.md](08-accessibility-keyboard.md) | ARIA rolleri, odak modelleri, tüm klavye kısayolları |
 | [09-i18n.md](09-i18n.md) | Tüm arayüz metinleri (EN + TR) ve biçimlendirme kuralları |
@@ -65,9 +63,9 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 | D12 | **DataSheet'te satır ekleme/çıkarma partiyi değiştirir,** sunucuda kayıt oluşturmaz/silmez. “Remove from list” nötr bir işlemdir. | |
 | D13 | **DataSheet'te filtre yalnızca görünümü daraltır;** gizlenen satırlardaki değişiklikler korunur. | 10.000 satırda kaybolan düzenlemeleri önler. |
 | D14 | **DataSheet telefonda salt okunur** (< 768 px veya yalnızca dokunmatik). | Hücre düzenleme telefonda verimsiz. |
-| D15 | **Belge satırlarında sıralama yok;** satırlar belge sırasında (#) kalır. | |
+| D15 | ~~Belge satırlarında sıralama yok.~~ D31 ile geçersiz (belge tablosu kapsam dışı). | |
 | D16 | **Arayüz metinleri İngilizce varsayılan,** Türkçe çeviri birinci sınıf (09). | Paket uluslararası yayınlanacak. |
-| D17 | **Üç bileşen, tek çekirdek.** `DataTable`, `DocumentTable`, `DataSheet`; `variant` prop'u yok. | `defineProps<A \| B>()` union'ı düzleştirir; ayrı sözleşmeler daha sade ve tip güvenli. |
+| D17 | **İki bileşen, tek çekirdek.** `DataTable`, `DataSheet`; `variant` prop'u yok. (D31'e kadar üçüncü bileşen `DocumentTable` vardı.) | `defineProps<A \| B>()` union'ı düzleştirir; ayrı sözleşmeler daha sade ve tip güvenli. |
 | D18 | **Paket veri çekmez.** `rows` tek giriştir; sunucu modunda `@request` → uygulama HTTP → `rows/hasMore/loading/error`. DataSheet'te `@save` → uygulama HTTP → `applyResult()`. | HTTP, önbellek ve retry uygulamanın kalıbıyla; paket I/O kodu taşımaz. |
 | D19 | **Seçim sayfa kapsamlıdır.** Sayfa, sayfa boyutu, filtre, arama ve sıralama değişince temizlenir; refresh'te korunur. All-matching, sayfalar arası seçim ve `excludedKeys` yoktur. | “Görmediğin satırı işleme”; basit ve öngörülebilir. |
 | D20 | **Toplu ve satır aksiyonları iş mantığı taşımaz.** `run(rows)` / `run(row)` beklenmez; onay, toast, temizleme ve refresh uygulamanındır. | Paket işlem motoru değildir. |
@@ -79,6 +77,7 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 | D26 | **Toolbar'da facet / hızlı filtre çipi yok.** Her filtre Filter › column picker veya header menüsünden eklenir; `ColumnDef.facet` yoktur. | Tek giriş noktası, sade toolbar. (Tasarım, 2026-10-21) |
 | D27 | **Görünüm kaydetme aksiyonları görünüm menüsündedir.** Görünüm düzenlenince menünün üstünde Save changes (`⌘S`) · Save as new view… · Discard changes; filtre satırında “View edited · Reset · Save view” yoktur. | Filtre satırı yalnızca filtre içindir; sıralama/sütun değişikliği de aynı yerden kaydedilir. (Tasarım, 2026-10-21) |
 | D28 | **Önizleme (peek) paketin değil.** Sağ panel, satırdaki Preview düğmesi, menüdeki Preview, `Space`, `peek` prop'u ve `#peek` slot'u yoktur; satır aksiyon sütunu yalnızca ⋯ (56 px). İhtiyaç duyan uygulama `row-click` olayı veya `rowActions` ile kendi panelini/sayfasını açar. | Sanal listeyle odak/Prev-Next senkronu pahalı; uygulama önizlemeyi kendi tasarımıyla taşır. (Tasarım, 2026-10-21) |
+| D31 | **Belge tablosu (`DocumentTable`) kapsam dışı.** Paket iki bileşendir: `DataTable`, `DataSheet`. Detay sayfasındaki satır listeleri için uygulama `DataTable`'ı istemci modunda `toolbar="false"` ile kullanır ya da kendi basit tablosunu yazar. 06 dokümanı, handoff 05, brief §7 ve T10 tasarımı kaldırıldı. | Kullanıcı: beklenen bileşen bu değildi; genel "SimpleTable" denemesi de istenen şey olmadı. (2026-10-22) |
 | D30 | **Paylaşılan görünüm yok.** Görünümler `system` (kodda) ve `personal` (kullanıcının kendi); `shared` türü, `readonly`, adapter `capabilities.share`, “Share with my team” kutusu ve “Shared views” bölümü yoktur. Ekip için ortak görünüm gerekirse `views` prop'unda system view olarak kodda tanımlanır. | Kullanıcı kararı: görünümler kişiseldir; paylaşım katmanı (yetki, salt okunur, çakışma) ürünün ihtiyacı değil. (2026-10-21) |
 | D29 | **Filtre satırı tek satırdır.** Çipler sarılmaz, `+N more` popover'ı ve Show all / Show fewer yoktur; sığmayan çipler yatay kayar, sağ kenarda solma, Clear all sağda sabit. | D2 çip sayısını sütun sayısıyla sınırlar; iki satır + ölçüm + gizli çip listesi bu sınırlı durum için karmaşıktı. (Uygulama, 2026-10-21) |
 

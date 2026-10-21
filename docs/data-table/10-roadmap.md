@@ -1,6 +1,6 @@
 # 10 · Yol haritası ve kabul kriterleri
 
-Sıra: **çekirdek → liste → belge satırları → toplu düzenleme.** Her faz kendi başına yayınlanabilir bir paket sürümü üretir. Her fazın sonunda CLAUDE.md'deki **Bitti tanımı** geçerlidir (light/dark, 3 yoğunluk, klavye, ekran okuyucu, playground sayfası, `vue-tsc` + ESLint sınırları + testler temiz).
+Sıra: **çekirdek → liste → toplu düzenleme.** Her faz kendi başına yayınlanabilir bir paket sürümü üretir. Her fazın sonunda CLAUDE.md'deki **Bitti tanımı** geçerlidir (light/dark, 3 yoğunluk, klavye, ekran okuyucu, playground sayfası, `vue-tsc` + ESLint sınırları + testler temiz).
 
 Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahibine sorun. Her fazda önce "TanStack'te var mı?" sorusu (01 · TanStack sınırı); özel kod yalnızca yerleşik özellik yetmeyince.
 
@@ -12,7 +12,7 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 | 3a | Filtreler ve arama | 0.3 |
 | 3b | Görünümler ve tercihler | 0.4 |
 | 4 | Seçim, bulk bar, satır etkileşimleri | 0.5 → **1.0 (DataTable tamam)** |
-| 5 | DocumentTable | 1.1 |
+| 5 | — (kaldırıldı, D31) | — |
 | 6a–6d | DataSheet | 1.2 → 1.5 |
 | 7 | Telefon, erişilebilirlik turu, dokümantasyon | 1.6 |
 
@@ -126,18 +126,9 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 
 **Notlar (uygulama):** Seçim ve expand durumu TanStack `rowSelectionFeature` / `rowExpandingFeature` ile `useListTable`'da; seçim sütunu (40 px) ve ⋯ sütunu (56 px) sütun düzeninin dışındadır, GridRoot `--cols`'un başına/sonuna ekler ve sabit sütun ofsetlerini kaydırır (görünüm ve Columns paneli bunları görmez). Sanal öğe = satır + açık detay (`.dt-item`); yalnızca açık öğeler `measureElement` ile ölçülür, kapanınca `resizeItem` satır yüksekliğine döndürür, sorgu/sayfa değişiminde `measure()`. Satırda `↵`, `row-click="open"` ve menüdeki Open birincil `<a href>`'e gerçek tık üretir: navigasyon ve değiştirici tuş davranışı tarayıcının, `row-open` dinleyicisi `preventDefault` ile durdurur; `href` yoksa `↵` bir şey yapmaz. ⋯ sütunu birincil sütun ya da `rowActions` varsa görünür. Satır ⋯ ve bulk ⋯ düğmelerinde Enter/Space ızgara/Listbox'a ulaşmaz. Toast yalnızca "Copied"; "Dim" satır durumu (işlem süren satır) için API yok, uygulanmadı. Alt satır yatay kaydırmada içerikle birlikte kayar (sticky değil). Playground: T4/T5/T6 ayrı rota değil, T1'in parçası (T2 kararıyla aynı); T1'de satır tıklaması seçimi, `?bar=toolbar` seçim çubuğu varyantı.
 
-## Faz 5 — DocumentTable
+## Faz 5 — (kaldırıldı)
 
-**Tasarım:** T10.
-**Kapsam:** `DocumentTable`, sanal olmayan gövde, 2 satır sarma, bölüm başlığı + Expand all, alt satır düzeni, `DocumentTotals`, hücrede birim (`unit` fonksiyonu), satır araması (`lineSearch`), boş durum, telefon öncelik düzeni ve toplam listesi.
-
-**Kabul kriterleri**
-- [ ] Yükseklik içeriğe göre; sayfa kayar; header sticky değil.
-- [ ] Sıralama, seçim, toolbar, filtre, sayfalama yok (D15).
-- [ ] Toplamlar `alignTo` sütununa hizalı; para kodu yalnızca genel toplamda; negatif U+2212.
-- [ ] `lineSearch` açıkken arama kutusu; eşleşme vurgusu; "3 of 84 lines"; toplamlar değişmez.
-- [ ] < 768 px: Product sabit, Line total yanında, kalanlar kayar; toplamlar özet liste.
-- [ ] T10 tasarımı görsel olarak birebir.
+Belge satırları bileşeni (`DocumentTable`) 2026-10-22'de kapsam dışına alındı (D31); sonraki fazların numaraları korunmuştur.
 
 ## Faz 6 — DataSheet
 

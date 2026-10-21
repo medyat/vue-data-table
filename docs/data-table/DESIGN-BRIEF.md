@@ -18,12 +18,11 @@ Bu doküman, SWORS ERP için geliştirilecek Vue 3 tablo paketinin **tek referan
 ## İçindekiler
 
 1. [Ürün bağlamı](#1-ürün-bağlamı)
-2. [Sistemin özeti: üç bileşen, tek çekirdek](#2-sistemin-özeti-üç-bileşen-tek-çekirdek)
+2. [Sistemin özeti: iki bileşen, tek çekirdek](#2-sistemin-özeti-iki-bileşen-tek-çekirdek)
 3. [Tasarım ilkeleri ve KOBİ yaklaşımı](#3-tasarım-ilkeleri-ve-kobi̇-yaklaşımı)
 4. [Görsel sistem](#4-görsel-sistem)
 5. [Ortak çekirdek davranışları](#5-ortak-çekirdek-davranışları)
 6. [DataTable](#6-datatable)
-7. [DocumentTable](#7-documenttable)
 8. [DataSheet](#8-datasheet)
 9. [Teknik mimari (davranış düzeyinde)](#9-teknik-mimari-davranış-düzeyinde)
 10. [Kapsam dışı](#10-kapsam-dışı)
@@ -42,7 +41,6 @@ SWORS, üretim yapan KOBİ'ler için bir ERP'dir (Laravel + Inertia + Vue 3). He
 | Bileşen | Ekran | Kullanıcı ne yapar |
 |---|---|---|
 | **DataTable** | Modülün liste ekranı (Üretim emirleri, Ürünler, Siparişler…) | Bulur (arama, filtre, kayıtlı görünüm), tarar (sayfalama, sanal satırlar), seçip toplu iş yapar, kayda iner (detay satırı, açma) |
-| **DocumentTable** | Belge detay sayfasının satırları (Sipariş SO-26-1182'nin kalemleri, fatura satırları, irsaliye) | Belgeyi okur: ne, kaç adet, kaça, toplam ne; satır detayına bakar |
 | **DataSheet** | Toplu düzenleme (ürün fiyat listesi, stok kartları; en fazla 10.000 satır) | Excel gibi düzenler: yaz, yapıştır, doldur, geri al, Excel'den içe aktar; tek Save ile teslim eder |
 
 ### 1.2 Neden geliştiriyoruz
@@ -59,7 +57,6 @@ Kullanıcıların önemli bir kısmı teknolojiye çok hâkim olmayan, günde sa
 | Kişi | Rol | Tipik iş | Tablodan beklediği |
 |---|---|---|---|
 | **Ayşe** | Üretim planlama sorumlusu | Sabah “Gebze tesisi · bu hafta termin” görünümünü açar, geciken emirleri bulur, 20 emri seçip “Release” yapar | Kayıtlı görünüm bir tıkla; geciken satır kırmızı tarih ile görünür; toplu işlem iki adımda |
-| **Mehmet** | Satış temsilcisi | Müşteri siparişini açar, kalemleri ve toplamı okur, teslimat detayını genişletir | Belge satırları temiz, toplamlar hizalı, sütun karmaşası yok |
 | **Zeynep** | Muhasebe | Fatura listesinde tarih aralığı ve durum filtresi; tutar sütunlarını karşılaştırır | Sayılar alt alta hizalı, para birimi karışmaz, filtre çipi ne yaptığını söyler |
 | **Can** | Ürün/stok sorumlusu | 3.000 ürünün liste fiyatını Excel'den yapıştırır, hataları düzeltir, kaydeder | Excel refleksleri çalışır (⌘C/⌘V, ⌘Z, aşağı doldur), hata hücrede, kaydetmeden önce |
 | **Geliştirici** (SWORS ekibi) | Vue/TS | Sütun tanımlarını feature'ın `columns.ts` dosyasında yazar, veriyi kendi API'siyle çeker | Tip güvenli tanım, az yapılandırma, paket I/O yapmaz |
@@ -72,31 +69,30 @@ Tasarımlarda gerçekçi SWORS verisi kullanılır; sayı uydurulmaz, biçimler 
 |---|---|---|
 | **Üretim emri** (DataTable) | number (id, birincil), product (string + SKU ikinci satır), customer.title (string), status (select: Draft/Planned/Released/In progress/On hold/Done), produced (percentage, bar), owner (user), due_date (date, overdue), plant (select), value (currency TRY), priority (select), created_at (datetime) | `WO-26-0418 · Hydraulic cylinder HC-80 · Kuzey Otomotiv · In progress · 68% · Ayşe K. · Oct 24 · Gebze · 412,800.00 TRY` |
 | **Ürün** (DataSheet) | sku (id, anahtar), name (string), category (select), unit (select: pcs/sets/kg), list_price (currency), cost (currency), vat (percentage), min_stock (int), lead_time (int, birim d), active (boolean), barcode (string), tags (tags) | `HC-080-S · Hydraulic cylinder HC-80 · Hydraulics · pcs · 1,650.00 · 1,120.00 · 20% · 10 · 14 · Yes` |
-| **Satış siparişi kalemi** (DocumentTable) | # (satır no), product (string + SKU), quantity (int/float + birim), unit_price (currency, kodsuz), discount (percentage), vat (percentage), line_total (currency) | `1 · Hydraulic cylinder HC-80 / HC-080-S · 120 pcs · 1,650.00 · — · 20% · 198,000.00` |
 | **Müşteri** (DataTable) | code (id), title (string, birincil), city (string), segment (select), owner (user), balance (currency), last_order (datetime relative), email, phone | `C-0142 · Kuzey Otomotiv · Kocaeli · OEM · Mehmet D. · 84,200.00 TRY · 2 hours ago` |
 | **Fatura** (DataTable) | number (id), customer (string), issued_at (date), due_at (date, overdue), status (select: Draft/Sent/Paid/Overdue), total (currency), currency (string), paid (boolean) | `INV-26-1182 · Kuzey Otomotiv · Oct 3 · Oct 17 · Overdue · 542,179.50 TRY · No` |
 
 ---
 
-## 2. Sistemin özeti: üç bileşen, tek çekirdek
+## 2. Sistemin özeti: iki bileşen, tek çekirdek
 
-**[Karar D17]** Üç ayrı bileşen vardır; tek bir bileşenin `variant` prop'u yoktur. Her biri kendi props/emits sözleşmesine sahiptir, ama hücre tipleri, token'lar, yoğunluk, biçimlendirme, filtre çipleri, durum ekranları ve klavye yardımcıları ortak çekirdekten gelir.
+**[Karar D17]** İki ayrı bileşen vardır; tek bir bileşenin `variant` prop'u yoktur. Her biri kendi props/emits sözleşmesine sahiptir, ama hücre tipleri, token'lar, yoğunluk, biçimlendirme, filtre çipleri, durum ekranları ve klavye yardımcıları ortak çekirdekten gelir.
 
-| | DataTable | DocumentTable | DataSheet |
-|---|---|---|---|
-| Giriş noktası | `@swors/data-table` | `@swors/data-table` | `@swors/data-table/sheet` (ayrı, tembel yüklenir) |
-| Yükseklik | Ebeveyni doldurur; yalnızca gövde kayar | İçeriğe göre; sayfa kayar | Ebeveyni doldurur |
-| Satır modeli | Sanal, sabit yükseklik, 100 satır/sayfa | Sanal değil, 2 satıra sarabilir | Sanal, 10.000 satıra kadar |
-| Toolbar | Otomatik yuvalar | Yok (bölüm başlığı) | Kendi toolbar'ı (Find, Filter, All/Changed/Errors, Undo/Redo, Add row, Import, Export, Display, Save) |
-| Filtre / arama | Var (çip modeli) | Yalnızca satır araması (opsiyonel) | Çipler yerelde; görünümü daraltır, düzenlemeler korunur |
-| Sıralama | Tekli + ⇧ çoklu (3) | Yok (belge sırası, D15) | Yerel, düzenlenen satır yerinde kalır |
-| Sayfalama | Simple (D7) | Yok | Yok (tamamı yüklü) |
-| Görünümler, tercihler | Var | Yok | Yok (sütun genişliği/gizleme oturumluk) |
-| Seçim | Satır, sayfa kapsamlı (D19) | Yok | Hücre aralığı |
-| Düzenleme | Yok | Yok | Var (tek `editing` hücresi, editörler) |
-| Satır detayı | Expand, open | Expand, open (link) | — |
-| Odak modeli | Satır odaklı | Linkler/butonlar | Hücre odaklı |
-| Veri | `rows` prop; `mode: client \| server`; sunucu modunda `@request` | `rows` prop | `rows` prop + `loading`; `@save` → `applyResult()` |
+| | DataTable | DataSheet |
+|---|---|---|
+| Giriş noktası | `@swors/data-table` | `@swors/data-table/sheet` (ayrı, tembel yüklenir) |
+| Yükseklik | Ebeveyni doldurur; yalnızca gövde kayar | Ebeveyni doldurur |
+| Satır modeli | Sanal, sabit yükseklik, 100 satır/sayfa | Sanal, 10.000 satıra kadar |
+| Toolbar | Otomatik yuvalar | Kendi toolbar'ı (Find, Filter, All/Changed/Errors, Undo/Redo, Add row, Import, Export, Display, Save) |
+| Filtre / arama | Var (çip modeli) | Çipler yerelde; görünümü daraltır, düzenlemeler korunur |
+| Sıralama | Tekli + ⇧ çoklu (3) | Yerel, düzenlenen satır yerinde kalır |
+| Sayfalama | Simple (D7) | Yok (tamamı yüklü) |
+| Görünümler, tercihler | Var | Yok (sütun genişliği/gizleme oturumluk) |
+| Seçim | Satır, sayfa kapsamlı (D19) | Hücre aralığı |
+| Düzenleme | Yok | Var (tek `editing` hücresi, editörler) |
+| Satır detayı | Expand, open | — |
+| Odak modeli | Satır odaklı | Hücre odaklı |
+| Veri | `rows` prop; `mode: client \| `rows` prop | `rows` prop + `loading`; `@save` → `applyResult()` |
 
 **Paket sınırı [Karar D18, D20]:** Paket veri çekmez, kaydetmez, iş mantığı taşımaz. Uygulama satırları verir, sunucu modunda `@request` ile gelen sorguyu kendi HTTP'siyle cevaplar, DataSheet'te `@save` ile gelen değişiklikleri kaydeder ve sonucu `applyResult()` ile bildirir. Toplu aksiyon ve satır aksiyonlarının onayı, toast'ı ve sonrası uygulamanındır. Bu sınır tasarım için şu anlama gelir: paketin arayüzünde “kaydediliyor / hata / başarılı” durumları vardır, ama bunlar uygulamanın verdiği bilgiden türer.
 
@@ -177,7 +173,7 @@ Kurallar **[Karar]:** ton yalnızca anlam taşır; rozet her zaman nokta + metin
 
 ### 4.5 Yoğunluk
 
-`data-density`: **Comfortable / Standard / Compact**. Varsayılan: DataTable Standard, DocumentTable Comfortable, DataSheet Compact. Kişisel tercihtir, görünüme yazılmaz (D5).
+`data-density`: **Comfortable / Standard / Compact**. Varsayılan: DataTable Standard, DataSheet Compact. Kişisel tercihtir, görünüme yazılmaz (D5).
 
 | Token | Comfortable | Standard | Compact |
 |---|---|---|---|
@@ -222,7 +218,7 @@ Toolbar padding 10 × 12, kontroller 32 px · filtre satırı 8 × 12, çip 28 p
 
 ## 5. Ortak çekirdek davranışları
 
-Bu bölüm üç bileşende aynı şekilde çalışan parçaları tanımlar. Tasarım görevleri bunları yeniden tasarlamaz, kullanır.
+Bu bölüm iki bileşende aynı şekilde çalışan parçaları tanımlar. Tasarım görevleri bunları yeniden tasarlamaz, kullanır.
 
 ### 5.1 Hücre tipleri (24) [Karar]
 
@@ -259,9 +255,9 @@ Skeleton tipe göre: metin → %55–80 çubuk, sayı → sağa yaslı kısa çu
 ### 5.2 Boş değer, uzun metin, taşma, ikinci satır, birim [Karar]
 
 - `null`, `undefined`, `''`, boş dizi → `emptyText` (varsayılan `—`, `--dt-text-3`). Asla boş hücre veya sahte `0`. Gerçek `0.00` gösterilir.
-- Tek satır, `…` ile kesilir, tam değer 400 ms gecikmeli tooltip'te. DataTable ve DataSheet'te sarma yok (D8); DocumentTable'da metin sütunları en fazla 2 satır.
+- Tek satır, `…` ile kesilir, tam değer 400 ms gecikmeli tooltip'te. DataTable ve DataSheet'te sarma yok (D8).
 - `secondary` ikinci satır (SKU, e-posta) yalnızca Comfortable'da, 12 px `--dt-text-3`.
-- Birim header'da soluk (`Lead time d`); DocumentTable'da satır başına değişebildiği için hücrede (`120 pcs`).
+- Birim header'da soluk (`Lead time d`).
 - Bilinmeyen `select` değeri ham değerle gri rozet.
 
 ### 5.3 Özel içerik ve hücre aksiyonları [Karar D21]
@@ -537,76 +533,6 @@ Ayşe sabah “Production orders” ekranını açar. Varsayılan görünümü �
 
 ---
 
-## 7. DocumentTable
-
-Kaynak doküman: 06.
-
-### 7.1 Amaç ve farklar [Karar D15]
-
-Sipariş, fatura, irsaliye, satınalma siparişi gibi bir **detay sayfasının içindeki satırlar**. Kullanıcı belgeyi okur; bulmak, filtrelemek, toplu iş yapmak bu ekranın işi değildir. Bu yüzden toolbar, filtre, görünüm, sayfalama, seçim ve sıralama **yoktur**; yerine satır detayı (expand) ve toplamlar vardır. Satırlar salt okunurdur (düzenleme belge düzenleme ekranının işi). Tablo içeriği kadar uzar: **sayfa kayar, tablo kaymaz**; header sticky değildir.
-
-### 7.2 Anatomi
-
-```
-Sayfa başlığı (uygulama): SO-26-1182 [Confirmed] · Kuzey Otomotiv · Gebze plant        [Edit]
-Bilgi şeridi (uygulama): Customer │ Order date │ Delivery │ Payment │ Currency │ Sales rep
-
-Bölüm başlığı:  Lines (6)                              [#section-actions] [Expand all]
-┌ kart (Comfortable) ───────────────────────────────────────────────────────────────┐
-│  ›  │ #  │ Product                     │ Quantity │ Unit price │ Discount │ VAT │ Line total │
-│  ›  │ 1  │ Hydraulic cylinder HC-80    │ 120 pcs  │  1,650.00  │    —     │ 20% │ 198,000.00 │
-│     │    │ HC-080-S                    │          │            │          │     │            │
-│     └ satır detayı (açıksa) ─────────────────────────────────────────────────────  │
-│ ───────────────────────────────────────────────────────────────────────────────── │
-│                                            Subtotal              460,975.00       │
-│                                            Line discounts         −9,158.75       │
-│                                            VAT 20%                90,363.25       │
-│ ───────────────────────────────────────────────────────────────────────────────── │
-│                                            Total            542,179.50 TRY        │
-└───────────────────────────────────────────────────────────────────────────────────┘
-```
-
-- Bölüm başlığı: `title` (15 px / 600) + sayı rozeti; sağda uygulamanın aksiyonları (`#section-actions`, ör. “Add line”) ve **Expand all** (en az bir satırda detay varsa; tümü açıkken **Collapse all**).
-- Kart DataTable kartıyla aynı; `overflow: visible`. Yoğunluk Comfortable; kullanıcı değiştiremez (Display yok), uygulama ayarlayabilir. Dikey çizgiler kapalı.
-
-### 7.3 Sütunlar ve satırlar [Karar]
-
-| Sütun | Genişlik | İçerik |
-|---|---|---|
-| Details (expander) | 36 px | Chevron, yalnızca detayı olan satırda; header `sr-only` “Details” |
-| `#` | 40 px | Satır numarası, mono 12 px `--dt-text-3`; belge sırası |
-| Product | `minmax(0, 1.6fr)` | Ad + SKU ikinci satırda (mono, soluk); ad **en fazla 2 satıra sarılır**, sonra `…` + tooltip |
-| Quantity | 130 px | `int`/`float` + soluk birim hücrede (`120 pcs`; birim satırdan satıra değişebilir) |
-| Unit price | 130 px | `currency`, para kodu **yok** |
-| Discount | 96 px | `percentage`; yoksa `—` |
-| VAT | 76 px | `percentage`, `--dt-text-2` |
-| Line total | 150 px | `currency` 500 ağırlık, para kodu yok; toplamların hizalandığı sütun |
-
-- Para birimi kodu satırlarda gösterilmez, yalnızca genel toplamda (bilgi şeridinde Currency zaten yazar). Sıfır tutarlı satır `0.00`; fiyatı olmayan açıklama satırında sayısal hücreler `—`.
-- Satır yüksekliği içeriğe göre, en az 52 px, dikey dolgu 9 px. Hover `--dt-row-hover`; seçim, current ve satır odak çerçevesi yok (yalnızca expander, link ve hücre aksiyonları odaklanır). Ürün adı linkse yalnızca ad link olur (birincil link, `row-open`).
-- Sütunlar uygulamanın tanımından gelir; yukarıdaki düzen sipariş/fatura için önerilen varsayılandır. İrsaliyede fiyat sütunları ve toplamlar olmayabilir.
-
-### 7.4 Satır detayı (expand)
-
-Açılınca satırın altında tam genişlik alt satır: `--dt-surface-2`, padding `14px 24px 16px 92px` (içerik Product sütunuyla hizalanır). İçerik uygulamanın; örnek: üç sütunlu ızgara (`1.2fr 1fr 1.2fr`, 12.5 px): **Deliveries** (tarih · miktar · durum rozeti: Delivered yeşil, Planned içi boş nötr), **Production** (iş emri linki mono + durum), **Note** (serbest metin `--dt-text-2`); alt başlıklar 11.5 px / 500 / `--dt-text-3`. Veriyi uygulamanın içeriği çeker; paket yükleme göstermez. Expand butonu: `aria-label="Show details for line 2"`.
-
-### 7.5 Toplamlar [Karar]
-
-Satırların altında 1 px üst çizgi; her toplam satırı tablo ızgarasını paylaşır: etiket sağa yaslı (`--dt-text-2`), tutar `alignTo` sütununda sağa yaslı tabular; 30 px satır, 13 px. Negatif indirim gerçek eksiyle. **Genel toplam:** üstte çizgi, 40 px, etiket 600, tutar 15 px / 600 + 11 px soluk mono para kodu. Toplamlar **sunucudan hazır gelir**; paket hesaplamaz. Her zaman tüm satırları kapsar (“Totals always cover all lines”).
-
-### 7.6 Satır araması, boş belge, mobil
-
-- **Satır araması** uygulama açarsa (`lineSearch`; satır sayısına bağlı otomatik eşik yoktur **[Açık: varsayılan]**): bölüm başlığının sağında 200 × 30 px “Find a line”; Product adı, SKU ve aranabilir sütunlarda anında; eşleşme 600 ağırlıkla vurgulanır; kartın altında 40 px footer “3 of 84 lines” + “Totals always cover all lines”; sonuç yoksa “No lines match “valve”” + Clear search; `Esc` temizler.
-- **Boş belge:** 40 px ikon kutusu, “No lines yet”, “Add products to this draft order to see quantities and totals.”, **Add line** (uygulama aksiyonu); header ve toplamlar görünmez, rozet `0`.
-- **< 768 px:** Product sola sabit 176 px (satır no + ad tek satır, SKU ikinci satır her zaman görünür); en düşük `priority` numaralı sayısal sütun (Line total) hemen yanında; kalanlar yatay kayar (`headerShort`: “Disc.”); expander kalkar, satıra dokunmak (link dışı) detayı açar, detay tam genişlik alt alta; toplamlar sütundan çıkıp tablonun altında özet liste (etiket solda, tutar sağda, 30 px; genel toplam 42 px). Satır ≥ 48 px.
-- Yüzlerce satırda sanallaştırma yok; 500 satıra kadar ilk render < 150 ms.
-
-### 7.7 Senaryo: Satış siparişi
-
-Mehmet SO-26-1182'yi açar. Sayfa başlığı ve bilgi şeridi uygulamanın; altında “Lines (6)” bölümü, sağında “Add line” ve “Expand all”. Altı kalem Comfortable yoğunlukta, ürün adı ve SKU iki satırda, miktarlar birimiyle (“120 pcs”, “8 sets”), tutarlar hizalı. Mehmet ikinci satırın chevron'una basar: alt satırda teslimatlar (Oct 12 · 40 pcs · Delivered; Oct 26 · 80 pcs · Planned), üretim emri linki ve not. Toplamlar: Subtotal, Line discounts −9,158.75, VAT 20%, **Total 542,179.50 TRY**. Telefonda aynı belge: Product + Line total yan yana, diğer sütunlar kayar, toplamlar altta liste.
-
----
-
 ## 8. DataSheet
 
 Kaynak doküman: 07.
@@ -782,7 +708,6 @@ export const orderColumns: ColumnDef<Order>[] = [
 ### 9.3 Veri akışı ve sorumluluk sınırı [Karar D18]
 
 - **DataTable** `rows` alır. `mode: 'client'` (varsayılan): her şey yerelde. `mode: 'server'`: sorgu değişince `@request` yayar — `{ query: { search, filters, sort, page: { number, size }, columns, fields }, reason, signal }`; uygulama HTTP'yi atar, `rows`, `hasMore` (Laravel `simplePaginate` → `next_page_url !== null`), `loading`, `error` verir. `refresh()` son talebi yeniden yayar. Sayım `countable` + `@count` → `total`. Yeni görünen sütunun alanı yoksa paket `reason: 'columns'` ile ister.
-- **DocumentTable** yalnızca `rows` ve `totals` alır.
 - **DataSheet** `rows` + `loading` alır; `@save` ile `{ rows: [{ clientId, key, op: 'create' | 'update', values }] }` verir; uygulama kaydeder, `saving` ile ilerlemeyi bildirir, `applyResult([{ clientId, status, fieldErrors?, rowError?, row? }])` çağırır. `lookupKeys` ve `parseFile` uygulamanın verdiği callback'lerdir.
 - Paket içinde HTTP, önbellek, otomatik yeniden deneme, chunk gönderimi ve iş mantığı **yoktur**. Toplu/satır aksiyonları `run(rows)` / `run(row)` olarak çağrılır ve beklenmez.
 
@@ -804,7 +729,7 @@ export const orderColumns: ColumnDef<Order>[] = [
 
 ### 9.7 Sanallaştırma [Karar]
 
-TanStack Virtual; sabit satır yüksekliği (yoğunluk + 1 px); görünür + 10 overscan; sanal öğe = satır + (açıksa) detay, detay yalnızca görünür aralıkta render edilir, yüksekliği ölçülür ve anahtarla önbelleklenir; detay içeriği kaydırmayla unmount olduğu için yerel durum tutmaz (veri önbelleği uygulamanın). DocumentTable sanal değildir.
+TanStack Virtual; sabit satır yüksekliği (yoğunluk + 1 px); görünür + 10 overscan; sanal öğe = satır + (açıksa) detay, detay yalnızca görünür aralıkta render edilir, yüksekliği ölçülür ve anahtarla önbelleklenir; detay içeriği kaydırmayla unmount olduğu için yerel durum tutmaz (veri önbelleği uygulamanın).
 
 ### 9.8 DataSheet değişiklik ve kayıt mimarisi [Karar]
 
@@ -813,17 +738,17 @@ Uygulamanın `rows` dizisine dokunulmaz. Değişiklikler hücre başına **tasla
 ### 9.9 i18n, erişilebilirlik, performans [Karar]
 
 - Tüm metinler i18n anahtarından (EN varsayılan, TR birinci sınıf; `one/other` çoğullar); uygulama ezebilir; seçenek etiketleri uygulamadan gelir. Biçimler bölüm 4.7.
-- WCAG 2.2 AA; NVDA + Firefox/Chrome, VoiceOver + Safari; roller 08 §1 (DataTable `grid`, DocumentTable `table`, DataSheet `grid` + `aria-multiselectable`); tek `aria-live="polite"` bölgesi (“100 rows loaded”, “No results”, “4 selected”, “Sorted by Due date, ascending”, “Pasted 5 rows by 3 columns”), hata `assertive`; yükleme boyunca `aria-busy`; `aria-sort` yalnızca birincil sıralama sütununda; odak göstergesi ≥ 2 px, kontrast ≥ 3:1; renk tek başına anlam taşımaz; dokunma hedefi ≥ 44 px (dokunmatik) / 24 px; `forced-colors` ve `prefers-reduced-motion` desteklenir.
+- WCAG 2.2 AA; NVDA + Firefox/Chrome, VoiceOver + Safari; roller 08 §1 (DataTable `grid`, DataSheet `grid` + `aria-multiselectable`); tek `aria-live="polite"` bölgesi (“100 rows loaded”, “No results”, “4 selected”, “Sorted by Due date, ascending”, “Pasted 5 rows by 3 columns”), hata `assertive`; yükleme boyunca `aria-busy`; `aria-sort` yalnızca birincil sıralama sütununda; odak göstergesi ≥ 2 px, kontrast ≥ 3:1; renk tek başına anlam taşımaz; dokunma hedefi ≥ 44 px (dokunmatik) / 24 px; `forced-colors` ve `prefers-reduced-motion` desteklenir.
 - Bütçeler: liste 500 satırda 60 fps; istemci modunda 10.000 satırda filtre + arama + sıralama + sayfalama < 60 ms; sheet 10.000 satırda girdi gecikmesi < 100 ms, hücre düzenleme < 16 ms, 1.000 × 10 yapıştırma < 300 ms, Changed/Errors geçişi < 50 ms; paket gzip ≤ 60 kB (çekirdek + DataTable), sheet ayrı yüklenir.
 
 ### 9.10 Public API özeti
 
-| | DataTable | DocumentTable | DataSheet |
-|---|---|---|---|
-| Props | `tableId`, `columns`, `rows`, `rowKey`, `mode`, `loading`, `error`, `hasMore`, `total`, `countable`, `fields`, `requestOnColumnChange`, `views`, `toolbar`, `searchPlaceholder`, `selectable`, `selectionBar`, `bulkActions`, `rowActions`, `rowClick`, `expand`, `pageSize`, `pageSizes`, `autoRefresh`, `density`, `locale`, `messages`, `entityName`, `shortcuts` | `tableId`, `columns`, `rows`, `rowKey`, `title`, `totals`, `expand`, `lineSearch`, `density`, `locale`, `messages`, `entityName` | `tableId`, `columns`, `rows`, `rowKey`, `keyColumn`, `loading`, `saving`, `lookupKeys`, `parseFile`, `maxRows`, `newRowDefaults`, `readOnlyBelow`, `density`, `locale`, `messages`, `entityName`, `shortcuts` |
-| Emits | `request`, `count`, `selection-change`, `row-open`, `row-click`, `view-change`, `export`, `import`, `print` | `row-open` | `save`, `export` |
-| Slot'lar | `#expanded`, `#empty`, `#toolbar-end`, `#selection-actions` | `#expanded`, `#empty`, `#section-actions` | `#empty` |
-| Handle | `refresh()`, `clearSelection()` | — | `status`, `isDirty()`, `getChanges()`, `applyResult()`, `reset()`, `undo()`, `redo()`, `goToNextError()` |
+| | DataTable | DataSheet |
+|---|---|---|
+| Props | `tableId`, `columns`, `rows`, `rowKey`, `mode`, `loading`, `error`, `hasMore`, `total`, `countable`, `fields`, `requestOnColumnChange`, `views`, `toolbar`, `searchPlaceholder`, `selectable`, `selectionBar`, `bulkActions`, `rowActions`, `rowClick`, `expand`, `pageSize`, `pageSizes`, `autoRefresh`, `density`, `locale`, `messages`, `entityName`, `shortcuts` | `tableId`, `columns`, `rows`, `rowKey`, `keyColumn`, `loading`, `saving`, `lookupKeys`, `parseFile`, `maxRows`, `newRowDefaults`, `readOnlyBelow`, `density`, `locale`, `messages`, `entityName`, `shortcuts` |
+| Emits | `request`, `count`, `selection-change`, `row-open`, `row-click`, `view-change`, `export`, `import`, `print` | `save`, `export` |
+| Slot'lar | `#expanded`, `#empty`, `#toolbar-end`, `#selection-actions` | `#empty` |
+| Handle | `refresh()`, `clearSelection()` | `status`, `isDirty()`, `getChanges()`, `applyResult()`, `reset()`, `undo()`, `redo()`, `goToNextError()` |
 
 ---
 
@@ -860,7 +785,6 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 |---|---|---|---|
 | Q2 | DataSheet'te sunucuda var olan ama listede olmayan anahtar eklenince (Update satırı) boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet; yalnızca kullanıcının değiştirdiği alanlar gider | Faz 6c |
 | Q3 | Excel içe aktarmada boş hücre mevcut değeri silsin mi? | Hayır, atlanır | Faz 6d |
-| — | DocumentTable satır aramasının açılış varsayılanı (uygulama mı açar, satır sayısına göre mi) | Uygulama açar; eşik yok | Faz 5 |
 | — | `tags` filtresinde seçenek kaynağı (yüklü satırlardan) | Yüklü satırlardan | Faz 3a |
 | — | DataSheet'te yükleme/taşıma hatasının gösterimi (paket prop'u yok, uygulamanın banner'ı) | Uygulamanın | Faz 6c |
 | — | Yükleme süreleri (150 / 400 / 10.000 ms) gerçek SWORS ekranlarında | Paket sabitleri | Faz 7 |
@@ -880,7 +804,7 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 
 ## 12. Claude Design görev paketleri
 
-Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanacak ekranlar/durumlar, zorunlu etkileşimler, örnek veri. Light + dark, Standard yoğunluk (DocumentTable Comfortable, DataSheet Compact) üretilir; gereken yerlerde üç yoğunluk.
+Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanacak ekranlar/durumlar, zorunlu etkileşimler, örnek veri. Light + dark, Standard yoğunluk (DataSheet Compact) üretilir; gereken yerlerde üç yoğunluk.
 
 ### T1 · DataTable ana liste ekranı
 - **Oku:** 1, 3, 4, 5.1–5.2, 6.1–6.3, 6.12–6.14, 6.17.
@@ -924,10 +848,6 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 ### T9 · Durum ekranları
 - **Oku:** 5.6, 6.14, 6.13.
 - **Tasarla:** First load (skeleton), Refreshing (2 px çubuk, Updating…), Query change (soluk + skeleton), Empty (uygulama aksiyonlu), No results (Remove “Due date” / Clear all / Clear search), Error (mesaj, Try again, Copy error ID), Stale (amber şerit), Still loading, “No rows on this page”.
-
-### T10 · DocumentTable satır ve toplam alanları
-- **Oku:** 7 (tamamı), 5.1–5.2.
-- **Tasarla:** sipariş detayındaki Lines bölümü (başlık, sayı rozeti, Add line, Expand all), 6 kalemli tablo (Comfortable, 2 satır ürün adı, birim hücrede, kodsuz tutarlar), bir açık detay satırı (Deliveries / Production / Note), toplamlar (Subtotal, Line discounts −, VAT, Total TRY), satır araması açık hali (“3 of 84 lines”), boş belge, telefon düzeni (Product + Line total, toplam listesi).
 
 ### T11 · DataSheet düzenleme ekranı
 - **Oku:** 8.1–8.10, 5.1, 5.4.
@@ -975,4 +895,4 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### 13.3 Kaynak dokümanlar
 
-`README.md` (ilkeler, D1–D28, Q2–Q3) · `01-architecture.md` · `02-design-tokens.md` · `03-column-types.md` · `04-filters-and-views.md` · `05-mode-list.md` · `06-mode-document.md` · `07-mode-sheet.md` · `08-accessibility-keyboard.md` · `09-i18n.md` · `10-roadmap.md` · `api-draft.ts` · `CLAUDE.md`.
+`README.md` (ilkeler, D1–D28, Q2–Q3) · `01-architecture.md` · `02-design-tokens.md` · `03-column-types.md` · `04-filters-and-views.md` · `05-mode-list.md` · `07-mode-sheet.md` · `08-accessibility-keyboard.md` · `09-i18n.md` · `10-roadmap.md` · `api-draft.ts` · `CLAUDE.md`.

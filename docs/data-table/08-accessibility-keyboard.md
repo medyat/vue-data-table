@@ -7,7 +7,6 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 | Bileşen | Kök | Satır | Hücre | Header |
 |---|---|---|---|---|
 | DataTable | `role="grid"` + `aria-label` (ör. “Production orders”), `aria-rowcount` (bilinmiyorsa `-1`), `aria-colcount` | `role="row"`, `aria-rowindex` (header = 1, ilk veri satırı = 2 + sayfa ofseti), `aria-selected` (seçim açıksa), `aria-expanded` (detayı varsa) | `role="gridcell"` | `role="columnheader"`, `aria-sort` (`ascending`/`descending`; sıralı değilse öznitelik yok) |
-| DocumentTable | `role="table"` | `role="row"` | `role="cell"` | `role="columnheader"` |
 | DataSheet | `role="grid"`, `aria-rowcount` = parti büyüklüğü, `aria-multiselectable="true"` | `role="row"`, `aria-rowindex` | `role="gridcell"`, `aria-colindex`, `aria-selected` (aralıktaysa), `aria-readonly`, `aria-invalid` + `aria-describedby` (hata) | `role="columnheader"`, `aria-sort`, zorunluysa `aria-required` açıklaması |
 
 - Alt satır (expand): `role="row"` içinde tek `role="gridcell"` (`aria-colspan` = sütun sayısı); expand butonunda `aria-controls` → alt satır id'si.

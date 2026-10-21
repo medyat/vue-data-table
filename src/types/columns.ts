@@ -121,7 +121,7 @@ export interface BaseColumn<Row, V = unknown> {
   /** Hesaplanan değer. Verilirse `fields` ile sunucudan istenecek alanlar bildirilir. */
   accessor?: (row: Row) => V
   fields?: string[]
-  /** string → header'da soluk son ek ("pcs", "d"). Fonksiyon → hücrede, satır bazında (belge satırları). */
+  /** string → header'da soluk son ek ("pcs", "d"). Fonksiyon → hücrede, satır bazında. */
   unit?: string | ((row: Row) => string)
 
   align?: 'left' | 'right' | 'center'

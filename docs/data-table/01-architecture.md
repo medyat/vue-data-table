@@ -7,7 +7,6 @@ Ortak bir çekirdek üzerinde üç bileşen. Uygulama (ör. Laravel + Inertia/Vu
 | Bileşen | Giriş | İş |
 |---|---|---|
 | `DataTable` | `@swors/data-table` | Liste ekranı: toolbar, filtre, görünümler, sıralama, sayfalama, seçim, satır detayı; `mode: 'client' \| 'server'` |
-| `DocumentTable` | `@swors/data-table` | Belge satırları: salt okunur, expand, toplamlar |
 | `DataSheet` | `@swors/data-table/sheet` | Toplu düzenleme: hücre seçimi, düzenleme, pano, doldurma, geri al, içe aktarma, kayıt teslimi |
 
 Üçü ayrı bileşendir çünkü `defineProps<A | B>()` union'ı düzleştirip tüm prop'ları zorunlu yapar (compiler-sfc ile doğrulandı); ayrı sözleşmeler daha sade ve tip güvenlidir (D17). Çekirdek "iki kuralı" ile büyür: bir parça en az iki bileşende kullanılıyorsa `core/`'a girer; çekirdekte mod bayrağı yoktur.
@@ -49,7 +48,7 @@ Keyboard binding için `@tanstack/vue-hotkeys` kullanılmaz (1.0 öncesi); tuş 
 
 ```
 src/
-  index.ts                  # DataTable, DocumentTable, createDataTable, tipler
+  index.ts                  # DataTable, createDataTable, tipler
   sheet.ts                  # DataSheet (ayrı giriş: @swors/data-table/sheet)
   core/
     columns/                # useColumnLayout (TanStack), genişlik hesabı, --cols
@@ -72,10 +71,6 @@ src/
     selection/              # BulkBar
     details/                # expand alt satırı
     footer/                 # Pagination
-  document/
-    DocumentTable.vue
-    useDocumentTable.ts     # TanStack: sütunlar + expand
-    DocumentTotals.vue
   sheet/
     DataSheet.vue
     useSheetTable.ts        # TanStack: sütunlar + sıralama + cellSelection
@@ -118,11 +113,6 @@ ESLint sınırları: `core/*` yalnızca `core/*` import eder; `list/`, `document
 ├─ BulkBar (seçim varsa; selectionBar: 'floating' | 'toolbar')
 └─ ScrollPosition (kaydırırken)
 
-<DocumentTable>
-├─ (opsiyonel) SectionHeader: title, sayı, [#section-actions], Expand all, satır araması (lineSearch)
-├─ GridRoot (role="table", sanal değil, yükseklik içeriğe göre)
-└─ DocumentTotals
-
 <DataSheet>
 ├─ Toolbar: Find, Filter, All/Changed/Errors, Undo/Redo, Add row, Import Excel, Export, Display │ değişiklik sayacı, Discard, Save changes ⌘S
 ├─ FilterBar (+ “Filters only change what you see…” notu)
@@ -150,10 +140,6 @@ sütun/filtre/arama/sıralama/sayfa değişimi
 - Arama 250 ms debounce. Filtre değişikliği anında (çip değeri seçilince).
 - `countable` ise footer'daki Count total `@count` yayar; uygulama `total` verir; sorgu (sayfa hariç) değişince sonuç geçersizdir.
 - Laravel karşılığı: `simplePaginate()` (`next_page_url !== null` → `hasMore`), isteğe bağlı count endpoint'i.
-
-### DocumentTable
-
-Satırlar `rows` ile verilir, talep yoktur. Toplamlar `totals` ile hazır gelir (vergi kırılımı sunucu tarafında; paket yalnızca gösterir). Expand içeriği `#expanded` slot'undan; veriyi slot bileşeni çeker.
 
 ### DataSheet
 

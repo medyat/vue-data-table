@@ -19,7 +19,6 @@ export const PAGES = [
   { id: 't7', title: 'T7 · Cell actions', phase: 1 },
   { id: 't8', title: 'T8 · Cell types', phase: 1 },
   { id: 't9', title: 'T9 · States', phase: 2 },
-  { id: 't10', title: 'T10 · Document lines', phase: 5 },
   { id: 't11', title: 'T11 · DataSheet', phase: 6 },
   { id: 't12', title: 'T12 · Saving & import', phase: 6 },
   { id: 't13', title: 'T13 · Phone', phase: 7 },

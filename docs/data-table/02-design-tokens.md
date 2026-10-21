@@ -111,7 +111,7 @@ Tüm sayısal hücreler, sayfalama aralıkları ve sayaçlar `font-variant-numer
 
 ## Yoğunluk
 
-`data-density` özniteliği (`comfortable | standard | compact`) aşağıdaki değişkenleri ayarlar. Varsayılan: list = standard, document = comfortable, sheet = compact.
+`data-density` özniteliği (`comfortable | standard | compact`) aşağıdaki değişkenleri ayarlar. Varsayılan: list = standard, sheet = compact.
 
 | Token | Comfortable | Standard | Compact |
 |---|---|---|---|

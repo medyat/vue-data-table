@@ -3,11 +3,10 @@
  *
  * Bu dosya public sözleşmedir; geliştirme sırasında `src/types/` altına
  * bölünerek taşınır. Alan adlarını değiştirmek gerekirse önce dokümanları
- * (03, 04, 05, 06, 07) güncelleyin.
+ * (03, 04, 05, 07) güncelleyin.
  *
- * Üç bileşen, tek çekirdek:
+ * İki bileşen, tek çekirdek:
  *   <DataTable>      liste ekranı         (import { DataTable } from '@swors/data-table')
- *   <DocumentTable>  belge satırları      (aynı giriş noktası)
  *   <DataSheet>      toplu düzenleme      (import { DataSheet } from '@swors/data-table/sheet')
  *
  * Public API'de TanStack tipi yoktur; TanStack Table yalnızca paket içinde
@@ -19,10 +18,9 @@
  *   3. Filtre, sıralama, sorgu, talep (04, 05)
  *   4. Liste: aksiyonlar, seçim, satır etkileşimleri (05)
  *   5. Görünümler ve tercihler (04)
- *   6. Belge satırları (06)
- *   7. Toplu düzenleme (07)
- *   8. Bileşen props / emits / slots / handle
- *   9. i18n (09)
+ *   6. Toplu düzenleme (07)
+ *   7. Bileşen props / emits / slots / handle
+ *   8. i18n (09)
  */
 
 import type { Component, Plugin, VNodeChild } from 'vue'
@@ -175,7 +173,7 @@ interface BaseColumn<Row, V = unknown> {
   accessor?: (row: Row) => V
   /** Sunucu modunda `query.fields`'e eklenecek alan yolları (hesaplanan sütunlar için). */
   fields?: string[]
-  /** string → header'da soluk son ek ("pcs", "d"). Fonksiyon → hücrede, satır bazında (belge satırları). */
+  /** string → header'da soluk son ek ("pcs", "d"). Fonksiyon → hücrede, satır bazında. */
   unit?: string | ((row: Row) => string)
 
   align?: 'left' | 'right' | 'center'
@@ -213,7 +211,7 @@ interface BaseColumn<Row, V = unknown> {
   suggested?: boolean
   /** Çip özetinde sayım için: "3 statuses". Verilmezse "3 values". */
   filterNoun?: Plural
-  /** Telefonda ve belge modunda sütun önceliği: küçük sayı = birincile daha yakın. */
+  /** Telefonda sütun önceliği: küçük sayı = birincile daha yakın. */
   priority?: number
 
   /* ---- gösterim ve aksiyonlar ---- */
@@ -446,26 +444,7 @@ export interface PreferencesAdapter {
 export declare function createLocalStoragePreferences(options: { scope: string }): PreferencesAdapter
 
 /* ------------------------------------------------------------------ */
-/* 6. Belge satırları                                                  */
-/* ------------------------------------------------------------------ */
-
-export interface DocumentTotalLine {
-  label: string
-  /** Negatifler (indirim) gerçek eksiyle gösterilir. */
-  amount: number
-  /** Son satır: kalın, üstünde çizgi, para birimi kodu yalnızca burada. */
-  grand?: boolean
-}
-
-export interface DocumentTotals {
-  lines: DocumentTotalLine[]
-  currency: string
-  /** Tutarların hizalanacağı sütun (ör. "line_total"). */
-  alignTo: string
-}
-
-/* ------------------------------------------------------------------ */
-/* 7. Toplu düzenleme                                                  */
+/* 6. Toplu düzenleme                                                  */
 /* ------------------------------------------------------------------ */
 
 /** `@save` yükündeki bir satır. */
@@ -531,7 +510,7 @@ export interface SheetStatus {
 }
 
 /* ------------------------------------------------------------------ */
-/* 8. Bileşen props / emits / slots / handle                           */
+/* 7. Bileşen props / emits / slots / handle                           */
 /* ------------------------------------------------------------------ */
 
 /** Yükleme hatası. string → uygulamanın mesajı; nesne → mesaj + "Copy error ID". */
@@ -626,26 +605,6 @@ export interface DataTableHandle<Row = any> {
  *   #selection-actions="{ rows, clear }" bulkActions yerine özel seçim çubuğu içeriği
  */
 
-export interface DocumentTableProps<Row> extends CommonProps<Row> {
-  /** Bölüm başlığı: "Lines". */
-  title?: string
-  totals?: DocumentTotals
-  expand?: boolean | ExpandOptions<Row>
-  /** Bölüm başlığında satır araması. Varsayılan false (eşik yok; uygulama satır sayısına göre açabilir). */
-  lineSearch?: boolean
-}
-
-export interface DocumentTableEmits<Row> {
-  'row-open': { row: Row; href: string; event: MouseEvent }
-}
-
-/**
- * DocumentTable slot'ları:
- *   #expanded="{ row, close }"
- *   #empty
- *   #section-actions                     Bölüm başlığının sağı (ör. Add line)
- */
-
 export interface DataSheetProps<Row> extends CommonProps<Row> {
   /** Upsert anahtarı olan sütun (ör. "sku"). Yüklenmiş satırlarda salt okunur. `rowKey`'den ayrıdır. */
   keyColumn: string
@@ -701,7 +660,7 @@ export interface DataSheetHandle<Row = any> {
  */
 
 /* ------------------------------------------------------------------ */
-/* 9. i18n                                                             */
+/* 8. i18n                                                             */
 /* ------------------------------------------------------------------ */
 
 /** Anahtar listesi ve EN/TR metinleri: 09-i18n.md. Parametreli metinler fonksiyondur. */

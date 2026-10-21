@@ -14,9 +14,9 @@ Sıralama ve filtreleme her zaman **ham değer** üzerinden çalışır; göster
 |---|---|
 | Boş değer | `null`, `undefined`, `''`, boş dizi → `emptyText` (varsayılan `—`, `--dt-text-3`). Hiçbir zaman boş hücre veya sahte `0`. |
 | Hizalama | `int`, `float`, `percentage`, `currency` sağa; diğerleri sola. `align` ile ezilebilir. Header etiketi de aynı tarafa hizalanır; sayısal header'da sıralama oku metnin **solunda** durur. |
-| Taşma | Tek satır, `…` ile kesilir, tam değer tooltip'te (400 ms gecikme). Sütun düzeyinde `wrap` seçeneği yok. Belge modunda metin sütunları en fazla 2 satıra sarılır (06); liste (D8) ve sheet modunda tek satır. |
+| Taşma | Tek satır, `…` ile kesilir, tam değer tooltip'te (400 ms gecikme). Sütun düzeyinde `wrap` seçeneği yok; liste (D8) ve sheet modunda tek satır. |
 | İkinci satır | `secondary` (ör. SKU, e-posta) yalnızca Comfortable'da; 12 px, `--dt-text-3`. |
-| Birim | Hücrede değil, header'da (`Produced pcs`, `Lead time d`). Belge modunda satır birimi hücrede soluk yazılır (satırdan satıra değişebildiği için). |
+| Birim | Hücrede değil, header'da (`Produced pcs`, `Lead time d`). |
 | Değer okuma | `id` nokta yolu (`customer.title`) null-güvenli okunur (`row.customer?.title`); `accessor` fonksiyonu hesaplanan değer içindir ve `fields` ile sunucuya istenecek alanlar bildirilir. Hücre değeri her zaman depodan okunur. |
 | Yerelleştirme | `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.Collator`; locale `createDataTable({ locale })` veya tablonun `locale` prop'u (varsayılan `navigator.language`). Biçimlendiriciler locale + seçenek anahtarıyla önbelleklenir. Metin sıralaması `Intl.Collator(locale, { numeric: true })`. |
 | Skeleton | Tipe göre: metin → %55–80 genişlikte çubuk; sayı → sağa yaslı kısa çubuk; rozet → 76×20 hap; kişi → daire + çubuk. |

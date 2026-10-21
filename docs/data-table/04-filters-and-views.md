@@ -179,7 +179,7 @@ Gerekçe: D2 çip sayısını filtrelenebilir sütun sayısıyla sınırlar; öl
 - İstemci modunda sıralama TanStack `createSortedRowModel` ile, tipe göre `sortFn`: metin `Intl.Collator(locale, { numeric: true })`, sayı sayısal, tarih zaman damgası. Boş değerler (`null`/`undefined`) “en büyük” sayılır: artan sırada sonda, azalan sırada başta — PostgreSQL varsayılanıyla aynı. Sunucu modunda `sort` sorguya gider.
 - Sıralama görünümün parçasıdır (D5) ve değiştiğinde görünüm “edited” olur.
 - Sunucuya `sort: [{ column, dir }]` öncelik sırasıyla gider. Kararlı sıralama için sunucu sona `rowKey` ekler.
-- Belge modunda sıralama yoktur (**D15**). Sheet modunda sıralama satırları yerel olarak dizer; değişiklikler satırıyla birlikte taşınır.
+- Sheet modunda sıralama satırları yerel olarak dizer; değişiklikler satırıyla birlikte taşınır.
 
 ---
 
@@ -295,8 +295,8 @@ Sütun gizleme/gösterme, sıra (menü ve klavye; D22), genişlik ve sabitleme g
 
 | Tercih | Varsayılan | Saklama |
 |---|---|---|
-| Yoğunluk | DataTable: Standard, DocumentTable: Comfortable, DataSheet: Compact | `preferences` adapter, ekran (`tableId`) başına |
-| Vertical grid lines | DataTable/DocumentTable: kapalı, DataSheet: açık | aynı |
+| Yoğunluk | DataTable: Standard, DataSheet: Compact | `preferences` adapter, ekran (`tableId`) başına |
+| Vertical grid lines | DataTable: kapalı, DataSheet: açık | aynı |
 | Rows per page | 100 | aynı |
 | Varsayılan görünüm (`defaultViewId`) | yok | aynı |
 

@@ -1,7 +1,7 @@
 {
   "name": "@swors/data-table",
   "version": "0.0.0",
-  "description": "Vue 3 için DataTable, DocumentTable ve DataSheet: ortak çekirdek, üç bileşen.",
+  "description": "Vue 3 için DataTable ve DataSheet: ortak çekirdek, iki bileşen.",
   "type": "module",
   "license": "UNLICENSED",
   "packageManager": "pnpm@10.34.7",

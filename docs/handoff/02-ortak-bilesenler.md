@@ -1,6 +1,6 @@
 # 02 · Ortak bileşenler
 
-DataTable, DocumentTable ve DataSheet'in paylaştığı parçalar. Tasarım: **T1 · List screen › T1-06 Components**, **T8 · Cell types**, ayrıca her sayfadaki örnekler. Davranış kuralları brief §5'te; burada görünüş ve durumlar var.
+DataTable ve DataSheet'in paylaştığı parçalar. Tasarım: **T1 · List screen › T1-06 Components**, **T8 · Cell types**, ayrıca her sayfadaki örnekler. Davranış kuralları brief §5'te; burada görünüş ve durumlar var.
 
 ## 1. Butonlar
 
@@ -28,7 +28,7 @@ Hepsi `display: inline-flex`, ikon ile metin arası 6 px, ikon 16 px, metin 13 /
 
 | Parça | Değer |
 |---|---|
-| Yükseklik | 32 (DocumentTable satır araması 30, telefon 44, telefon araması 40) |
+| Yükseklik | 32 (telefon 44, telefon araması 40) |
 | Kenar / yarıçap | 1 px `--dt-line-2` / 7 (telefon 10) |
 | Dolgu | metin 10; sol ikon varsa 32–34 |
 | İkon | 14–16 px `--dt-text-3`, solda 10 px içeride |

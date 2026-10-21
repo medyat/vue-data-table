@@ -20,19 +20,14 @@ describe('import sınırları', () => {
     expect(msgs).toHaveLength(1)
     expect(msgs[0]).toContain('TanStack')
   })
-  it('useColumnLayout, useListTable, useDocumentTable, useSheetTable edebilir', async () => {
-    for (const f of [
-      'src/core/columns/useColumnLayout.ts',
-      'src/list/useListTable.ts',
-      'src/document/useDocumentTable.ts',
-      'src/sheet/useSheetTable.ts',
-    ]) {
+  it('useColumnLayout, useListTable, useSheetTable edebilir', async () => {
+    for (const f of ['src/core/columns/useColumnLayout.ts', 'src/list/useListTable.ts', 'src/sheet/useSheetTable.ts']) {
       expect(
         await restricted(f, "import { useVueTable } from '@tanstack/vue-table'\nexport const x = useVueTable"),
       ).toEqual([])
     }
   })
-  it('core/ list/, document/, sheet/ import edemez', async () => {
+  it('core/ list/, sheet/ import edemez', async () => {
     expect(
       await restricted('src/core/cells/x.ts', "import { a } from '../../list/useListTable'\nexport const b = a"),
     ).toHaveLength(1)

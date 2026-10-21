@@ -122,7 +122,6 @@ Font: `--dt-font` Geist, `--dt-font-mono` Geist Mono. Sayılar her yerde `font-v
 | Sayfa başlığı (uygulamanın) | 16 / 600; telefonda 17 / 600 |
 | Dialog başlığı | 16 / 600 |
 | Boş/hata mesajı başlığı | 15 / 600 |
-| Bölüm başlığı (DocumentTable “Lines”) | 15 / 600 |
 | Popover başlığı / panel başlığı | 13 / 600 |
 | Buton, menü öğesi, input | 13 / 500 (menü öğesi 400) |
 | Çip | 12.5; alan `--dt-text-2`, operatör `--dt-text-3`, değer 500 `--dt-text` |

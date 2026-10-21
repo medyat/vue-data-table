@@ -1,6 +1,6 @@
 # @swors/data-table
 
-Vue 3 için `DataTable`, `DocumentTable` ve `DataSheet`: ortak çekirdek, üç bileşen. Spesifikasyon `docs/data-table/`, tasarım teslimi `docs/handoff/`, çalışma kuralları `CLAUDE.md`.
+Vue 3 için `DataTable` ve `DataSheet`: ortak çekirdek, iki bileşen. Spesifikasyon `docs/data-table/`, tasarım teslimi `docs/handoff/`, çalışma kuralları `CLAUDE.md`.
 
 ## Geliştirme
 

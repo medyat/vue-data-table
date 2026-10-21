@@ -4,24 +4,17 @@ import pluginVue from 'eslint-plugin-vue'
 import tseslint from 'typescript-eslint'
 
 // 01 · TanStack sınırı (D23): TanStack Table yalnızca bu dört dosyada yaşar.
-const TANSTACK_HOSTS = [
-  'src/core/columns/useColumnLayout.ts',
-  'src/list/useListTable.ts',
-  'src/document/useDocumentTable.ts',
-  'src/sheet/useSheetTable.ts',
-]
+const TANSTACK_HOSTS = ['src/core/columns/useColumnLayout.ts', 'src/list/useListTable.ts', 'src/sheet/useSheetTable.ts']
 const TANSTACK_PATTERN = {
   group: ['@tanstack/vue-table', '@tanstack/vue-table/*', '@tanstack/table-core', '@tanstack/table-core/*'],
-  message:
-    'TanStack Table yalnızca useColumnLayout / useListTable / useDocumentTable / useSheetTable içinde (01 · TanStack sınırı, D23).',
+  message: 'TanStack Table yalnızca useColumnLayout / useListTable / useSheetTable içinde (01 · TanStack sınırı, D23).',
 }
 
-// 01 · Klasör yapısı: core/* yalnızca core/*; list/document/sheet yalnızca core/, birbirini değil.
+// 01 · Klasör yapısı: core/* yalnızca core/*; list/sheet yalnızca core/, birbirini değil.
 const LAYERS = {
-  core: ['list', 'document', 'sheet'],
-  list: ['document', 'sheet'],
-  document: ['list', 'sheet'],
-  sheet: ['list', 'document'],
+  core: ['list', 'sheet'],
+  list: ['sheet'],
+  sheet: ['list'],
 }
 
 const restrict = (patterns) => ({ 'no-restricted-imports': ['error', { patterns }] })

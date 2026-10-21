@@ -25,7 +25,6 @@ Her tasarımın light ve dark artboard'u vardır. Çoğu sayfada light solda, da
 | T7 · Cell actions | Hücre aksiyonları (hover/odak), uygulamanın çizdiği hücreler | [03-datatable.md](03-datatable.md) §9 |
 | T8 · Cell types | 24 tip, skeleton biçimleri, 8 ton, yoğunluklar | [02-ortak-bilesenler.md](02-ortak-bilesenler.md) §8 |
 | T9 · States | First load, refreshing, query change, empty, no results (3), error, stale, still loading, no rows on page, footer durumları | [03-datatable.md](03-datatable.md) §10–11 |
-| T10 · Document lines | DocumentTable: satırlar, detay, toplamlar, satır araması, boş belge, telefon | [05-documenttable.md](05-documenttable.md) |
 | T11 · DataSheet | Toplu düzenleme ekranı, hücre durumları, editörler, doldurma, yapıştırma, hücre menüsü | [06-datasheet.md](06-datasheet.md) |
 | T12 · Saving & import | Kayıt dialog'u, kaydetme, kaydedildi, kısmen kaydedildi, çıkış/vazgeç, açılış, satır sınırı, Excel içe aktarma, telefon salt okunur | [06-datasheet.md](06-datasheet.md) §9–12 |
 | T13 · Phone | DataTable < 640 px: liste, kaydırma, arama, Filters / değer / görünüm / ⋯ alt sayfaları, bulk bar | [04-datatable-telefon.md](04-datatable-telefon.md) |
@@ -59,7 +58,6 @@ S6, S11 ve S12 spesifikasyona işlendi (02 dialog ölçüsü, 07 Find genişliğ
 - T12 “Saved”: brief “96 rows saved · 24 created · 72 updated” der; örnek veride tek yeni satır olduğu için “1 created · 95 updated” kullanıldı. Metin şablonu aynı.
 - T12'de iki senaryo var: küçük (128 değişiklik / 96 satır) ve büyük (9,600 satırlık fiyat güncellemesi; “Saving… 4,800 of 9,600”, “3 rows couldn't be saved. 9,597 rows were saved.”).
 - T12 içe aktarma, 10.000 satırlık tabloya 12 yeni SKU ekliyor gibi gösterildi (brief örneği). Gerçekte `maxRows` 10.000 ise `sheet.limitFile` uyarısı devreye girmeli; bu durum ayrıca çizilmedi.
-- T10'da satır araması örneği “2 of 6 lines” (brief “3 of 84”), toplamları uydurmamak için.
 
 ## Açık kalanlar ve çizilmeyenler
 
@@ -70,7 +68,7 @@ S6, S11 ve S12 spesifikasyona işlendi (02 dialog ölçüsü, 07 Find genişliğ
 
 ## `design/` görselleri
 
-T1–T13'ün 84 artboard'ı 1× PNG olarak light ve dark `design/` altındadır (2026-10-21 dışa aktarımı): klasör `design/T01-list` … `design/T13-phone`, dosya `T1-01-light.png` kalıbında; artboard başlıkları `design/README.md`'de. Roadmap'teki görsel karşılaştırmalar (T8 Playwright, T1/T10/T13 “birebir”) bu dosyalara bakar. `design/` git'e girmez (`.gitignore`); yeni bir klonda veya tasarım değişince Paylaş › Dışa aktarma › PNG (1×) ile sayfa sayfa yeniden aktarılır ve `design/README.md`'deki adlandırmaya göre yerleştirilir.
+T1–T13'ün 84 artboard'ı 1× PNG olarak light ve dark `design/` altındadır (2026-10-21 dışa aktarımı): klasör `design/T01-list` … `design/T13-phone`, dosya `T1-01-light.png` kalıbında; artboard başlıkları `design/README.md`'de. Roadmap'teki görsel karşılaştırmalar (T8 Playwright, T1/T13 “birebir”) bu dosyalara bakar. `design/` git'e girmez (`.gitignore`); yeni bir klonda veya tasarım değişince Paylaş › Dışa aktarma › PNG (1×) ile sayfa sayfa yeniden aktarılır ve `design/README.md`'deki adlandırmaya göre yerleştirilir.
 
 ## Metinler
 

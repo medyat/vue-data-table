@@ -80,6 +80,7 @@ describe('roller ve yapı', () => {
     w.unmount()
   })
   it('birincil hücre gerçek link, sayısal sağa, sabit sütun sticky ofset değişkeni', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true, now: new Date('2026-10-21T10:00:00') }) // "3d late" sabit tarihe göre
     const w = await mountTable()
     const row = w.get('.dt-row[data-index="0"]')
     const primary = row.get('[data-col="number"]')
@@ -92,6 +93,7 @@ describe('roller ve yapı', () => {
     expect(value.text()).toBe('1,000.00TRY')
     expect(row.get('[data-col="dueAt"]').text()).toBe('Oct 18 · 3d late')
     w.unmount()
+    vi.useRealTimers()
   })
   it('ikinci satır yalnızca Comfortable; hücredeki özel düğme Tab durağı değil', async () => {
     const std = await mountTable()

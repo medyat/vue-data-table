@@ -192,6 +192,7 @@ test('T8: uzun header kesikken tek çift tık sığdırır (header ölçümü)',
 test('T8: 24 tip light ve dark görsel referansı', async ({ page }) => {
   for (const theme of ['light', 'dark-class']) {
     await settings(page, 'standard', theme)
+    await page.clock.setFixedTime(new Date('2026-10-21T10:00:00')) // "3d late" gibi göreli tarihler sabit
     await page.goto('/t8')
     await expect(page.locator('.dt-row').first()).toBeVisible()
     // Sayfa kendi içinde kayar (pg-scroll): tüm tabloların görünmesi için viewport içerik yüksekliğine açılır.
