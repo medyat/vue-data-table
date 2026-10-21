@@ -62,8 +62,9 @@ src/
     views/                  # ViewMenu, SaveViewDialog, useViews, useEditedState
     toolbar/                # Toolbar yuvaları, DisplayPopover, MoreMenu
     states/                 # Skeleton, EmptyState, NoResults, ErrorState, StaleBanner, RefreshBar
-    i18n/                   # t(), en.ts, tr.ts
-    plugin.ts               # createDataTable
+    i18n/                   # t(), en.ts, tr.ts (09'dan üretilir: scripts/i18n-from-docs.ts)
+    adapters/               # createLocalStorageViews, createLocalStoragePreferences
+    plugin.ts               # createDataTable, useDataTableContext
   list/
     DataTable.vue
     useListTable.ts         # TanStack: sütunlar + sıralama + sayfalama + seçim + expand (+ istemci filtre)
@@ -88,11 +89,13 @@ src/
     import/matchColumns.ts      # başlıklar + ColumnDef → sütun→alan eşlemesi (saf; belirsizse boş)
   types/                    # api-draft.ts'den türetilir
   styles/
-    tokens.css              # --dt-* değişkenleri (light/dark/density)
+    tokens.css              # --dt-* değişkenleri (light/dark/density); 02'den üretilir (scripts/tokens-from-docs.ts)
     shadcn-bridge.css       # opsiyonel: --dt-* → shadcn değişkenleri (Tailwind v4, oklch)
     shadcn-bridge-hsl.css   # opsiyonel: aynı köprü, Tailwind v3 HSL üçlüleri için
     data-table.css          # bileşen stilleri
-playground/                 # her board için bir senaryo sayfası, sahte Laravel API'si
+playground/                 # her tasarım sayfası için bir rota, sahte Laravel API'si (server/mock-api.ts)
+scripts/                    # docs.ts (02/09 tablo parser'ı) ve üreticiler; pnpm gen:docs
+tests/ · e2e/               # Vitest (birim/bileşen, doküman eşitlik testleri) · Playwright
 ```
 
 ESLint sınırları: `core/*` yalnızca `core/*` import eder; `list/`, `document/`, `sheet/` yalnızca `core/` import eder, birbirini etmez.

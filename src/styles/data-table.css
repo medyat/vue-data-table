@@ -1,0 +1,18 @@
+@import './tokens.css';
+
+/* Bileşen kökü. Tüm ölçü ve renkler --dt-* token'larından (02); sabit değer yok. */
+.dt {
+  box-sizing: border-box;
+  font-family: var(--dt-font);
+  font-size: var(--dt-fs);
+  line-height: 1.4;
+  color: var(--dt-text);
+  background: var(--dt-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.dt *,
+.dt *::before,
+.dt *::after {
+  box-sizing: inherit;
+}

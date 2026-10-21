@@ -1,0 +1,10 @@
+import './styles/data-table.css'
+
+export { default as DataTable } from './list/DataTable.vue'
+export { default as DocumentTable } from './document/DocumentTable.vue'
+export { createDataTable, useDataTableContext, DATA_TABLE_KEY } from './core/plugin'
+export type { DataTableContext } from './core/plugin'
+export { createLocalStoragePreferences, createLocalStorageViews } from './core/adapters/localStorage'
+export { createI18n } from './core/i18n'
+export type { I18n, MessageParams } from './core/i18n'
+export * from './types'

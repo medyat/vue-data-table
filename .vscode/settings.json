@@ -1,0 +1,38 @@
+{
+  // Biçim yalnızca Prettier'ın (.prettierrc, .prettierignore); ESLint hata yakalar ve kaydederken düzeltir.
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": ["javascript", "typescript", "vue"],
+  "prettier.requireConfig": true,
+
+  // Projenin TypeScript'i (6.x); VS Code'un gömülü sürümü değil.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+
+  // Üretilmiş dosyalar: dokümanı değiştirip pnpm gen:docs (README).
+  "files.readonlyInclude": {
+    "src/styles/tokens.css": true,
+    "src/core/i18n/en.ts": true,
+    "src/core/i18n/tr.ts": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "dist": true,
+    "design": true,
+    "pnpm-lock.yaml": true,
+    "playwright-report": true,
+    "test-results": true
+  },
+  "vitest.maximumConfigs": 1
+}

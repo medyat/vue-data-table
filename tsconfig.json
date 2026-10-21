@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@swors/data-table": ["./src/index.ts"],
+      "@swors/data-table/sheet": ["./src/sheet.ts"]
+    }
+  },
+  "include": ["src", "tests", "scripts", "playground", "e2e", "vite.config.ts", "playwright.config.ts"]
+}

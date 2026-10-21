@@ -23,13 +23,13 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 **Kapsam:** Vite library mode (iki giriş: `.` ve `./sheet`), TypeScript strict, ESLint (import sınırları: `core/*` → `core/*`; `list/document/sheet` → `core/`), Vitest, Playwright; `styles/tokens.css` (02'deki tüm token'lar, light/dark, `data-density`); `shadcn-bridge.css` ve `shadcn-bridge-hsl.css`; i18n altyapısı (EN/TR, 09); `createDataTable()` plugin'i (locale, messages, adapter'lar); `createLocalStorageViews` / `createLocalStoragePreferences`; `playground/` (Vite app, her board için bir rota, tema/yoğunluk/dil anahtarı, sahte Laravel API'si).
 
 **Kabul kriterleri**
-- [ ] `pnpm build` iki giriş noktası için ESM + `.d.ts` üretir; `vue` ve `reka-ui` peer dependency.
-- [ ] 02'deki her token `tokens.css`'te, light ve dark; değerler 02'deki tablolarla birebir (otomatik test).
-- [ ] `.dark` sınıfı ve `data-theme="dark"` ikisi de koyu temaya geçirir.
-- [ ] Kontrast testi: 08 §6'daki token çiftleri AA'yı geçer (Vitest, hesaplamalı).
-- [ ] `t('key', params)` ve `.one/.other` çoğulları çalışır; eksik anahtar geliştirme modunda uyarı verir.
-- [ ] ESLint, `grid/`'den TanStack import'unu reddeder (test).
-- [ ] Playground'da tema, yoğunluk ve dil anahtarı.
+- [x] `pnpm build` iki giriş noktası için ESM + `.d.ts` üretir; `vue` ve `reka-ui` peer dependency.
+- [x] 02'deki her token `tokens.css`'te, light ve dark; değerler 02'deki tablolarla birebir (otomatik test).
+- [x] `.dark` sınıfı ve `data-theme="dark"` ikisi de koyu temaya geçirir.
+- [x] Kontrast testi: 08 §6'daki token çiftleri AA'yı geçer (Vitest, hesaplamalı).
+- [x] `t('key', params)` ve `.one/.other` çoğulları çalışır; eksik anahtar geliştirme modunda uyarı verir.
+- [x] ESLint, `grid/`'den TanStack import'unu reddeder (test).
+- [x] Playground'da tema, yoğunluk ve dil anahtarı.
 
 ## Faz 1 — Çekirdek ızgara ve hücre tipleri
 
