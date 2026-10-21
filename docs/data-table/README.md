@@ -2,7 +2,7 @@
 
 Bu klasör, **Data Table** sisteminin Vue 3 paketi (`@swors/data-table`) olarak geliştirilmesi için hazırlanmış spesifikasyondur. Claude Code ile geliştirme yaparken her aşamada önce ilgili dokümanı okuyun; tasarım referansı `DESIGN-BRIEF.md`'dir. Dokümanla tasarım görseli çelişirse **doküman** geçerlidir.
 
-> **Tasarım kaynağı:** ilk canvas tasarımı (20 board) kararlarla çeliştiği için 2026-10-21'de kaldırıldı. Yeni tasarımlar Claude Design ile [DESIGN-BRIEF.md](DESIGN-BRIEF.md)'deki görev paketlerinden (T1–T13) üretilecek ve `design/` altına konacak. Token'ların tek kaynağı `02-design-tokens.md`'dir.
+> **Tasarım kaynağı:** ilk canvas tasarımı (20 board) kararlarla çeliştiği için 2026-10-21'de kaldırıldı. T1–T13 tasarımları aynı gün Claude Design ile [DESIGN-BRIEF.md](DESIGN-BRIEF.md)'deki görev paketlerinden üretildi; teslim belgeleri (ölçüler, durumlar, tasarım kararları) `docs/handoff/` altındadır, tasarım dosyasının linki orada. Dışa aktarılmış görseller (1× PNG, light/dark) `design/` altındadır (git'e girmez, yerelde tutulur); dizin `design/README.md`. Token'ların tek kaynağı `02-design-tokens.md`'dir.
 
 ---
 
@@ -56,7 +56,7 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 | D3 | **Arama filtre değildir.** Çip üretmez; aranabilir metin sütunlarında arar. Uzaktan öneri (suggest) altyapısı yoktur. | Arama ve filtre zihinsel olarak ayrı. |
 | D4 | **Görünümler tek tiptir:** `kind: system \| personal \| shared`. System görünümler kodla tanımlanır ve değiştirilemez; personal yalnızca sahibine; shared yalnızca adapter `capabilities.share` destekliyorsa. Kullanıcı varsayılan görünümünü seçebilir (tercih). | Paylaşım kararı adapter'a bırakıldı; model tek. |
 | D5 | **Görünüm = filtre + sıralama + sütun düzeni.** Yoğunluk, tema, sayfa boyutu görünüme yazılmaz (kişisel tercih). | |
-| D6 | **Satırın tamamı link değildir.** Birincil hücre gerçek `<a href>`; satır gövdesine tıklamak varsayılan olarak hiçbir şey yapmaz ve asla seçim yapmaz. `row-click="open \| expand \| peek"` ile satır tıklanabilir olur; yeni sekme ve sağ tık için birincil link kalır. | Seçim, kopyalama, navigasyon çakışmaz. |
+| D6 | **Satırın tamamı link değildir.** Birincil hücre gerçek `<a href>`; satır gövdesine tıklamak varsayılan olarak hiçbir şey yapmaz ve asla seçim yapmaz. `row-click="open \| expand"` ile satır tıklanabilir olur; yeni sekme ve sağ tık için birincil link kalır. | Seçim, kopyalama, navigasyon çakışmaz. |
 | D7 | **Simple pagination, yalnızca o.** 100 satır/sayfa (50/100/250/500), sanal satırlar, toplam isteğe bağlı (`countable`). Numbered / load-more / infinite yok. | Pahalı COUNT sorgusu yok; tek sayfalama modeli. |
 | D8 | **Sanal listede satır yüksekliği sabit.** DataTable'da “Wrap long text” yok. | Sanallaştırma için. |
 | D9 | **boolean:** Yes = yeşil, No = nötr. Gerçek olumsuzluklar için sütunda `falseTone: 'destructive'`. | Kırmızı = hata. |
@@ -76,6 +76,9 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 | D23 | **Önce TanStack.** Sütun modeli, sıralama, sayfalama state'i, satır seçimi, expand ve hücre seçimi TanStack Table'ın yerleşik özellikleridir; sanal satırlar TanStack Virtual. Özel mekanizma yalnızca bunlar yetmeyince. | Yeniden yazılmış özellik ve bakım maliyeti yok. |
 | D24 | **Klavye modeli:** DataTable satır odaklı, DataSheet hücre odaklı; ikisi de roving tabindex (`aria-activedescendant` yok). Hücre içi widget'lar `tabindex="-1"`, `→` / `Enter` ile girilir, `Esc` ile çıkılır. | Sanal listede referans garantisi; ekran okuyucuya doğal odak olayları. |
 | D25 | **`syncUrl` yok.** Uygulama isterse `view-change` / `request` olaylarıyla kendi URL'ini yazar. | Kapsam. |
+| D26 | **Toolbar'da facet / hızlı filtre çipi yok.** Her filtre Filter › column picker veya header menüsünden eklenir; `ColumnDef.facet` yoktur. | Tek giriş noktası, sade toolbar. (Tasarım, 2026-10-21) |
+| D27 | **Görünüm kaydetme aksiyonları görünüm menüsündedir.** Görünüm düzenlenince menünün üstünde Save changes (`⌘S`) · Save as new view… · Discard changes; filtre satırında “View edited · Reset · Save view” yoktur. | Filtre satırı yalnızca filtre içindir; sıralama/sütun değişikliği de aynı yerden kaydedilir. (Tasarım, 2026-10-21) |
+| D28 | **Önizleme (peek) paketin değil.** Sağ panel, satırdaki Preview düğmesi, menüdeki Preview, `Space`, `peek` prop'u ve `#peek` slot'u yoktur; satır aksiyon sütunu yalnızca ⋯ (56 px). İhtiyaç duyan uygulama `row-click` olayı veya `rowActions` ile kendi panelini/sayfasını açar. | Sanal listeyle odak/Prev-Next senkronu pahalı; uygulama önizlemeyi kendi tasarımıyla taşır. (Tasarım, 2026-10-21) |
 
 ## Açık sorular (ilgili aşamaya başlamadan önce ürün sahibine sorun)
 
@@ -88,7 +91,7 @@ Q1 (kullanıcı varsayılan görünümü) kapandı: evet, tercihlerde `defaultVi
 
 ## Tasarım geçmişi
 
-İlk canvas board'ları (20 board, kit.css, ekran görüntüleri) kararlarla çeliştiği için kaldırıldı; oradaki davranışlardan değişen kararlar günlükte (D4, D6, D7, D17–D25). Yeni tasarımlar DESIGN-BRIEF'e göre yapılır; bir tasarım dokümanla çelişirse doküman geçerlidir, çelişki not edilip sorulur.
+İlk canvas board'ları (20 board, kit.css, ekran görüntüleri) kararlarla çeliştiği için kaldırıldı; oradaki davranışlardan değişen kararlar günlükte (D4, D6, D7, D17–D25). T1–T13 tasarımları 2026-10-21'de DESIGN-BRIEF'e göre Claude Design ile yapıldı; tasarım sırasında alınan D26–D28 günlüğe işlendi ve dokümanlar buna göre güncellendi. Teslim belgeleri `docs/handoff/`. Bir tasarım dokümanla çelişirse doküman geçerlidir, çelişki not edilip sorulur.
 
 ## Sözlük
 
@@ -99,7 +102,6 @@ Q1 (kullanıcı varsayılan görünümü) kapandı: evet, tercihlerde `defaultVi
 | Talep (request) | Sunucu modunda paketin `@request` ile yaydığı sorgu (`query`, `reason`, `signal`) |
 | Snapshot | Footer'ın okuduğu, başarıyla yüklenmiş son sayfa bilgisi (satırlar + `hasMore`) |
 | Bulk bar | Satır seçildiğinde altta yüzen toplu aksiyon çubuğu |
-| Peek | Satırı sağdan açılan, listeyi kapatmayan önizleme paneli |
 | Parti (batch) | DataSheet'teki satırların tamamı; Save'de yeni/değişen satırlar gönderilir |
 | Anahtar sütun (key) | Upsert eşleşmesini belirleyen sütun (ör. SKU); `rowKey`'den ayrıdır |
 | Taslak (draft) | DataSheet'te orijinal satıra dokunmadan tutulan hücre değişiklikleri |

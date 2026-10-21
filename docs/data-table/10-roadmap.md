@@ -70,11 +70,11 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 ## Faz 3a — Filtreler ve arama
 
 **Tasarım:** T2, T9.
-**Kapsam:** filtre modeli (18 operatör, op'a göre `FilterCondition`), column picker, çip (gövde + ×; popover: operatör + değer), tipe göre değer editörleri (`core/editors` — sheet'te de kullanılır), operatör değişiminde değer korunumu, uygulama zamanlaması, değer özetleri, filtre satırı taşma kuralları (+N, Show all), facet çipleri, arama (250 ms), istemci modu `filterFn`/`globalFilterFn`.
+**Kapsam:** filtre modeli (18 operatör, op'a göre `FilterCondition`), column picker, çip (gövde + ×; popover: operatör + değer), tipe göre değer editörleri (`core/editors` — sheet'te de kullanılır), operatör değişiminde değer korunumu, uygulama zamanlaması, değer özetleri, filtre satırı taşma kuralları (+N, Show all), arama (250 ms), istemci modu `filterFn`/`globalFilterFn`.
 
 **Kabul kriterleri**
 - [ ] Bir sütun için ikinci çip oluşturulamaz; picker'da Filtered bölümü mevcut çipi açar (D2).
-- [ ] AND/OR, grup, iç içe koşul arayüzü yok (D1).
+- [ ] AND/OR, grup, iç içe koşul arayüzü yok (D1); toolbar'da facet çipi yok (D26).
 - [ ] Eksik çip sorguya ve sayaca girmez; değer seçilmeden kapanırsa kaldırılır.
 - [ ] Her tip için 03'teki operatör listesi; `is empty / is not empty` hepsinde; `in` tek değerde "is", çoklu değerde "is any of".
 - [ ] Operatör değişiminde değer yalnızca aynı şekil grubunda korunur (`in ↔ not_in`, `contains ↔ starts_with`); boş/boş değil değersiz (tip bazlı testler).
@@ -91,7 +91,8 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 
 **Kabul kriterleri**
 - [ ] Görünüm = filtre + sıralama + sütun düzeni; arama ve yoğunluk "edited" yapmaz (D5).
-- [ ] System view düzenlenince yalnızca Save as new view…; Rename/Delete yok.
+- [ ] System view düzenlenince yalnızca Save as my view…; Rename/Delete yok.
+- [ ] Kaydetme aksiyonları (Save changes `⌘S` / Save as new view… / Discard changes) görünüm menüsünün en üstünde; filtre satırında “View edited · Reset · Save view” yok (D27).
 - [ ] `viewsAdapter` yoksa kaydetme aksiyonları gizli; adapter `share` desteklemiyorsa "shared" seçeneği yok.
 - [ ] Varsayılan görünüm sırası: kullanıcı varsayılanı (tercih) → system `default` → ilk system view.
 - [ ] Görünüm değiştirince önceki görünümün kaydedilmemiş değişiklikleri oturum boyu kalır (toast yok); sayfa yenilenince gider.
@@ -103,7 +104,7 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 ## Faz 4 — Seçim, bulk bar, satır etkileşimleri
 
 **Tasarım:** T5, T6.
-**Kapsam:** TanStack `rowSelection` (tekli/çoklu, sayfa select-all, ⇧ aralık, `X`), sıfırlama kuralları, `selection-change`, bulk bar (`floating`/`toolbar`), `bulkActions` + `#selection-actions`, `rowActions` menüsü ve sağ tık, `row-click`, birincil link (`row-open`, native modifier davranışı), Expand (TanStack expanding, ölçülen yükseklik, `#expanded`), Peek kabuğu (`#peek`, Prev/Next, Open), liste klavye haritası (08 §3).
+**Kapsam:** TanStack `rowSelection` (tekli/çoklu, sayfa select-all, ⇧ aralık, `X`), sıfırlama kuralları, `selection-change`, bulk bar (`floating`/`toolbar`), `bulkActions` + `#selection-actions`, `rowActions` menüsü ve sağ tık, `row-click`, birincil link (`row-open`, native modifier davranışı), Expand (TanStack expanding, ölçülen yükseklik, `#expanded`), liste klavye haritası (08 §3).
 
 **Kabul kriterleri**
 - [ ] Satır gövdesine tıklamak varsayılan olarak seçmez ve açmaz (D6); `row-click="open"` ile açar; etkileşimli hedef, metin seçimi ve değiştirici tuşta yok sayılır.
@@ -112,7 +113,7 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 - [ ] Header checkbox yalnızca bu sayfa; kısmi seçimde `indeterminate`; gerçek checkbox'ta ⇧ aralık çalışır.
 - [ ] Bulk bar düzeni kaydırmaz; en fazla 3 aksiyon + ⋯; `run(rows)` beklenmez, hata yutulmaz; "Select all matching" yok.
 - [ ] Expand: chevron yalnızca `canExpand`'ta; detay yalnızca görünür aralıkta render edilir; yükseklik önbelleği remount'ta zıplatmaz; `query`/`page` sonrası açıklar kapanır ve `virtualizer.measure()` çağrılır.
-- [ ] Peek açıkken satır tıklaması `row-click` prop'una uyar; Prev/Next ve Space ile değişir; Open hedef satır DOM'da olmasa da `href(row)` ile çalışır; kayıt listeden düşerse panel kapanır; `Esc` odağı satıra döndürür.
+- [ ] Önizleme paneli, Preview düğmesi ve `Space` kısayolu yok (D28); satır aksiyon sütunu yalnızca ⋯ (56 px); menüdeki Open hedef satır DOM'da olmasa da `href(row)` ile çalışır.
 - [ ] Odaklı satır sayfa değişiminde aynı anahtar → aynı indeks → ilk satır sırasıyla geri gelir.
 - [ ] 08 §3'teki tüm kısayollar; metin alanındayken tek harfliler devre dışı.
 - [ ] **1.0 sürüm kontrolü:** 05'in tamamı (§11 telefon düzeni hariç — Faz 7) karşılanıyor; T1 tasarımı playground'da birebir.
@@ -178,10 +179,12 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 ### 6d — İçe/dışa aktarma ve telefon
 
 **Ön koşul:** Q3 cevaplandı.
-**Kapsam:** Import dialog'u (`parseFile` callback'i; dosya, sayfa, başlık, anahtar eşleme, otomatik eşleme + `importAliases`, önizleme dönüşümleri, özet, yeni anahtarlar), grid'e uygulama (tek undo), Export (`export` olayı), telefonda salt okunur mod.
+**Kapsam:** Import dialog'u (`parseFile` callback'i; dosya, sayfa, başlık satırı tespiti + Header row seçici, anahtar eşleme, sütun eşleme (otomatik + elle, `importAliases`), önizleme dönüşümleri, özet, yeni anahtarlar), grid'e uygulama (tek undo), Export (`export` olayı), telefonda salt okunur mod.
 
 - [ ] Anahtar eşlenmeden Apply pasif.
-- [ ] `Stok Kodu`, `Liste Fiyatı` gibi başlıklar `importAliases` ile otomatik eşlenir.
+- [ ] Başlık satırı otomatik bulunur (07 §13); Header row seçici ile değiştirilince eşleme tablosu yeniden kurulur; `.xlsx` ve `.csv` için aynı kod yolu.
+- [ ] `Stok Kodu`, `Liste Fiyatı` gibi başlıklar `importAliases` ile otomatik eşlenir; büyük/küçük harf, boşluk ve Türkçe karakter farkı eşleşmeyi engellemez.
+- [ ] Hiçbir alana uymayan ya da birden fazla alana uyan sütun boş kalır (otomatik seçim yapılmaz); elle seçilebilir; otomatik eşleme de değiştirilebilir; boş bırakılan sütun Apply'da alınmaz.
 - [ ] `1.650,00 → 1,650.00`, `%20 → 20%` önizlemeleri.
 - [ ] Boş Excel hücresi mevcut değeri silmez.
 - [ ] `maxRows` aşımı engellenir.
@@ -190,12 +193,12 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 ## Faz 7 — Telefon, erişilebilirlik ve yayın cilası
 
 **Tasarım:** T13.
-**Kapsam:** DataTable telefon düzeni (alt sayfalar, Filters sheet, tam ekran peek, bulk bar konumu, 44 px dokunma alanları), `forced-colors`, NVDA/VoiceOver turu (iki roving tabindex modeli), tüm duyurular (08 §5), yükleme/skeleton sürelerinin gerçek SWORS ekranlarında ayarı, dokümantasyon sitesi (playground'dan), README ve kullanım örnekleri (Vue Router / Inertia `row-open` tarifleri, Laravel kayıt tarifi), sürüm notları.
+**Kapsam:** DataTable telefon düzeni (alt sayfalar, Filters sheet, bulk bar konumu, 44 px dokunma alanları), `forced-colors`, NVDA/VoiceOver turu (iki roving tabindex modeli), tüm duyurular (08 §5), yükleme/skeleton sürelerinin gerçek SWORS ekranlarında ayarı, dokümantasyon sitesi (playground'dan), README ve kullanım örnekleri (Vue Router / Inertia `row-open` tarifleri, Laravel kayıt tarifi), sürüm notları.
 
 **Kabul kriterleri**
 - [ ] T13 tasarımındaki telefon ekranları birebir.
 - [ ] Hiçbir modda kart görünümü yok (ilke 4).
-- [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, peek, sheet'te düzenle ve kaydet senaryoları tamamlanır.
+- [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, satır menüsü, sheet'te düzenle ve kaydet senaryoları tamamlanır.
 - [ ] axe-core taramasında kritik/ciddi ihlal yok (Playwright).
 - [ ] `prefers-reduced-motion` ve `forced-colors` kontrolleri.
 - [ ] Paket boyutu (gzip): çekirdek + DataTable ≤ 60 kB; `@swors/data-table/sheet` ayrı yüklenir.

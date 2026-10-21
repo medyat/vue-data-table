@@ -14,7 +14,7 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 - Gutter (sheet): `role="rowheader"`.
 - Seçim checkbox'ı: `aria-label="Select WO-26-0418"`; header checkbox `aria-label="Select all rows on this page"`, kısmi seçimde `aria-checked="mixed"`.
 - Sabit sütunlar ve sanallaştırma DOM sırasını bozmaz: hücreler her satırda görsel sırada.
-- Dekoratif ikonlar `aria-hidden="true"`; yalnızca ikonlu butonlar `aria-label` + `title` (kısayol dahil: “Preview (Space)”).
+- Dekoratif ikonlar `aria-hidden="true"`; yalnızca ikonlu butonlar `aria-label` + `title` (kısayol dahil: “Refresh (R)”).
 
 ## 2. Odak modeli
 
@@ -24,9 +24,9 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 - Odaklı satır: 2 px `--dt-accent` çerçeve (05 §4). Odak görünürlüğü fareyle tıklamada da korunur (`:focus-visible` yerine kendi `is-focus` sınıfı, klavye ile gelindiyse).
 - `→` satırdayken: genişletilebilir ve kapalıysa açar; değilse odağı satırın **ilk widget'ına** (birincil link) taşır. Widget'lar arası `←`/`→` (APG: next/previous widget); ilkinde `←` satıra döner; `Esc` her zaman satıra. Satırdayken `←` açık satırı kapatır.
 - Hücre içindeki widget'lar (link, buton, `actions`, `cell` içeriği, input) her zaman `tabindex="-1"` taşır; `Tab` ızgaradan çıkar. Odak bir widget içindeyken ızgara tuşları (`↑↓`, `Space`, `Enter`, `X`, tek harfliler) devre dışıdır; input/combobox kendi tuşlarını alır; widget odaklıyken `Enter`/`Space` onu çalıştırır (native), satır kısayolunu tetiklemez.
-- Hover'da beliren aksiyonlar (`actions`, Preview) `:focus-within`'de de görünür; yalnızca hover'a bağlı işlev yoktur.
+- Hover'da beliren aksiyonlar (`actions`) `:focus-within`'de de görünür; yalnızca hover'a bağlı işlev yoktur.
 - Sanallaştırma: odaklı satır (ya da detayında odak varsa o satır) her zaman render edilir (virtualizer `rangeExtractor` odak indeksini ekler); kaydırma odağı kaybettirmez. Sayfa/sorgu değişiminde odak önce `role="grid"` köküne alınır, veri gelince aynı anahtar → aynı indeks → ilk satır sırasıyla geri verilir.
-- Tab ızgaradan çıkar: footer → bulk bar. `F6` bölgeler arası atlar: toolbar → filtre satırı → ızgara → footer → bulk bar → peek.
+- Tab ızgaradan çıkar: footer → bulk bar. `F6` bölgeler arası atlar: toolbar → filtre satırı → ızgara → footer → bulk bar.
 
 ### DataSheet — hücre odaklı
 
@@ -40,7 +40,6 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 - Açılınca odak içeri: arama kutusu varsa ona, yoksa ilk öğeye. Kapanınca odak **tetikleyiciye** döner.
 - Menüler `role="menu"` / `menuitem`, oklarla gezinme, harf ile atlama (typeahead), `Esc` kapatır.
 - Dialog'lar odak tuzağı, `aria-modal="true"`, ilk odak: yıkıcı dialog'da **güvenli** buton (Keep orders / Stay / Fix first), formlu dialog'da ilk alan.
-- Peek **modal değildir** (`role="complementary"`, `aria-label="Order preview"`); odak açılınca peek başlığına gider, `Esc` kapatır ve odağı satıra döndürür, `F6` liste ile peek arasında geçer.
 - Toast'lar `role="status"`; Undo butonu klavyeyle erişilebilir (`F6` döngüsünde son durak, toast görünürken).
 
 ### Filtre çipi
@@ -67,11 +66,10 @@ Tek harfli kısayollar yalnızca odak bir metin alanında değilken çalışır.
 | `X` | Satırı seç / bırak | Izgara |
 | `⇧↑` `⇧↓` | Seçimi genişlet | Izgara |
 | `⌘A` | Sayfadaki tüm satırları seç | Izgara |
-| `Space` | Peek aç / kapat | Izgara |
 | `↵` | Kaydı aç (`row-open`) | Izgara |
 | `→` sonra `⌘↵` / `⇧↵` | Linke odaklan, yeni sekmede / pencerede aç (tarayıcı davranışı; paket kısayol bağlamaz) | Izgara |
 | `⇧F10` veya Menü tuşu | Satır menüsü | Izgara |
-| `Esc` | Sırayla: popover → peek → seçim | Her yerde |
+| `Esc` | Sırayla: popover → seçim | Her yerde |
 | `Alt←` / `Alt→` | Önceki / sonraki sayfa | Sayfa |
 | `F6` | Bölgeler arası | Sayfa |
 

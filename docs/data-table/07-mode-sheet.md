@@ -43,7 +43,7 @@ Bulk edit products                                                              
 
 | Öğe | Ayrıntı |
 |---|---|
-| **Find in grid** | 240 px, `⌘F` (odak tablodayken tarayıcı aramasının yerine). Eşleşmeleri **vurgular ve gezer**, satır gizlemez: Enter sonraki, ⇧Enter önceki, sağda `3 of 41`. Arama görünür sütunlarda, görüntülenen metin üzerinde. |
+| **Find in grid** | 188 px (1440 px'te Save kontrolleriyle tek satıra sığsın diye), `⌘F` (odak tablodayken tarayıcı aramasının yerine). Eşleşmeleri **vurgular ve gezer**, satır gizlemez: Enter sonraki, ⇧Enter önceki, sağda `3 of 41`. Arama görünür sütunlarda, görüntülenen metin üzerinde. |
 | **Filter** | Liste modundaki çip sistemi (04), yerel çalışır. Sayaç rozeti. |
 | **All / Changed / Errors** | Segmented, her birinde sayı (Errors sayısı `--dt-r-fg`). §11. |
 | Undo / Redo | İkon butonlar, tooltip `Undo (⌘Z)` / `Redo (⌘⇧Z)`. Yığın boşsa pasif. |
@@ -68,7 +68,7 @@ Bulk edit products                                                              
 
 | Sütun | Genişlik | Not |
 |---|---|---|
-| Gutter (satır no) | 56 px, sola sabit | Mono 11 px `--dt-text-3`, sağa yaslı, `--dt-surface-2` (header'da `--dt-surface-3`). Solunda işaret: değişti = 6 px accent kare (2 px yarıçap), hata = 13 px kırmızı ikon, yeni = 13 px accent `+`. `role="rowheader"`. |
+| Gutter (satır no) | 56 px, sola sabit | Mono 11 px `--dt-text-3`, binlik ayırıcısız (`10001`), sağa yaslı, `--dt-surface-2` (header'da `--dt-surface-3`). Solunda işaret: değişti = 6 px accent kare (2 px yarıçap), hata = 13 px kırmızı ikon, yeni = 13 px accent `+`. `role="rowheader"`. |
 | Anahtar (`keyColumn`) | 128 px, sabit | Mono. Header tooltip: “Match key — an existing SKU updates that product, a new SKU creates one”. **Yüklenmiş satırlarda salt okunur**, yeni satırlarda düzenlenebilir. Yeni satırda sağda `New` / `Update` etiketi. |
 | Birincil ad | `minmax(220px, 1.4fr)`, sabit | |
 | Diğerleri | Sütun tanımındaki `width`; yoksa 05 §4'teki tip varsayılanları | Sayısal sütunlar sağa yaslı. |
@@ -226,9 +226,9 @@ Header tıklaması **yerel** sıralar (asc → desc → kapalı; ⇧ ile ikincil
 Dialog 560 px, başlık “Import from Excel”, açıklama: “Rows are matched by SKU: a known SKU updates its product, a new SKU becomes a new row. Everything lands in the grid for review first.”
 
 1. **Dosya:** sürükle-bırak veya seç (`.xlsx`, `.xls`, `.csv`). Seçilince dosya kartı: XLS ikonu · ad · “Sheet “Fiyatlar” · 1,252 rows” · **Replace file**. Birden çok sayfa varsa sayfa seçici.
-2. **Başlık satırı:** ilk boş olmayan satır.
+2. **Başlık satırı** (`detectHeaderRow`): paket ham satırlardan başlığı otomatik seçer — ilk 20 satır içinde, boş olmayan hücre sayısı en yüksek ve hücrelerinin çoğu metin olan ilk satır; eşitlikte ilk boş olmayan satır. Eşleşme satırının sağındaki **Header row** select'i (“Row 1”) tespit edilen satırla gelir; kullanıcı değiştirebilir, değişince sütun eşleme tablosu yeniden kurulur ve önceki elle seçimler sıfırlanır. Tespit dosya biçiminden bağımsızdır (.xlsx ve .csv aynı yol).
 3. **Eşleşme anahtarı:** “Match rows by **SKU ← “Stok Kodu”**”. Anahtar eşlenmeden **Apply pasif**.
-4. **Sütun eşleme tablosu:** Excel column → Field (select, “Don't import” dahil) · First value (dönüşüm önizlemesiyle: `1.650,00 → 1,650.00`, `%20 → 20%`). Otomatik eşleme: sütun `header`, `id` ve `importAliases` ile; büyük/küçük harf, Türkçe karakter ve boşluk duyarsız. Read-only alanlara eşleme yapılamaz (listede pasif).
+4. **Sütun eşleme tablosu** (`matchColumns`): Excel column → Field (select) · First value (dönüşüm önizlemesiyle: `1.650,00 → 1,650.00`, `%20 → 20%`). Otomatik eşleme yalnızca **tek ve kesin** eşleşmede: başlık, normalize edilerek (küçük harf, baştaki/sondaki ve ardışık boşluklar, Türkçe karakterler `ı→i, ş→s` …) sütunun `header`, `id` veya `importAliases` değerlerinden biriyle aynıysa. Eşleşmeyen ya da birden fazla alana uyan sütunun select'i **boş** kalır (“Choose a field”, `import.chooseField`); kullanıcı elle seçer. Otomatik eşlemeler de değiştirilebilir. Seçenekler: alanlar · “Don't import”. Boş bırakılan sütun Apply'da alınmaz (Don't import gibi). Read-only alanlara eşleme yapılamaz (listede pasif). Başlık tespiti ve sütun eşleme ayrı saf fonksiyonlardır (01, `sheet/import/`), ayrı test edilir.
 5. **Özet** (info banner): “**1,240** update existing products · **12** new SKUs · See new SKUs” + checkbox “Add the 12 new SKUs as new rows” (varsayılan açık).
 6. Cancel · **Apply to grid**.
 

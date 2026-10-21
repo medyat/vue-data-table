@@ -144,10 +144,7 @@ Sunucu, `columns` listesinde `filterable` olmayan bir sütun veya tipine uymayan
 
 - **Yalnızca en az bir çip varken** görünür. Toolbar ile tablo arasında; padding 8 × 12, çip aralığı 6.
 - Sıra: çipler → **Add filter** (ghost, `+` ikonu) → sağa yaslı aksiyonlar.
-- Sağdaki aksiyonlar:
-  - **Clear all** — tüm çipleri kaldırır. Her zaman (çip varken).
-  - **View edited · Reset · Save view** — yalnızca aktif görünüm düzenlenmişse (§7). `views` ve `viewsAdapter` ikisi de yoksa bu üçlü hiç yok. Yalnızca `views` (system) varsa (kaydetme yok): **View edited · Reset** görünür, Save view görünmez.
-- Sağdaki aksiyon grubu **ilk satırın sağ üstüne sabittir**, çipler sarılsa da yer değiştirmez.
+- Sağda **Clear all** — tüm çipleri kaldırır; **ilk satırın sağ üstüne sabittir**, çipler sarılsa da yer değiştirmez. Görünüm kaydetme aksiyonları filtre satırında değil, görünüm menüsündedir (D27, §7).
 
 ### Taşma
 
@@ -253,7 +250,8 @@ Sütun kimlikleri sabit tutulmalı. Kayıtlı bir görünümde artık var olmaya
 
 ### Görünüm menüsü (kısayol `V`)
 
-- Tetik: toolbar'ın en solunda görünüm adı (600 ağırlık) + düzenlenmişse `--dt-accent` 6 px nokta. Hiç görünüm yoksa (ne `views` ne adapter) tetik görünmez.
+- Tetik: toolbar'ın en solunda görünüm adı (600 ağırlık) + düzenlenmişse `--dt-accent` 6 px nokta + “Edited” etiketi. Hiç görünüm yoksa (ne `views` ne adapter) tetik görünmez.
+- **Kaydetme bölümü** (yalnızca aktif görünüm düzenlenmişse, menünün en üstünde; D27): etiket ““{ad}” edited”; **Save changes** (`⌘S`; alt satır “Updates “{ad}””) · **Save as new view…** (alt satır “Keeps “{ad}” unchanged”) · **Discard changes**. System görünümde **Save as my view…** (`⌘S`) + Discard changes. `viewsAdapter` yoksa yalnızca Discard changes. Ayırıcıdan sonra arama ve bölümler.
 - Popover 300–330 px: üstte **Find a view…** araması; **System views** (`Built in`), **My views** (`Only you`) ve varsa **Shared views** (`Team`) bölümleri; aktif görünüm kalın; varsayılan görünümün sağında soluk `Default`; düzenlenmiş olanın sağında nokta + `Edited`.
 - Satır menüsü `⋯` → Rename · Duplicate · Set as default · ayırıcı · Delete (türün izin verdiği kadarı).
 - Altta **New view** (mevcut durumla Save as new view dialog'unu açar).
@@ -262,11 +260,10 @@ Sütun kimlikleri sabit tutulmalı. Kayıtlı bir görünümde artık var olmaya
 ### Düzenlenmiş durum
 
 - Görünüm, mevcut `ViewState` kayıtlı `state`'ten farklıysa **edited** olur. Karşılaştırma normalize edilmiş durum üzerinden: eksik çipler hariç, `in` değerleri sırasız, sütun genişliklerinde ±2 px tolerans.
-- Göstergeler: görünüm adının yanında nokta, filtre satırında **View edited · Reset · Save view**.
-  - Filtre yoksa ama sıralama/sütun değiştiyse filtre satırı yine görünür, yalnızca bu üçlüyle.
-- **Reset** → kayıtlı duruma döner (filtre + sıralama + sütunlar).
-- **Save view** (personal/shared) → menü: **Save changes** (`⌘S`) · **Save as new view…** · **Discard changes** (= Reset).
-- **System view** düzenlenmişse üzerine yazılamaz: etiket ““Late orders” edited”, buton doğrudan **Save as my view…**.
+- Göstergeler: toolbar'da görünüm adının yanında nokta + “Edited”; menüde satırında nokta + “Edited”. Filtre satırında gösterge yoktur (D27); filtre olmadan yalnızca sıralama/sütun değiştiyse de kaydetme görünüm menüsündendir.
+- **Discard changes** (görünüm menüsü) → kayıtlı duruma döner (filtre + sıralama + sütunlar).
+- **Save changes** (`⌘S`; personal/shared) kayıtlı görünümü günceller; **Save as new view…** aşağıdaki dialog'u açar.
+- **System view** düzenlenmişse üzerine yazılamaz: etiket ““Late orders” edited”, menüde **Save as my view…** (`⌘S`) + Discard changes.
 - Kaydedilmemiş değişiklik **bellekte, oturum boyu, görünüm başına** tutulur: başka görünüme geçip dönünce düzenleme yerinde durur; toast yok, otomatik atma yok. Sayfa yenilenince gider (kalıcı çalışma kopyası yoktur).
 
 ### Save as new view dialog

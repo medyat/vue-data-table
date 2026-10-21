@@ -7,7 +7,7 @@ Bu repo, Vue 3 için `@swors/data-table` paketini geliştirir: ortak bir çekird
 1. `docs/data-table/README.md` dosyasını oku (özellikle **Karar günlüğü**).
 2. Üzerinde çalıştığın aşamayı `docs/data-table/10-roadmap.md` içinde bul; kabul kriterlerini not al.
 3. İlgili bileşen dokümanını (05/06/07) ve gerekiyorsa 01 (mimari, TanStack sınırı), 03 (tipler), 04 (filtre/görünüm) dokümanlarını oku. Public sözleşme `api-draft.ts`'tedir; props/emit/tip adlarını oradan al.
-4. Tasarım referansı `docs/data-table/DESIGN-BRIEF.md`'dir: §4 görsel sistem, bileşen bölümlerinde anatomi ve durumlar, §12'de görev paketleri. Claude Design'dan gelen tasarımlar `design/` altına eklendikçe ilgili ekranın görselini de aç. Ölçü ve renk için `02-design-tokens.md` geçerlidir; değerleri yuvarlama, ızgaraya oturtma.
+4. Tasarım referansı `docs/data-table/DESIGN-BRIEF.md`'dir: §4 görsel sistem, bileşen bölümlerinde anatomi ve durumlar, §12'de görev paketleri. Tasarımın ölçü, durum ve kararları `docs/handoff/` altındaki teslim belgelerindedir (bileşen başına bir dosya); tasarım dosyasının linki orada. Dışa aktarılmış görseller `design/` altına eklendikçe ilgili ekranın görselini de aç. Ölçü ve renk için `02-design-tokens.md` geçerlidir; değerleri yuvarlama, ızgaraya oturtma.
 5. Dokümanla tasarım görseli çelişirse **doküman** geçerlidir; çelişkiyi not et ve sor.
 6. Bir özelliği yazmadan önce TanStack Table / TanStack Virtual / reka-ui'de aynı ihtiyacı karşılayan yerleşik özellik var mı bak (01 · TanStack sınırı). Sıra: yerleşik özellik → resmi API ile yapılandırma → desteklenen genişletme noktası → özel çözüm. İç API'lere bağlanma.
 
@@ -26,7 +26,7 @@ Bu repo, Vue 3 için `@swors/data-table` paketini geliştirir: ortak bir çekird
 - **Renk, ölçü, gölge, yarıçap için asla sabit değer yazma.** Her zaman `--dt-*` token'larını kullan. Yeni bir değer gerekiyorsa önce `02-design-tokens.md`'ye ekle.
 - Sayılar ve tutarlar `font-variant-numeric: tabular-nums`. ID ve kodlar `--dt-font-mono`. Biçimlendiriciler (`Intl.*`) önbelleklenir, hücre başına oluşturulmaz.
 - **Paket veri çekmez, kaydetmez (D18).** HTTP, önbellek, otomatik yeniden deneme, chunk gönderimi ve iş mantığı uygulamadadır. Paket yalnızca `@request` / `@save` yayar ve `rows` / `applyResult()` alır.
-- Spesifikasyonda olmayan özellik ekleme. Özellikle **reddedilmiş** olanları ekleme: AND/OR filtre builder, mobilde kart görünümü, satırın tamamının link olması, bulk edit'te sunucudan silme, Vue slot ile hücre özelleştirme (D21), sürükle-bırak (D22), numbered/load-more/infinite sayfalama (D7), all-matching seçim (D19), `syncUrl` (D25), uzaktan metin önerisi (D3).
+- Spesifikasyonda olmayan özellik ekleme. Özellikle **reddedilmiş** olanları ekleme: AND/OR filtre builder, mobilde kart görünümü, satırın tamamının link olması, bulk edit'te sunucudan silme, Vue slot ile hücre özelleştirme (D21), sürükle-bırak (D22), numbered/load-more/infinite sayfalama (D7), all-matching seçim (D19), `syncUrl` (D25), uzaktan metin önerisi (D3), toolbar'da facet çipi (D26), filtre satırında görünüm kaydetme üçlüsü (D27), önizleme (peek) paneli (D28).
 - Hücre içindeki etkileşimli öğeler için geliştirici `stopPropagation` yazmaz; paket tek bir guard ile satır tıklaması, seçim ve düzenleme başlatmayı ayırır (05 §7, 07 §5).
 - Karar günlüğündeki bir karar uygulamada sorun çıkarırsa, değiştirmeden önce sor.
 - Erişilebilirlik spesifikasyonun parçasıdır, sonradan eklenmez: `08-accessibility-keyboard.md`.

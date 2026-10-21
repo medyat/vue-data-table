@@ -4,7 +4,7 @@ Tasarım referansı: `DESIGN-BRIEF.md` §6 ve görev paketleri T1–T7, T9, T13.
 
 ## 1. Genel bakış
 
-Bir modülün ana ekranı: siparişler, ürünler, müşteriler, iş emirleri. Kullanıcı burada **bulur** (arama, filtre, görünüm), **tarar** (sanal satırlar, sayfalama), **seçip toplu iş yapar** (bulk bar) ve **kayda iner** (expand, peek, open). Tablo sayfanın tamamını kaplar; yalnızca tablo gövdesi kayar, toolbar ve footer her zaman görünür.
+Bir modülün ana ekranı: siparişler, ürünler, müşteriler, iş emirleri. Kullanıcı burada **bulur** (arama, filtre, görünüm), **tarar** (sanal satırlar, sayfalama), **seçip toplu iş yapar** (bulk bar) ve **kayda iner** (expand, open). Tablo sayfanın tamamını kaplar; yalnızca tablo gövdesi kayar, toolbar ve footer her zaman görünür.
 
 Varsayılanlar: Standard yoğunluk, 100 satır/sayfa, simple pagination (D7), dikey ızgara çizgileri kapalı, `mode: 'client'`, `row-click: 'none'`.
 
@@ -25,7 +25,6 @@ Varsayılanlar: Standard yoğunluk, 100 satır/sayfa, simple pagination (D7), di
 └──────────────────────────────────────────────────────────────────────┘
    BulkBar  — yüzer, altta ortalı, alt kenardan 64 px
    ScrollPosition — yüzer, sağdan 22 px, alttan 62 px
-   Peek — sağa yapışık 440 px, kartın tam yüksekliği (toolbar ve footer'ın da üstünde)
 ```
 
 - **Yükseklik sözleşmesi:** uygulama, DataTable'ın ebeveynine belirli bir yükseklik verir (ör. `height: calc(100dvh - var(--app-header-h))` veya flex çocuğu `min-height: 0`). Paket bunu bulamazsa (yükseklik 0 veya içerikle büyüyorsa) geliştirme modunda konsola uyarı yazar.
@@ -42,14 +41,13 @@ Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. **Yalnızca yapıland�
 |---|---|---|
 | 1 | View switcher | `views` prop'unda veya adapter'da en az bir görünüm varsa (04 §7) |
 | 2 | Search | `searchable` sütun varsa. `/`. Çip üretmez (04 §5) |
-| 3 | Facet çipleri | `facet: true` sütunlar; doğrudan çip butonu (`Country: Türkiye`), aynı çip modeli (D2) |
-| 4 | Filter | Facet dışı `filterable` sütun varsa. Sayaç rozeti = uygulanmış çip sayısı. Column picker açar. `F` |
-| 5 | Filter bar | Ayrı satır, yalnızca filtre varken (04 §4) |
-| 6 | Display | Kullanılabilir en az bir ayar varsa: yoğunluk, Columns ›, Sort › (sıralama varsa), dikey çizgiler |
-| 7 | More `⋯` | Öğe varsa: **Refresh** `R` (sunucu modunda veya `@request` dinleyicisi varsa), **Export** / **Import…** / **Print** (ilgili olay dinleniyorsa), **Auto-refresh** (`autoRefresh` verilmişse) |
-| 8 | `#toolbar-end="{ compact }"` | Uygulamanın birincil aksiyonu vb. **En fazla bir** birincil buton; mürekkep (`--dt-ink`), asla accent mavi değil. `compact` daralmada ikon moduna geçmek için |
+| 3 | Filter | `filterable` sütun varsa. Sayaç rozeti = uygulanmış çip sayısı. Column picker açar. `F`. Facet çipi yok (D26) |
+| 4 | Filter bar | Ayrı satır, yalnızca filtre varken (04 §4) |
+| 5 | Display | Kullanılabilir en az bir ayar varsa: yoğunluk, Columns ›, Sort › (sıralama varsa), dikey çizgiler |
+| 6 | More `⋯` | Öğe varsa: **Refresh** `R` (sunucu modunda veya `@request` dinleyicisi varsa), **Export** / **Import…** / **Print** (ilgili olay dinleniyorsa), **Auto-refresh** (`autoRefresh` verilmişse) |
+| 7 | `#toolbar-end="{ compact }"` | Uygulamanın birincil aksiyonu vb. **En fazla bir** birincil buton; mürekkep (`--dt-ink`), asla accent mavi değil. `compact` daralmada ikon moduna geçmek için |
 
-Sıra: `[1] [2] [3] [4] ……… [6] [7] │ [8]`. 1–4 arası 8 px, 6–7 arası 8 px, 7 ile 8 arasında `vsep` (1×20 px, `--dt-line`). Tazelik bilgisi (“Updated just now ↻”, “Live”) **footer**'dadır (§8).
+Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 8 px, 6 ile 7 arasında `vsep` (1×20 px, `--dt-line`). Tazelik bilgisi (“Updated just now ↻”, “Live”) **footer**'dadır (§8).
 
 | `toolbar` | Sonuç |
 |---|---|
@@ -105,9 +103,9 @@ Sıra: `[1] [2] [3] [4] ……… [6] [7] │ [8]`. 1–4 arası 8 px, 6–7 ara
 | `phone` 156 · `email` 200 · `url` 180 · `color` 132 · `array` 160 | |
 | `uppercase`, `lowercase` | `string` ile aynı |
 | `cell` ile çizilen sütun | Tipin varsayılanı; gerekirse `width` (Main'deki Produced: `object`, 176 px) |
-| Satır aksiyonları | 76 px (peek + ⋯) veya 56 px (yalnızca ⋯, SimpleList), sağa sabit |
+| Satır aksiyonları | 56 px (yalnızca ⋯, D28), sağa sabit |
 
-Örnek düzen (Production orders): `40 │ 136 │ minmax(200,1.6fr) │ minmax(160,1.2fr) │ 124 │ 176 │ 156 │ 132 │ 148 │ 76` → min genişlik 1350 px. Toplam genişlik kabı aşarsa yatay kayar.
+Örnek düzen (Production orders): `40 │ 136 │ minmax(200,1.6fr) │ minmax(160,1.2fr) │ 124 │ 176 │ 156 │ 132 │ 148 │ 56` → min genişlik 1330 px. Toplam genişlik kabı aşarsa yatay kayar.
 
 ### Header
 
@@ -132,16 +130,15 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 | Durum | `--dt-row-bg` | Not |
 |---|---|---|
 | Default | `--dt-surface` | |
-| Hover | `--dt-row-hover` | Satır aksiyonlarının `hov` öğeleri görünür |
-| Current (peek açık olan satır) | `--dt-row-current` | |
+| Hover | `--dt-row-hover` | Hücre aksiyonları (`actions`, `reveal: 'hover'`) görünür; ⋯ `--dt-text-2` |
 | Selected | `--dt-row-selected` | Hover: `--dt-row-selected-hover` |
 | Klavye odağı | — | Satır üstünde 2 px `--dt-accent` çerçeve (yarıçap 3 px, `::after`) |
 | Dim | opacity .55 | İşlem süren satır (bulk aksiyon çalışırken) |
 
 - Hücreler zemin rengini `--dt-row-bg`'den alır; sabit hücreler opak kalsın diye bu zorunludur (01).
-- **Birincil hücre gerçek `<a href>`** (D6). Satır gövdesine tıklamak varsayılan olarak (`row-click: 'none'`) hiçbir şey yapmaz: seçim yapmaz, açmaz; metin seçilip kopyalanabilir. `row-click: 'open' | 'expand' | 'peek'` satır tıklamasına bir eylem bağlar (§7). Hangi değer olursa olsun: etkileşimli hedefe (link, buton, checkbox, input, menü) tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; satır tıklaması asla seçim yapmaz. Guard tek yerdedir; `cell`/`actions` içindeki düğmeler `stopPropagation` yazmaz.
-- Satır aksiyonları (sağa sabit): **Preview** (yalnızca hover/odak/current'ta görünür, `title="Preview (Space)"`) + **⋯** (her zaman görünür, satır menüsünü açar). Sağ tık da satır menüsünü açar.
-- Satır menüsü (268 px): Open `↵` (gerçek `<a href>`; düz tıkta `row-open`) · Open in new tab (gerçek `<a target="_blank">`, tarayıcı açar) · Preview `Space` · **Copy {birincil sütun}** (yerleşik, ör. “Copy order number”; birincil değeri panoya yazar, toast “Copied”) · ─ · uygulamanın `rowActions` listesi (`run(row)` beklenmez; onay ve toast uygulamanın). Pasif aksiyon gerekçesiyle iki satırlı gösterilir (“Release — Already running”). Yıkıcı aksiyon en altta, ayırıcıdan sonra, kırmızı metin, sonu `…` (onay ister).
+- **Birincil hücre gerçek `<a href>`** (D6). Satır gövdesine tıklamak varsayılan olarak (`row-click: 'none'`) hiçbir şey yapmaz: seçim yapmaz, açmaz; metin seçilip kopyalanabilir. `row-click: 'open' | 'expand'` satır tıklamasına bir eylem bağlar (§7). Hangi değer olursa olsun: etkileşimli hedefe (link, buton, checkbox, input, menü) tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; satır tıklaması asla seçim yapmaz. Guard tek yerdedir; `cell`/`actions` içindeki düğmeler `stopPropagation` yazmaz.
+- Satır aksiyonları (sağa sabit, 56 px): yalnızca **⋯** (28 × 28, her zaman görünür, `--dt-text-3`, hover'da `--dt-text-2`; satır menüsünü açar). Sağ tık ve `⇧F10` da satır menüsünü açar. Önizleme düğmesi ve paneli yoktur (D28).
+- Satır menüsü (268 px): Open `↵` (gerçek `<a href>`; düz tıkta `row-open`) · Open in new tab (gerçek `<a target="_blank">`, tarayıcı açar) · **Copy {birincil sütun}** (yerleşik, ör. “Copy order number”; birincil değeri panoya yazar, toast “Copied”) · ─ · uygulamanın `rowActions` listesi (`run(row)` beklenmez; onay ve toast uygulamanın). Pasif aksiyon gerekçesiyle iki satırlı gösterilir (“Release — Already running”). Yıkıcı aksiyon en altta, ayırıcıdan sonra, kırmızı metin, sonu `…` (onay ister).
 
 ## 5. Sütun yönetimi
 
@@ -192,15 +189,14 @@ Dialog 460 px: başlık “Cancel 4 production orders?”, açıklama, etkilenen
 
 ## 7. Satır detayı
 
-Aynı satır, üç derinlik:
+Aynı satır, iki derinlik:
 
 | Derinlik | Ne | Nasıl açılır | Liste |
 |---|---|---|---|
 | **Expand** | Alt kayıtlar satırın altında (operasyonlar, sipariş satırları, partiler) | Birincil hücredeki chevron, `→` aç / `←` kapa; `row-click="expand"` | Yerinde kalır |
-| **Peek** | Kayıt sağdan açılan panelde | Hover'daki Preview butonu, `Space`; `row-click="peek"` | Görünür ve kullanılabilir kalır |
 | **Open** | Tam detay sayfası | Birincil link (düz tık → `row-open`), satırda `↵`, `row-click="open"`; yeni sekme: ⌘/Ctrl veya orta tık (tarayıcı) ya da `→` ile linke odaklanıp `⌘↵` | Terk edilir |
 
-`row-open { row, href, event }`: paket `preventDefault` yapmaz. Dinleyici yoksa tarayıcı `href`'e gider (tam sayfa). SPA için uygulama `event.preventDefault()` çağırıp `router.push(href)` (Vue Router) veya `router.visit(href)` (Inertia) yapar. Satırda `↵`, satır tıklaması, menü ve peek'teki Open aynı `href(row)` çözümlemesini kullanır; DOM'daki bir öğeye bağımlı değildir.
+`row-open { row, href, event }`: paket `preventDefault` yapmaz. Dinleyici yoksa tarayıcı `href`'e gider (tam sayfa). SPA için uygulama `event.preventDefault()` çağırıp `router.push(href)` (Vue Router) veya `router.visit(href)` (Inertia) yapar. Satırda `↵`, satır tıklaması ve menüdeki Open aynı `href(row)` çözümlemesini kullanır; DOM'daki bir öğeye bağımlı değildir.
 
 ### Expand
 
@@ -210,14 +206,9 @@ Aynı satır, üç derinlik:
 - `expand: true | { canExpand }`; TanStack expanding state'i satır anahtarıyla tutulur (refresh'te açık kalır); `query`/`page` taleplerinde açıklar kapanır.
 - Sanal liste: öğe = satır + detay; detay yalnızca görünür aralıkta render edilir (kaydırınca unmount olur, içindeki yerel durum gider), yükseklik `measureElement` ile ölçülür ve anahtar bazlı önbellekte kalır; yeniden mount zıplatmaz. Birden çok satır açık olabilir.
 
-### Peek
+### Önizleme (peek) yok — D28
 
-- 440 px, sağa yapışık, **scrim yok** (liste kullanılabilir), `--dt-shadow-sheet`, açılış 160 ms.
-- Başlık çubuğu 52 px: **Previous / Next** butonları · kayıt numarası (mono, 12.5 px) · `4 of 25` (sayfadaki konum, soluk) · boşluk · **Open** (sm; gerçek `<a :href="href(row)">`, `row-open` yayar) · ✕ (`Close (Esc)`).
-- Gövde 20 px padding: durum rozeti, başlık (18 px/600), ikincil kod; anahtar–değer listesi (116 px etiket sütunu); alt bölümler (“Recent activity”). İçerik `#peek="{ row, close }"` slot'undan; veriyi slot bileşeni çeker. Kabuk (başlık çubuğu, Prev/Next, Open, odak) paketindir.
-- Açıkken ilgili satır **current**. Gösterilen kayıt yalnızca şu yollarla değişir: paneldeki Previous/Next (sayfadaki sırayla, liste de kayar), başka satırın önizleme düğmesi, odaklı satırda `Space`. Izgaradaki `↑`/`↓` yalnızca odağı taşır. Satır tıklaması `row-click` prop'una uyar (peek açık diye değişmez).
-- `Esc` kapatır, odak satıra döner (satır DOM'da değilse `scrollToIndex` ile getirilir). Kayıt veri değişiminde listeden düşerse panel kapanır, odak ızgara köküne gider.
-- Peek tablonun üstünde durur; tablo genişliği değişmez.
+Paket önizleme paneli taşımaz. Uygulama isterse `row-click` olayında veya `rowActions` ile kendi panelini/sayfasını açar; birincil link ve `row-open` değişmez.
 
 ## 8. Sayfalama
 
@@ -283,16 +274,15 @@ Token tablosu: 02 · Yoğunluk. Kişisel tercih, görünüme yazılmaz. Comforta
 | Genişlik | Değişiklik |
 |---|---|
 | ≥ 1024 px | Varsayılan düzen |
-| 640 – 1023 px | Toolbar daralır (§3); peek 440 px kalır, tablonun üstüne biner |
+| 640 – 1023 px | Toolbar daralır (§3) |
 | < 640 px | Seçim sütunu ve birincil sütun sola sabit, diğerleri yatay kayar, sağ kenarda solma (“daha fazlası var”); kaydırınca sabit kenar gölgesi belirir |
 
 Telefonda (< 640 px):
 - Toolbar: görünüm adı (tıklanınca alt sayfa), arama ikonu, filtre ikonu + sayaç, `⋯`. Arama ikonu toolbar'ın yerine tam genişlik arama alanı açar (sol başta geri oku).
 - Filtre çip satırı tek satır, yatay kayar; çipe dokunmak **Filters alt sayfasını** açar (04 §9).
 - Tüm popover'lar **alt sayfa** olur: 52 px satırlar, üstte tutamaç, altta tam genişlik birincil buton.
-- Peek tam ekran sayfa olur (sağdan kayarak), üstte geri oku.
 - Bulk bar §6'daki telefon düzeninde.
-- Dokunmatikte (`pointer: coarse`) Compact otomatik Standard'a döner; satır en az 48 px; checkbox dokunma alanı 44 px (görsel 16 px kalır). Hover'a bağlı Preview butonu yerine satır menüsündeki Preview kullanılır; satır aksiyon sütunu yalnızca `⋯` (56 px).
+- Dokunmatikte (`pointer: coarse`) Compact otomatik Standard'a döner; satır en az 48 px; checkbox dokunma alanı 44 px (görsel 16 px kalır); satır aksiyon sütunu (`⋯`, 56 px) sağa sabit kalır, düğmenin dokunma alanı 44 px.
 
 ## 12. Kenar durumlar
 
@@ -307,7 +297,7 @@ Telefonda (< 640 px):
 
 ## 13. Hareket
 
-02 · Hareket tablosu. Bu modda: popover 120 ms, peek 160 ms, bulk bar 160 ms, sıralama oku 150 ms, kaydırma hapı 900 ms bekleme + 150 ms solma, refresh çubuğu 1.25 s döngü. `prefers-reduced-motion` desteklenir.
+02 · Hareket tablosu. Bu modda: popover 120 ms, bulk bar 160 ms, sıralama oku 150 ms, kaydırma hapı 900 ms bekleme + 150 ms solma, refresh çubuğu 1.25 s döngü. `prefers-reduced-motion` desteklenir.
 
 ## 14. Erişilebilirlik (özet — tamamı 08)
 

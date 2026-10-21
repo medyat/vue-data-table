@@ -192,10 +192,10 @@ interface BaseColumn<Row, V = unknown> {
 
   /**
    * Birincil hücre: kaydın adı/numarası. Gerçek <a href> olarak render edilir (D6),
-   * telefonda sabit kalır, peek başlığı olur. Tabloda en fazla bir tane.
+   * telefonda sabit kalır. Tabloda en fazla bir tane.
    */
   primary?: boolean
-  /** Birincil hücre veya `id`/`ajax` tipi için kayıt linki. Peek'teki Open da bunu kullanır. */
+  /** Birincil hücre veya `id`/`ajax` tipi için kayıt linki. Satır menüsündeki Open da bunu kullanır. */
   href?: (row: Row) => string | undefined
   /** İkinci satır (yalnızca Comfortable). */
   secondary?: (row: Row) => string | null | undefined
@@ -211,8 +211,6 @@ interface BaseColumn<Row, V = unknown> {
   searchable?: boolean
   /** Column picker › Suggested (en fazla 4). */
   suggested?: boolean
-  /** Toolbar'da doğrudan çip butonu (facet) olarak göster. */
-  facet?: boolean
   /** Çip özetinde sayım için: "3 statuses". Verilmezse "3 values". */
   filterNoun?: Plural
   /** Telefonda ve belge modunda sütun önceliği: küçük sayı = birincile daha yakın. */
@@ -233,7 +231,7 @@ interface BaseColumn<Row, V = unknown> {
   validate?: Validator<Row>
   /** Uyarı: kayda izin verir (ör. fiyat %40'tan fazla değişti). */
   warn?: Validator<Row>
-  /** Import Excel'de otomatik eşleşme için alternatif başlıklar: ["Stok Kodu", "Stock code"]. */
+  /** İçe aktarmada otomatik eşleşme için alternatif başlıklar: ["Stok Kodu", "Stock code"]. `header` ve `id` ile birlikte normalize edilerek (küçük harf, boşluk ve Türkçe karakter duyarsız) karşılaştırılır (07 §13). */
   importAliases?: string[]
   /** Formula bar ipucundaki kısıt metni: "≥ 0". Tip, para birimi ve "required" otomatik eklenir. */
   hint?: string
@@ -347,7 +345,7 @@ export interface RowAction<Row> {
   id: string
   label: string
   icon?: Component
-  /** Gösterim için: "⌘↵". Kısayolu paket bağlamaz; yalnızca Open/Preview yerleşiktir. */
+  /** Gösterim için: "⌘↵". Kısayolu paket bağlamaz; yalnızca Open yerleşiktir. */
   shortcut?: string
   /** true veya gerekçe metni ("Already running") → pasif, gerekçe ikinci satırda. */
   disabled?: (row: Row) => boolean | string
@@ -374,7 +372,7 @@ export interface BulkAction<Row> {
 }
 
 /** Satır gövdesine tıklama. Varsayılan 'none': metin seçilip kopyalanabilir, seçim ve açma yapmaz. */
-export type RowClickMode = 'none' | 'open' | 'expand' | 'peek'
+export type RowClickMode = 'none' | 'open' | 'expand'
 
 export interface ExpandOptions<Row> {
   /** Bu satırın detayı var mı? Yoksa chevron gösterilmez. */
@@ -511,14 +509,22 @@ export interface SheetRowResult<Row> {
 /** İlerleme: boolean ya da sayaç ("Loading products… 6,200 of 10,000", "Saving… 4,800 of 9,600 rows"). */
 export type Progress = boolean | { done: number; total: number }
 
+/**
+ * `parseFile` sonucu: dosya biçiminden bağımsız ham satırlar (.xlsx/.xls için ör. exceljs, .csv için uygulamanın
+ * CSV ayrıştırıcısı). Başlık satırı tespiti ve sütun eşleme paketindir (07 §13); uygulama başlığı ayırmaz.
+ */
 export interface ParsedWorkbook {
   sheets: Array<{
     name: string
-    headers: string[]
-    /** Ham hücreler; sayı/tarih çözümlemesini paket yapar (07 · Import). */
+    /** Ham satırlar, başlık satırı dahil, boş satırlar yerinde (Header row seçici satır numarasıyla çalışır). Sayı/tarih çözümlemesini paket yapar. */
     rows: unknown[][]
   }>
 }
+
+/** 07 §13: başlık satırı tespiti (`detectHeaderRow`) ve sütun eşleme (`matchColumns`) ayrı, saf fonksiyonlardır; `@swors/data-table/sheet`'ten dışa verilir ve ayrı test edilir. */
+export declare function detectHeaderRow(rows: unknown[][]): number
+/** Dönen eşlemede yalnızca tek ve kesin eşleşenler vardır; eşleşmeyen ya da birden fazla alana uyan sütun haritada yoktur (seçici boş kalır). */
+export declare function matchColumns(headers: string[], columns: Array<Pick<ColumnDef<any>, 'id' | 'header' | 'importAliases'>>): Record<number, string>
 
 export type SheetFilterMode = 'all' | 'changed' | 'errors'
 
@@ -585,8 +591,6 @@ export interface DataTableProps<Row> extends CommonProps<Row> {
   /** Varsayılan 'none'. */
   rowClick?: RowClickMode
   expand?: boolean | ExpandOptions<Row>
-  /** true → Space ve hover butonu ile peek (içerik `#peek` slot'undan). */
-  peek?: boolean
   /** Varsayılan 100; tercih varsa o. */
   pageSize?: number
   /** Varsayılan [50, 100, 250, 500]. */
@@ -601,7 +605,7 @@ export interface DataTableEmits<Row> {
   count: CountRequest
   /** Seçim her değiştiğinde; sayfa kapsamlı yüklü satırlar. */
   'selection-change': Row[]
-  /** Birincil linke düz sol tık, satırda Enter, satır menüsü › Open, peek › Open, `row-click="open"`. Paket preventDefault yapmaz: dinleyici yoksa tarayıcı gider; SPA için `event.preventDefault()` + router. */
+  /** Birincil linke düz sol tık, satırda Enter, satır menüsü › Open, `row-click="open"`. Paket preventDefault yapmaz: dinleyici yoksa tarayıcı gider; SPA için `event.preventDefault()` + router. */
   'row-open': { row: Row; href: string; event: MouseEvent }
   /** Etkileşimli hedef, metin seçimi ve değiştirici tuş dışındaki satır tıklamaları (`rowClick` değerinden bağımsız). */
   'row-click': { row: Row; event: MouseEvent }
@@ -623,7 +627,6 @@ export interface DataTableHandle<Row = any> {
 /**
  * DataTable slot'ları:
  *   #expanded="{ row, close }"           Satır detayı; veriyi slot bileşeni çeker (paket yüklemez, önbelleklemez)
- *   #peek="{ row, close }"               Önizleme paneli içeriği (kabuk paketin)
  *   #empty                               İlk kullanım boş durumu (başlık, metin, aksiyonlar)
  *   #toolbar-end="{ compact }"           Toolbar'ın sağı (birincil aksiyon vb.)
  *   #selection-actions="{ rows, clear }" bulkActions yerine özel seçim çubuğu içeriği
@@ -661,7 +664,7 @@ export interface DataSheetProps<Row> extends CommonProps<Row> {
    * Verilmezse her bilinmeyen anahtar New sayılır. Toplu çağrılır (en fazla 500 anahtar).
    */
   lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
-  /** Import Excel. Verilmezse menüde Import gösterilmez. */
+  /** Import Excel / CSV: dosyayı uygulama ayrıştırır (ör. exceljs; CSV için kendi ayrıştırıcısı) ve ham satırları verir. Verilmezse toolbar'da Import gösterilmez. */
   parseFile?: (file: File) => Promise<ParsedWorkbook>
   /** Varsayılan 10.000. Aşılırsa ekleme/yapıştırma/içe aktarma durur ve uyarır. */
   maxRows?: number

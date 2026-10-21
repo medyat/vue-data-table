@@ -35,13 +35,16 @@ Faz 0'daki token testi `tokens.css`'i bu dokümandaki tablolarla karşılaştır
 | `--dt-focus` | `rgba(45,91,227,.45)` | `rgba(110,139,255,.55)` | Odak halkası (2 px, 1–2 px offset) |
 | `--dt-focus-soft` | `rgba(45,91,227,.14)` | `rgba(110,139,255,.18)` | Input odak halesi (3 px) |
 | `--dt-row-hover` | `#F8F9FA` | `#17191E` | Satır hover |
-| `--dt-row-current` | `#F3F4F7` | `#1A1C21` | Peek'te açık olan satır |
 | `--dt-row-selected` | `#F2F5FE` | `#161C2E` | Seçili satır |
 | `--dt-row-selected-hover` | `#EAF0FE` | `#1A2136` | Seçili + hover |
 | `--dt-sk` / `--dt-sk-hi` | `#EDEFF2` / `#F7F8FA` | `#1C1E23` / `#25282E` | Skeleton parıltısı |
 | `--dt-scrim` | `rgba(15,17,22,.28)` | `rgba(0,0,0,.55)` | Dialog / bottom sheet arkası |
 | `--dt-danger` / `--dt-danger-hover` | `#C42626` / `#AE1F1F` | aynı | Yıkıcı birincil buton (“Cancel 3 orders”, “Discard changes”), metni `#FFFFFF` |
 | `--dt-switch-knob` | `#FFFFFF` | `#FFFFFF` | Switch topuzu |
+| `--dt-swatch-line` | `rgba(16,24,40,.12)` | `rgba(255,255,255,.16)` | `color` hücresindeki renk karesinin kenarı |
+| `--dt-live-halo` | `rgba(44,157,90,.18)` | `rgba(61,184,115,.2)` | Footer “Live” noktasının halesi |
+| `--dt-r-line` | `#F6CFCF` | `rgba(240,82,82,.28)` | Kırmızı şeridin üst kenarı (DataSheet kısmen kaydedildi) |
+| `--dt-a-line` | `#F2DDB4` | `rgba(232,163,42,.26)` | Amber şeridin üst kenarı (stale, satır sınırı) |
 
 ## Renk — koyu yüzer öğeler (bulk bar, toast, tooltip)
 
@@ -55,6 +58,7 @@ Faz 0'daki token testi `tokens.css`'i bu dokümandaki tablolarla karşılaştır
 | `--dt-bulk-link` | `#AFC2FF` | `#9CB0FF` |
 | `--dt-tip-bg` / `--dt-tip-fg` | `#15171C` / `#F1F2F4` | `#2B2E35` / `#ECEDF0` |
 | `--dt-bulk-danger` | `#FF9F9F` | `#FF9F9F` |
+| `--dt-bulk-warn` | `#F1C46C` | `#F1C46C` |
 | `--dt-error-tip-bg` | `#B42323` (her iki tema; metin `#FFFFFF`) | |
 
 ## Tonlar (durum rozetleri, seçenek renkleri, avatarlar)
@@ -97,8 +101,8 @@ Font paketle gelmez; uygulama yükler (ör. `geist` npm paketi veya Google Fonts
 | Menü öğesi | 13 px · 400; bölüm etiketi 11.5 px · 500 `--dt-text-3` |
 | Popover/section başlığı | 13–15 px · 600 |
 | Dialog başlığı | 16 px · 600, açıklama 13 px `--dt-text-2` |
-| ID / kod | mono, hücre boyutunun 0.5 px altı, `letter-spacing: -.01em` |
-| Para birimi kodu | mono 10.5–11 px · 500, `--dt-text-3`, sayıdan 6 px sonra |
+| ID / kod | mono `--dt-mono-fs` (hücre boyutunun 0.5 px altı: 13 / 12.5 / 12 px) · 500, `letter-spacing: -.01em` |
+| Para birimi kodu | mono `--dt-currency-fs` (11 / 11 / 10.5 px) · 500, `--dt-text-3`, sayıdan 6 px sonra, taban çizgisine hizalı |
 | Kbd | mono 11 px · 500, 18 px yükseklik, 4 px yarıçap |
 
 Tüm sayısal hücreler, sayfalama aralıkları ve sayaçlar `font-variant-numeric: tabular-nums`.
@@ -116,6 +120,9 @@ Tüm sayısal hücreler, sayfalama aralıkları ve sayaçlar `font-variant-numer
 | `--dt-fs-head` | 12 px | 12 px | 11.5 px |
 | `--dt-av` (avatar) | 24 px | 20 px | 18 px |
 | `--dt-badge-h` | 24 px | 22 px | 20 px |
+| `--dt-mono-fs` (ID / kod) | 13 px | 12.5 px | 12 px |
+| `--dt-currency-fs` (para birimi kodu) | 11 px | 11 px | 10.5 px |
+| `--dt-avatar-fs` (avatar baş harfleri) | 10 px | 9 px | 8 px |
 
 - İkinci satır (`secondary`) yalnızca Comfortable'da görünür; diğerlerinde tooltip'e taşınır.
 - Dokunmatik cihazda (`pointer: coarse`) Compact otomatik Standard'a döner; mobil liste satırı en az 48 px, sheet salt-okunur satırı 44 px.
@@ -144,7 +151,6 @@ Telefondaki bulk bar `--dt-radius-dialog` (14 px) kullanır.
 |---|---|
 | `--dt-shadow-sm` | `0 1px 2px rgba(16,24,40,.05)` — buton, input, çip, kart |
 | `--dt-shadow-pop` | `0 0 0 1px rgba(16,24,40,.08), 0 2px 4px rgba(16,24,40,.04), 0 14px 34px -8px rgba(16,24,40,.18)` |
-| `--dt-shadow-sheet` | `-1px 0 0 rgba(16,24,40,.07), -18px 0 40px -18px rgba(16,24,40,.24)` — Peek |
 | `--dt-shadow-dialog` | `0 0 0 1px rgba(16,24,40,.07), 0 28px 60px -14px rgba(16,24,40,.34)` |
 | `--dt-shadow-pin-l` / `-r` | `±1px 0 0 var(--dt-line), ±10px 0 12px -10px rgba(16,24,40,.22)` |
 | `--dt-shadow-float` | `0 0 0 1px var(--dt-bulk-line), 0 18px 40px -10px rgba(16,24,40,.45)` — bulk bar, toast |
@@ -157,10 +163,9 @@ Dark değerleri (siyah bazlı, daha yoğun):
 |---|---|
 | `--dt-shadow-sm` | `0 1px 2px rgba(0, 0, 0, .35)` |
 | `--dt-shadow-pop` | `0 0 0 1px rgba(255, 255, 255, .08), 0 14px 34px -8px rgba(0, 0, 0, .7)` |
-| `--dt-shadow-sheet` | `-1px 0 0 rgba(255, 255, 255, .07), -18px 0 40px -18px rgba(0, 0, 0, .8)` |
 | `--dt-shadow-dialog` | `0 0 0 1px rgba(255, 255, 255, .08), 0 28px 60px -14px rgba(0, 0, 0, .8)` |
-| `--dt-shadow-pin-l` | `1px 0 0 var(--line), 10px 0 12px -10px rgba(0, 0, 0, .7)` |
-| `--dt-shadow-pin-r` | `-1px 0 0 var(--line), -10px 0 12px -10px rgba(0, 0, 0, .7)` |
+| `--dt-shadow-pin-l` | `1px 0 0 var(--dt-line), 10px 0 12px -10px rgba(0, 0, 0, .7)` |
+| `--dt-shadow-pin-r` | `-1px 0 0 var(--dt-line), -10px 0 12px -10px rgba(0, 0, 0, .7)` |
 
 ## Bileşen ölçüleri (sık kullanılanlar)
 
@@ -174,9 +179,8 @@ Dark değerleri (siyah bazlı, daha yoğun):
 | Menü öğesi | 32 px (iki satırlı: 44 px); popover iç dolgu 4 px |
 | Footer | min 48 px, padding 8 × 12 |
 | Bulk bar | padding 6, buton 32 px, alt kenardan 64 px (footer'ın üstü), yatay ortalı |
-| Peek | 440 px genişlik, sağa yapışık, scrim yok |
-| Dialog | 460 px (import: 560) |
-| Popover genişlikleri | Views 300–330 · Column picker 264–280 · Display ve Columns drill-in 300–320 · More 236 · Date 520 · Değer editörleri 296–300 · Operatör menüsü 220 · Sütun menüsü 248 · Satır menüsü 268 · “+N more” 340 · Save view menüsü 320 · Görünüm satırı ⋯ 200 · Açılan toolbar araması 260–280 |
+| Dialog | 460 px (DataSheet'te hatalı satır listeli onay 480; import 560) |
+| Popover genişlikleri | Views 300–330 · Column picker 264–280 · Display ve Columns drill-in 300–320 · More 236 · Date 520 · Değer editörleri 296–300 · Operatör menüsü 220 · Sütun menüsü 248 · Satır menüsü 268 · “+N more” 340 · Save view menüsü 320 · Görünüm satırı ⋯ 200 · Açılan toolbar araması 240 |
 | Sheet formül çubuğu | 36 px; ad kutusu 240 px; `fx` 40 px |
 | Sheet durum çubuğu | min 36 px, `--dt-surface-2` |
 
@@ -189,7 +193,6 @@ Dark değerleri (siyah bazlı, daha yoğun):
 | Expand oku | aç/kapa | `rotate(90deg)` | 150 ms | ease |
 | Switch | değişim | topuz `translateX(12px)` | 150 ms | ease |
 | Popover / menü | aç | opacity 0→1, scale .98→1 | 120 ms | ease-out |
-| Peek | aç/kapa | translateX(16px)→0 + opacity | 160 ms | ease-out |
 | Bulk bar | ilk seçim | translateY(8px)→0 + opacity | 160 ms | ease-out |
 | Kaydırma göstergesi | kaydırma durunca | 900 ms sonra opacity → 0 | 150 ms | ease |
 | Skeleton | yükleme | arka plan kayması | 1.6 s döngü | ease-in-out |

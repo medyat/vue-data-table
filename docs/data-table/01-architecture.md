@@ -22,7 +22,7 @@ Ortak bir çekirdek üzerinde üç bileşen. Uygulama (ör. Laravel + Inertia/Vu
 | İkonlar | `@phosphor-icons/vue` | Tek ağırlık (regular), tree-shake. |
 | Stil | Derlenmiş CSS + `--dt-*` değişkenleri | Uygulamanın Tailwind kurulumundan bağımsız; shadcn temasına köprülenebilir (02). |
 | Biçimlendirme | `Intl.NumberFormat` / `DateTimeFormat` / `Collator`, locale+seçenek anahtarıyla önbellekli | Hücre başına formatter oluşturmak 10k satırda 134 ms, önbellekli 3,5 ms. |
-| Excel okuma | `parseFile` callback'i — öneri: SheetJS veya ExcelJS | Lisans/boyut kararını uygulama versin; paket yalnızca satır dizisi alır. |
+| Excel / CSV okuma | `parseFile` callback'i — öneri: `exceljs` (.xlsx/.xls okuma ve Export için yazma), CSV için uygulamanın ayrıştırıcısı | Lisans/boyut kararını uygulama versin; paket yalnızca ham satır dizisi alır. Başlık satırı tespiti ve sütun eşleme paketindedir ve dosya biçiminden bağımsızdır (07 §13). |
 | Pano | Clipboard olayları (`copy`/`cut`/`paste`, `clipboardData`) + `readText` yedeği; `text/plain` (TSV) + `text/html` | Excel'den kopyalanan aralıklar TSV gelir; olay tabanlı yol izin istemez. |
 
 ### TanStack sınırı (D23)
@@ -69,7 +69,7 @@ src/
     useListTable.ts         # TanStack: sütunlar + sıralama + sayfalama + seçim + expand (+ istemci filtre)
     useRequest.ts           # sorgu birleştirme, pending, snapshot, abort, refresh
     selection/              # BulkBar
-    details/                # PeekPanel, expand alt satırı
+    details/                # expand alt satırı
     footer/                 # Pagination
   document/
     DocumentTable.vue
@@ -84,6 +84,8 @@ src/
     useSheetClipboard.ts    # TSV/HTML serileştirme ve ayrıştırma, doldurma
     useSheetKeyboard.ts
     FormulaBar.vue, StatusBar.vue, ContextMenu.vue, ImportDialog.vue, SaveControls.vue
+    import/detectHeaderRow.ts   # ham satırlar → başlık satırı indeksi (saf, biçimden bağımsız)
+    import/matchColumns.ts      # başlıklar + ColumnDef → sütun→alan eşlemesi (saf; belirsizse boş)
   types/                    # api-draft.ts'den türetilir
   styles/
     tokens.css              # --dt-* değişkenleri (light/dark/density)
@@ -101,17 +103,16 @@ ESLint sınırları: `core/*` yalnızca `core/*` import eder; `list/`, `document
 <DataTable>
 ├─ Toolbar (toolbar: 'auto')
 │  ├─ ViewSwitcher (görünüm varsa)        ├─ SearchInput (/, aranabilir sütun varsa)
-│  ├─ Facet çipleri (facet: true)         ├─ FilterButton (facet dışı filtrelenebilir sütun varsa)
+│  ├─ FilterButton (filtrelenebilir sütun varsa)
 │  ├─ DisplayPopover (kullanılabilir ayar varsa)
 │  ├─ MoreMenu (Refresh sunucu modunda; Export/Import/Print dinleyici varsa; Auto-refresh ayarlıysa)
 │  └─ [#toolbar-end]
-├─ FilterBar (yalnızca filtre varken) → FilterChip × n, Add filter, Clear all, View edited · Reset · Save view
+├─ FilterBar (yalnızca filtre varken) → FilterChip × n, Add filter, Clear all
 ├─ GridRoot (role="grid", satır odaklı, sanal gövde)
 │  ├─ HeaderRow → HeaderCell × n (sort, menü, resize)
 │  └─ Row × n → Cell × n (+ SubRow, satır aksiyonları)
 ├─ Footer → Pagination (simple)
 ├─ BulkBar (seçim varsa; selectionBar: 'floating' | 'toolbar')
-├─ PeekPanel (açıksa)
 └─ ScrollPosition (kaydırırken)
 
 <DocumentTable>

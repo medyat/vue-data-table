@@ -41,7 +41,7 @@ SWORS, üretim yapan KOBİ'ler için bir ERP'dir (Laravel + Inertia + Vue 3). He
 
 | Bileşen | Ekran | Kullanıcı ne yapar |
 |---|---|---|
-| **DataTable** | Modülün liste ekranı (Üretim emirleri, Ürünler, Siparişler…) | Bulur (arama, filtre, kayıtlı görünüm), tarar (sayfalama, sanal satırlar), seçip toplu iş yapar, kayda iner (detay satırı, önizleme, açma) |
+| **DataTable** | Modülün liste ekranı (Üretim emirleri, Ürünler, Siparişler…) | Bulur (arama, filtre, kayıtlı görünüm), tarar (sayfalama, sanal satırlar), seçip toplu iş yapar, kayda iner (detay satırı, açma) |
 | **DocumentTable** | Belge detay sayfasının satırları (Sipariş SO-26-1182'nin kalemleri, fatura satırları, irsaliye) | Belgeyi okur: ne, kaç adet, kaça, toplam ne; satır detayına bakar |
 | **DataSheet** | Toplu düzenleme (ürün fiyat listesi, stok kartları; en fazla 10.000 satır) | Excel gibi düzenler: yaz, yapıştır, doldur, geri al, Excel'den içe aktar; tek Save ile teslim eder |
 
@@ -94,7 +94,7 @@ Tasarımlarda gerçekçi SWORS verisi kullanılır; sayı uydurulmaz, biçimler 
 | Görünümler, tercihler | Var | Yok | Yok (sütun genişliği/gizleme oturumluk) |
 | Seçim | Satır, sayfa kapsamlı (D19) | Yok | Hücre aralığı |
 | Düzenleme | Yok | Yok | Var (tek `editing` hücresi, editörler) |
-| Satır detayı | Expand, peek, open | Expand, open (link) | — |
+| Satır detayı | Expand, open | Expand, open (link) | — |
 | Odak modeli | Satır odaklı | Linkler/butonlar | Hücre odaklı |
 | Veri | `rows` prop; `mode: client \| server`; sunucu modunda `@request` | `rows` prop | `rows` prop + `loading`; `@save` → `applyResult()` |
 
@@ -122,7 +122,7 @@ Sloganlar değil, bileşenlere yansıyan kurallar:
 |---|---|
 | Çok veri korkutmasın | Standard yoğunlukta 40 px satır, 13 px metin, dikey çizgiler kapalı; sayısal sütunlar sağa, metin sola; ikinci satır (SKU, e-posta) yalnızca Comfortable'da, diğerlerinde tooltip. Header soluk (`--dt-text-2`), veri koyu. |
 | İşlev azaltmadan karmaşıklık kontrolü | Toolbar'da en fazla 8 yuva ve her biri yalnızca gerekince; ikincil işler More ⋯ altında; filtreler tek satır çip; Display popover'ı üç ayardan ibaret. |
-| Sık işler bir tıkta | Görünüm seçici en solda; facet çipleri (`Status: On hold`) toolbar'da; satır üzerinde Preview ve ⋯; `⌘S` kaydet; `⌘Z` geri al; `F8` sonraki hata. |
+| Sık işler bir tıkta | Görünüm seçici en solda; satır üzerinde ⋯; `⌘S` kaydet; `⌘Z` geri al; `F8` sonraki hata. |
 | Gereksiz dialog/menü yok | Filtre değerleri popover'da ve anında uygulanır; boolean filtre popover bile açmaz; görünüm silme tek onay; toplu aksiyon onayı uygulamanın, paket araya girmez; Manage columns dialog'u yok (D22). |
 | Eğitimsiz temel kullanım | Her boş/hata ekranı ne olduğunu ve ne yapılacağını söyler (“No orders match these 3 filters · Clear all filters”); operatörler kelimeyle (“is greater than”), sembolle değil; hata hücrenin üstünde balonda, kaydetmeden önce. |
 | Profesyonel, sade, modern | Geist yazı tipi, 12 px kart yarıçapı, ince `--dt-line` ayırıcılar, gölge yalnızca yüzen öğelerde, tonlar yumuşak rozet (nokta + etiket). |
@@ -192,8 +192,8 @@ Kurallar **[Karar]:** ton yalnızca anlam taşır; rozet her zaman nokta + metin
 ### 4.6 Yarıçap, gölge, hareket
 
 - Yarıçap: checkbox/kbd 4 · tag 5 · buton/input/çip 7 (sm 6) · menü öğesi 6 · segmented/mini tablo 8 · popover 10 · kart/bulk bar/toast 12 · dialog 14 · rozet 999 · telefon alt sayfası 18 px.
-- Gölge yalnızca yüzen öğelerde: popover `--dt-shadow-pop`, peek `--dt-shadow-sheet`, dialog `--dt-shadow-dialog`, bulk bar/toast `--dt-shadow-float`, tooltip/hata balonu `--dt-shadow-tip`, düzenlenen hücre `--dt-shadow-editing`, sabit sütun kenarı `--dt-shadow-pin-l/r` (yalnızca o yöne kaydırılmışken).
-- Hareket: hover 120 ms; sıralama/expand oku 150 ms döner; popover 120 ms ease-out; peek ve bulk bar 160 ms; kaydırma hapı 900 ms sonra 150 ms solar; skeleton 1.6 s; yenileme çubuğu 1.25 s. `prefers-reduced-motion` tüm döngüleri durdurur.
+- Gölge yalnızca yüzen öğelerde: popover `--dt-shadow-pop`, dialog `--dt-shadow-dialog`, bulk bar/toast `--dt-shadow-float`, tooltip/hata balonu `--dt-shadow-tip`, düzenlenen hücre `--dt-shadow-editing`, sabit sütun kenarı `--dt-shadow-pin-l/r` (yalnızca o yöne kaydırılmışken).
+- Hareket: hover 120 ms; sıralama/expand oku 150 ms döner; popover 120 ms ease-out; bulk bar 160 ms; kaydırma hapı 900 ms sonra 150 ms solar; skeleton 1.6 s; yenileme çubuğu 1.25 s. `prefers-reduced-motion` tüm döngüleri durdurur.
 - İkonlar: Phosphor (regular), 16 px (buton), 14 px (hücre içi). Dekoratif ikonlar `aria-hidden`.
 
 ### 4.7 Sayı, tarih ve metin biçimleri [Karar]
@@ -216,7 +216,7 @@ Türkçe metinler İngilizceden ~%30 uzundur: sabit genişlikli buton yoktur, to
 
 ### 4.8 Bileşen ölçüleri (sık kullanılanlar)
 
-Toolbar padding 10 × 12, kontroller 32 px · filtre satırı 8 × 12, çip 28 px · buton 32 / 28 / 24 px · icon button 28 (24) · checkbox 16 px, seçim sütunu 40 px · menü öğesi 32 (iki satırlı 44) · footer min 48 px · bulk bar padding 6, buton 32, alt kenardan 64 px · peek 440 px · dialog 460 (import 560) · popover genişlikleri: Views 300–330, Column picker 264–280, Display/Columns 300–320, More 236, tarih 520, değer editörleri 296–300, operatör menüsü 220, sütun menüsü 248, satır menüsü 268, “+N more” 340.
+Toolbar padding 10 × 12, kontroller 32 px · filtre satırı 8 × 12, çip 28 px · buton 32 / 28 / 24 px · icon button 28 (24) · checkbox 16 px, seçim sütunu 40 px · menü öğesi 32 (iki satırlı 44) · footer min 48 px · bulk bar padding 6, buton 32, alt kenardan 64 px · dialog 460 (DataSheet hata listeli onay 480, import 560) · popover genişlikleri: Views 300–330, Column picker 264–280, Display/Columns 300–320, More 236, tarih 520, değer editörleri 296–300, operatör menüsü 220, sütun menüsü 248, satır menüsü 268, “+N more” 340.
 
 ---
 
@@ -311,10 +311,9 @@ Retry = aynı talebin yeniden yayılması; otomatik yeniden deneme yoktur. 401/4
 | **Popover** (10 px yarıçap, 120 ms) | Filtre değeri, operatör, görünüm menüsü, Display, Columns paneli, column picker, `+N more`, hücre JSON/uzun metin kartı | Kaydetmeyi gerektiren formlar |
 | **Menü** (`role="menu"`) | Header ⋯, satır ⋯, More ⋯, hücre ⋯, sheet sağ tık | Değer seçimi (o combobox'tır) |
 | **Dialog** (460 px, odak tuzağı) | Save as new view; görünüm silme onayı; DataSheet hata/ayrılma/discard onayları; Import (560 px) | Filtre düzenleme, sütun yönetimi (dialog yok, D22), toplu aksiyon onayı (uygulamanın) |
-| **Peek paneli** (440 px, sağa yapışık, scrim yok) | Satır önizlemesi; liste kullanılabilir kalır | Düzenleme formu |
 | **Bottom sheet** (telefon, 18 px üst yarıçap) | < 640 px'te tüm popover'lar; Filters | Masaüstü |
 | **Toast** (koyu, altta) | DataSheet yapıştırma/içe aktarma sonucu + Undo; “Copied”. Toplu aksiyon ve kayıt toast'ları uygulamanın | Hata (hata yerinde gösterilir) |
-| **Tooltip** (400 ms) | Kesilmiş değer, ikon düğmesi etiketi + kısayol (“Preview (Space)”), “Was 2,150.00 · ⌘Z” | Kritik bilgi |
+| **Tooltip** (400 ms) | Kesilmiş değer, ikon düğmesi etiketi + kısayol (“Refresh (R)”), “Was 2,150.00 · ⌘Z” | Kritik bilgi |
 
 Açılınca odak içeri (arama kutusu varsa ona), kapanınca tetikleyiciye. Dialog'da ilk odak **güvenli** düğmede (Keep editing / Stay / Fix first).
 
@@ -339,7 +338,6 @@ Kaynak doküman: 05, 04.
 └──────────────────────────────────────────────────────────────────────┘
    BulkBar  — yüzer, altta ortalı, alt kenardan 64 px
    ScrollPosition — yüzer, sağdan 22 px, alttan 62 px
-   Peek — sağa yapışık 440 px, kartın tam yüksekliği
 ```
 
 - Kart: `--dt-surface`, 1 px `--dt-line`, 12 px yarıçap, `--dt-shadow-sm`. Sayfa kaymaz; gövde `overscroll-behavior: contain`.
@@ -361,14 +359,13 @@ Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. **Yalnızca yapıland�
 |---|---|---|---|
 | 1 | View switcher | En az bir görünüm varsa | Görünüm adı (600) + düzenlenmişse 6 px accent nokta; tıklanınca görünüm menüsü. `V` |
 | 2 | Search | Aranabilir sütun varsa | 240 px; `/` odaklar; 250 ms sonra arar; çip üretmez (D3). İlk `Esc` temizler, ikinci odaktan çıkar |
-| 3 | Facet çipleri | `facet: true` sütunlar | Doğrudan çip butonu: `Status: On hold`; tıklanınca o sütunun değer popover'ı |
-| 4 | Filter | Facet dışı filtrelenebilir sütun varsa | Sayaç rozeti = uygulanmış çip sayısı; column picker açar. `F` |
-| 5 | Filter bar | Yalnızca çip varken | Ayrı satır (6.5) |
-| 6 | Display | Kullanılabilir ayar varsa | Popover 300–312 px: Density segmented · Columns › `8 of 14` · Sort › `Due date ↑` · Vertical grid lines switch · altta “Saved for you only” (yalnızca tercih deposu varsa) + Reset |
-| 7 | More ⋯ | Öğe varsa | Export matching rows › CSV / Excel (seçim varsa üstte “Export 7 selected rows”) · Import… · Print · Refresh `R` · Auto-refresh switch (açıkken footer'da yeşil `live-dot` + “Live”). Her öğe yalnızca uygulama ilgili olayı dinliyorsa |
-| 8 | `#toolbar-end` | Uygulama verirse | Birincil aksiyon (“New order”): mürekkep, asla accent mavi; en fazla bir |
+| 3 | Filter | Filtrelenebilir sütun varsa | Sayaç rozeti = uygulanmış çip sayısı; column picker açar. `F`. Facet çipi yok (D26) |
+| 4 | Filter bar | Yalnızca çip varken | Ayrı satır (6.5) |
+| 5 | Display | Kullanılabilir ayar varsa | Popover 300–312 px: Density segmented · Columns › `8 of 14` · Sort › `Due date ↑` · Vertical grid lines switch · altta “Saved for you only” (yalnızca tercih deposu varsa) + Reset |
+| 6 | More ⋯ | Öğe varsa | Export matching rows › CSV / Excel (seçim varsa üstte “Export 7 selected rows”) · Import… · Print · Refresh `R` · Auto-refresh switch (açıkken footer'da yeşil `live-dot` + “Live”). Her öğe yalnızca uygulama ilgili olayı dinliyorsa |
+| 7 | `#toolbar-end` | Uygulama verirse | Birincil aksiyon (“New order”): mürekkep, asla accent mavi; en fazla bir |
 
-Sıra `[1] [2] [3] [4] ……… [6] [7] │ [8]`; 7 ile 8 arasında dikey ayırıcı. `toolbar: 'minimal'` yalnızca arama + sağ yuva; `false` toolbar yok.
+Sıra `[1] [2] [3] ……… [5] [6] │ [7]`; 6 ile 7 arasında dikey ayırıcı. `toolbar: 'minimal'` yalnızca arama + sağ yuva; `false` toolbar yok.
 
 **Daralma** (toolbar'ın kendi genişliğiyle ölçülür): ≥ 1024 px her şey etiketli · 640–1023 px Search ve Display yalnızca ikon (arama ikonu tıklanınca 240 px'e açılır) · < 640 px Display ⋯ içine, sağ yuva ikon modu, Filter ikon + sayaç.
 
@@ -395,7 +392,7 @@ Filtre değildir: çip üretmez, sayaca girmez, görünüme kaydedilmez, görün
 
 `currency` sütununda para birimi çipte ikinci bir parça olarak seçilir (segmented), değer düz sayıdır. Tarih hazır aralıkları: Today, This week, Next 7 days, This month, Last 30 days, This quarter, Overdue; göreli kalırlar (“This month” görünüme kaydedilince ay değişince kayar).
 
-**Giriş noktaları:** toolbar Filter (`F`) → column picker; filtre satırında Add filter; header menüsü › Filter by this column…; filtrelenmiş header'daki filtre işareti; facet çipi; No results › Remove “…”.
+**Giriş noktaları:** toolbar Filter (`F`) → column picker; filtre satırında Add filter; header menüsü › Filter by this column…; filtrelenmiş header'daki filtre işareti; No results › Remove “…”.
 
 **Column picker** (264–280 px): üstte arama; bölümler **Filtered** (“opens its chip” — mevcut çipi açar, yenisini oluşturmaz), **Suggested** (`suggested: true`, en fazla 4), **All columns** (sütun sırasında, sağda soluk tip etiketi: Date, Person, Currency…). Seçince çip tipin varsayılan operatörüyle oluşur ve değer popover'ı hemen açılır; `boolean` doğrudan “is Yes” olarak uygulanır.
 
@@ -407,7 +404,7 @@ Filtre değildir: çip üretmez, sayaca girmez, görünüme kaydedilmez, görün
 
 **Değer özeti** (çip satırı kaymadan önce değer kısalır): uzun tek değer ≤ 180 px + tooltip; 2 değer virgülle; 3+ sayılır (“3 statuses”, sütunun `filterNoun`'u; yoksa “3 values”); kişiler 3 avatar + “3 people”; sayı aralığı `100K – 250K TRY`; tek uç `≥ 100K`; tarih `Oct 12 – 24` / “Last 30 days”.
 
-**Filtre satırı:** çipler → **Add filter** (ghost, +) → sağda **Clear all** ve, görünüm düzenlenmişse, **View edited · Reset · Save view** (ilk satırın sağ üstüne sabit). Taşma: 2 satıra kadar sarar; fazlası ikinci satırın sonunda **+N more** (popover 340 px: gizli çipler satır satır, satıra tıklamak editörü açar; altta Show all filters ↔ Show fewer). Düzenlenen/yeni çip her zaman görünür. Telefonda tek satır yatay kayar, çip iki parça (alan + değer), dokunma Filters alt sayfasını açar.
+**Filtre satırı:** çipler → **Add filter** (ghost, +) → sağda **Clear all** (ilk satırın sağ üstüne sabit; görünüm kaydetme aksiyonları görünüm menüsündedir, D27). Taşma: 2 satıra kadar sarar; fazlası ikinci satırın sonunda **+N more** (popover 340 px: gizli çipler satır satır, satıra tıklamak editörü açar; altta Show all filters ↔ Show fewer). Düzenlenen/yeni çip her zaman görünür. Telefonda tek satır yatay kayar, çip iki parça (alan + değer), dokunma Filters alt sayfasını açar.
 
 ### 6.6 Sıralama [Karar]
 
@@ -454,7 +451,7 @@ Kaydetme deposu yoksa yalnızca kod görünümleri vardır ve kaydetme aksiyonla
 
 **Görünüm menüsü** (`V`, 300–330 px): üstte **Find a view…**; bölümler System views / My views / Shared views; aktif kalın; varsayılanın sağında soluk `Default`; düzenlenmişin sağında nokta + `Edited`; satır `⋯` → Rename · Duplicate · Set as default · ─ · Delete (türe göre); altta **New view**. Manage views ekranı ve görünüm sekmeleri yoktur.
 
-**Düzenlenmiş durum:** mevcut durum kayıtlıdan farklıysa görünüm adı yanında nokta; filtre satırında **View edited · Reset · Save view** (filtre olmasa da sıralama/sütun değiştiyse satır bu üçlüyle görünür). Save view menüsü: **Save changes** (`⌘S`) · **Save as new view…** · **Discard changes**. System görünüm üzerine yazılamaz: ““Late orders” edited” + **Save as my view…**. Kaydedilmemiş değişiklik oturum boyunca görünüm başına bellekte kalır: başka görünüme geçip dönünce düzenleme yerinde durur; toast yok.
+**Düzenlenmiş durum:** mevcut durum kayıtlıdan farklıysa görünüm adı yanında nokta + “Edited”; görünüm menüsünün en üstünde kaydetme bölümü (D27): ““Gebze · this week” edited” etiketi, **Save changes** (`⌘S`) · **Save as new view…** · **Discard changes**. Filtre satırında gösterge yoktur. System görünüm üzerine yazılamaz: ““Late orders” edited” + **Save as my view…** (`⌘S`) + Discard changes. Kaydedilmemiş değişiklik oturum boyunca görünüm başına bellekte kalır: başka görünüme geçip dönünce düzenleme yerinde durur; toast yok.
 
 **Save as new view** dialog'u (460 px): başlık, alt metin (“It appears under My views. Only you can see it.” / paylaşımda “Team”), **Name** (otomatik odak; Duplicate'ten “{ad} copy”; 60 karakter; aynı türde benzersiz), özet (Filters `Plant · Created · Owner` · Sort `Due date ↑` · Columns `8 of 14 · Order pinned`), **Make this my default view**, varsa **Share with my team**; Cancel / **Save view**.
 
@@ -481,14 +478,12 @@ Aynı satır, üç derinlik:
 | | Ne | Nasıl açılır | Liste |
 |---|---|---|---|
 | **Expand** | Alt kayıtlar satırın altında (operasyonlar, sipariş kalemleri, partiler) | Birincil hücredeki chevron; `→` aç / `←` kapa; `row-click="expand"` | Yerinde kalır |
-| **Peek** | Kayıt sağdan açılan panelde | Hover'daki Preview butonu; `Space`; `row-click="peek"` | Görünür ve kullanılabilir kalır |
-| **Open** | Tam detay sayfası | Birincil link (gerçek `<a>`); satırda `↵`; satır menüsü › Open; peek › Open; `row-click="open"`. Yeni sekme: ⌘/Ctrl veya orta tık (tarayıcı) ya da `→` ile linke odaklanıp `⌘↵` | Terk edilir |
+| **Open** | Tam detay sayfası | Birincil link (gerçek `<a>`); satırda `↵`; satır menüsü › Open; `row-click="open"`. Yeni sekme: ⌘/Ctrl veya orta tık (tarayıcı) ya da `→` ile linke odaklanıp `⌘↵` | Terk edilir |
 
-- **Satır gövdesi varsayılan olarak hiçbir şey yapmaz** (`row-click: 'none'`): metin seçilip kopyalanabilir. Uygulama `row-click` ile open/expand/peek'ten birini bağlayabilir; her durumda etkileşimli hedefe tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; seçim asla tıklamayla yapılmaz.
-- **Satır durumları:** Default `--dt-surface` · Hover `--dt-row-hover` (Preview belirir) · Current (peek açık) `--dt-row-current` · Selected · Klavye odağı 2 px accent çerçeve (`::after`, 3 px yarıçap).
-- **Satır aksiyonları** (sağa sabit, 76 px; SimpleList'te yalnızca ⋯, 56 px): **Preview** (hover/odak/current'ta görünür, `title="Preview (Space)"`) + **⋯** (her zaman). Sağ tık da menüyü açar. Satır menüsü (268 px): Open `↵` · Open in new tab · Preview `Space` · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
+- **Satır gövdesi varsayılan olarak hiçbir şey yapmaz** (`row-click: 'none'`): metin seçilip kopyalanabilir. Uygulama `row-click` ile open/expand'den birini bağlayabilir; her durumda etkileşimli hedefe tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; seçim asla tıklamayla yapılmaz.
+- **Satır durumları:** Default `--dt-surface` · Hover `--dt-row-hover` · Selected · Klavye odağı 2 px accent çerçeve (`::after`, 3 px yarıçap).
+- **Satır aksiyonları** (sağa sabit, 56 px): yalnızca **⋯** (her zaman görünür; D28). Sağ tık da menüyü açar. Satır menüsü (268 px): Open `↵` · Open in new tab · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
 - **Expand:** chevron 20 px birincil hücrede ID'nin solunda; açıkken 90° döner. Alt satır tam genişlik, `--dt-surface-2`, sol kenarı seçim sütununun sağından; içinde uygulamanın içeriği — örnek: mini tablo (8 px yarıçap, kendi header'ı, 34 px satırlar) + özet satırı (“4 operations · Line 2 routing” + “Open routing”). **Veriyi uygulamanın içeriği çeker;** yükleniyor/hata görünümü de onun (paket “Loading…” göstermez). Birden çok satır açık olabilir; sorgu/sayfa değişince kapanır; sanal listede zıplama olmaz.
-- **Peek** (440 px, scrim yok, 160 ms): başlık çubuğu 52 px: **Previous / Next** · kayıt numarası (mono) · `4 of 25` · boşluk · **Open** (sm) · ✕. Gövde 20 px padding: uygulamanın içeriği (örnek: durum rozeti, başlık 18 px/600, ikincil kod, 116 px etiketli anahtar–değer listesi, “Recent activity”). Açıkken satır **current**. Gösterilen kayıt yalnızca Previous/Next, başka satırın Preview düğmesi veya odaklı satırda `Space` ile değişir; ızgaradaki `↑↓` yalnızca odağı taşır; satır tıklaması `row-click`'e uyar. `Esc` kapatır, odak satıra döner. Kayıt listeden düşerse panel kapanır. Telefonda tam ekran sayfa olur.
 
 ### 6.13 Sayfalama ve footer [Karar D7]
 
@@ -519,12 +514,12 @@ Izgara tek Tab durağıdır (roving tabindex); Tab ile girilince son odaklanan s
 | `↑ ↓` · `Home/End` · `PageUp/Down` | Satırlar arası · ilk/son yüklü satır · bir ekran |
 | `→` / `←` | Açılabilir satırı aç / kapa; değilse ilk widget'a gir / satıra dön; widget'lar arası |
 | `X` · `⇧↑↓` · `⌘A` | Seç/bırak · seçimi genişlet · sayfadakileri seç |
-| `Space` · `↵` | Peek aç/kapat · Kaydı aç |
+| `↵` | Kaydı aç |
 | `⇧F10` / Menü | Satır menüsü |
-| `Esc` | Sırayla: popover → peek → seçim |
+| `Esc` | Sırayla: popover → seçim |
 | `Alt←` / `Alt→` | Önceki / sonraki sayfa |
 | `⌘S` | Görünüm düzenlenmişse Save changes / Save as my view |
-| `F6` | Bölgeler arası: toolbar → filtre satırı → ızgara → footer → bulk bar → peek |
+| `F6` | Bölgeler arası: toolbar → filtre satırı → ızgara → footer → bulk bar |
 | Header'da `↵`/`Space` · `⇧↵` · `⇧F10` · `⇧←→` · `⌥⇧←→` | Sırala · ikincil sıralama · sütun menüsü · genişlik ±16 px · sütunu taşı |
 
 ### 6.16 Responsive [Karar ilke 4]
@@ -532,14 +527,14 @@ Izgara tek Tab durağıdır (roving tabindex); Tab ile girilince son odaklanan s
 | Genişlik | Değişiklik |
 |---|---|
 | ≥ 1024 px | Varsayılan |
-| 640–1023 px | Toolbar daralır; peek 440 px kalır, tablonun üstüne biner |
-| < 640 px | Seçim ve birincil sütun sola sabit, diğerleri yatay kayar (sağ kenarda solma); toolbar: görünüm adı, arama ikonu (tam genişlik alana açılır), filtre ikonu + sayaç, ⋯; çip satırı tek satır kayar; tüm popover'lar alt sayfa (52 px satırlar, tutamaç, tam genişlik birincil buton); peek tam ekran; bulk bar telefon düzeni; dokunmatikte Compact → Standard, satır ≥ 48 px, checkbox dokunma alanı 44 px; hover Preview yerine satır menüsündeki Preview |
+| 640–1023 px | Toolbar daralır |
+| < 640 px | Seçim ve birincil sütun sola sabit, diğerleri yatay kayar (sağ kenarda solma); toolbar: görünüm adı, arama ikonu (tam genişlik alana açılır), filtre ikonu + sayaç, ⋯; çip satırı tek satır kayar; tüm popover'lar alt sayfa (52 px satırlar, tutamaç, tam genişlik birincil buton); bulk bar telefon düzeni; dokunmatikte Compact → Standard, satır ≥ 48 px, checkbox dokunma alanı 44 px (görsel 16); satır ⋯ sütunu (56 px) sağa sabit kalır |
 
 **Filters alt sayfası** (< 640 px): başlık “Filters” + Clear all; uygulanmış filtreler, sonra `suggested` sütunlar (`Owner · Any`) 52 px satırlar; Add filter; **Sort** bölümü; altta tam genişlik **Show results** (değişiklikler bu düğmeyle uygulanır, masaüstündeki anında uygulamadan farklı).
 
 ### 6.17 Senaryo: Üretim emirleri listesi
 
-Ayşe sabah “Production orders” ekranını açar. Varsayılan görünümü “Gebze · this week” (personal) yüklenir: Plant = Gebze, Due date is within This week, sıralama Due date ↑. Toolbar: görünüm adı, arama, `Status` facet çipi, Filter (2), Display, ⋯, “New order”. Filtre satırında iki çip. Tablo 100 satır, `Due date` sütununda geciken emirler kırmızı “Oct 18 · 3d late”. Ayşe `Status` facet çipinden “On hold” seçer; tablo anında daralır, görünüm “edited” olur, satırda “View edited · Reset · Save view” belirir. 12 satırı header checkbox'ıyla seçer; bulk bar “12 selected · Release · Reschedule · ⋯ · ×”. Release'e basar; uygulama kendi onay dialog'unu açar, tamamlanınca toast gösterir ve tabloyu yeniler (satırlar yerinde kalır, ince çubuk). Bir emrin üstüne gelip Preview'a basar: sağdan panel açılır, `Next` ile sonraki emirlere bakar, `Esc` ile satıra döner, `↵` ile emri açar.
+Ayşe sabah “Production orders” ekranını açar. Varsayılan görünümü “Gebze · this week” (personal) yüklenir: Plant = Gebze, Due date is within This week, sıralama Due date ↑. Toolbar: görünüm adı, arama, Filter (2), Display, ⋯, “New order”. Filtre satırında iki çip. Tablo 100 satır, `Due date` sütununda geciken emirler kırmızı “Oct 18 · 3d late”. Ayşe Filter'dan Status çipi ekleyip “On hold” seçer; tablo anında daralır, görünüm “edited” olur (ad yanında nokta + Edited; kaydetme görünüm menüsünün üstünde). 12 satırı header checkbox'ıyla seçer; bulk bar “12 selected · Release · Reschedule · ⋯ · ×”. Release'e basar; uygulama kendi onay dialog'unu açar, tamamlanınca toast gösterir ve tabloyu yeniler (satırlar yerinde kalır, ince çubuk). Bir emrin satır menüsünden (⋯) numarasını kopyalar, `↵` ile emri açar.
 
 ---
 
@@ -772,7 +767,7 @@ export const orderColumns: ColumnDef<Order>[] = [
   { id: 'number', header: 'Order', type: 'id', primary: true, href: r => `/orders/${r.id}`,
     actions: [{ id: 'copy', label: 'Copy number', icon: Copy, run: r => copy(r.number) }] },
   { id: 'product.name', header: 'Product', type: 'string', secondary: r => r.product.sku },
-  { id: 'status', header: 'Status', type: 'select', options: statusOptions, facet: true,
+  { id: 'status', header: 'Status', type: 'select', options: statusOptions,
     cell: ({ row, value }) => h(StatusCell, { status: value, late: row.dueAt < today }) },
   { id: 'produced', header: 'Produced', unit: 'pcs', type: 'percentage', display: 'bar' },
   { id: 'owner', header: 'Owner', type: 'user', options: users },
@@ -782,7 +777,7 @@ export const orderColumns: ColumnDef<Order>[] = [
 ```
 
 - `id` nokta yolu olabilir (`customer.title`); null-güvenli okunur. Hesaplanan değer `accessor` fonksiyonuyla.
-- Ortak seçenekler: `header`, `headerShort`, `unit`, `align`, `width/minWidth/maxWidth`, `pinned`, `hidden`, `alwaysVisible`, `primary`, `href`, `secondary`, `emptyText`, `sortable`, `filterable`, `filter` (operatör alt kümesi), `searchable`, `suggested`, `facet`, `filterNoun`, `priority`; DataSheet: `editable`, `editor`, `required`, `validate`, `warn`, `importAliases`, `hint`.
+- Ortak seçenekler: `header`, `headerShort`, `unit`, `align`, `width/minWidth/maxWidth`, `pinned`, `hidden`, `alwaysVisible`, `primary`, `href`, `secondary`, `emptyText`, `sortable`, `filterable`, `filter` (operatör alt kümesi), `searchable`, `suggested`, `filterNoun`, `priority`; DataSheet: `editable`, `editor`, `required`, `validate`, `warn`, `importAliases`, `hint`.
 - `cell` yalnızca gösterim; sıralama, filtre, editör ve dışa aktarma tipten gelir. Vue slot ile hücre özelleştirme yoktur.
 
 ### 9.3 Veri akışı ve sorumluluk sınırı [Karar D18]
@@ -826,9 +821,9 @@ Uygulamanın `rows` dizisine dokunulmaz. Değişiklikler hücre başına **tasla
 
 | | DataTable | DocumentTable | DataSheet |
 |---|---|---|---|
-| Props | `tableId`, `columns`, `rows`, `rowKey`, `mode`, `loading`, `error`, `hasMore`, `total`, `countable`, `fields`, `requestOnColumnChange`, `views`, `toolbar`, `searchPlaceholder`, `selectable`, `selectionBar`, `bulkActions`, `rowActions`, `rowClick`, `expand`, `peek`, `pageSize`, `pageSizes`, `autoRefresh`, `density`, `locale`, `messages`, `entityName`, `shortcuts` | `tableId`, `columns`, `rows`, `rowKey`, `title`, `totals`, `expand`, `lineSearch`, `density`, `locale`, `messages`, `entityName` | `tableId`, `columns`, `rows`, `rowKey`, `keyColumn`, `loading`, `saving`, `lookupKeys`, `parseFile`, `maxRows`, `newRowDefaults`, `readOnlyBelow`, `density`, `locale`, `messages`, `entityName`, `shortcuts` |
+| Props | `tableId`, `columns`, `rows`, `rowKey`, `mode`, `loading`, `error`, `hasMore`, `total`, `countable`, `fields`, `requestOnColumnChange`, `views`, `toolbar`, `searchPlaceholder`, `selectable`, `selectionBar`, `bulkActions`, `rowActions`, `rowClick`, `expand`, `pageSize`, `pageSizes`, `autoRefresh`, `density`, `locale`, `messages`, `entityName`, `shortcuts` | `tableId`, `columns`, `rows`, `rowKey`, `title`, `totals`, `expand`, `lineSearch`, `density`, `locale`, `messages`, `entityName` | `tableId`, `columns`, `rows`, `rowKey`, `keyColumn`, `loading`, `saving`, `lookupKeys`, `parseFile`, `maxRows`, `newRowDefaults`, `readOnlyBelow`, `density`, `locale`, `messages`, `entityName`, `shortcuts` |
 | Emits | `request`, `count`, `selection-change`, `row-open`, `row-click`, `view-change`, `export`, `import`, `print` | `row-open` | `save`, `export` |
-| Slot'lar | `#expanded`, `#peek`, `#empty`, `#toolbar-end`, `#selection-actions` | `#expanded`, `#empty`, `#section-actions` | `#empty` |
+| Slot'lar | `#expanded`, `#empty`, `#toolbar-end`, `#selection-actions` | `#expanded`, `#empty`, `#section-actions` | `#empty` |
 | Handle | `refresh()`, `clearSelection()` | — | `status`, `isDirty()`, `getChanges()`, `applyResult()`, `reset()`, `undo()`, `redo()`, `goToNextError()` |
 
 ---
@@ -851,7 +846,7 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 | Sürükle-bırak (sütun sırası, Columns paneli, Sort paneli); Manage columns dialog'u; Manage views ekranı; görünüm sekmeleri | D22, 04 §7 |
 | Paket içinde HTTP, önbellek, otomatik yeniden deneme, chunk gönderimi; DataSheet'te Stop/ETA/çevrimdışı banner'ı | D18 |
 | DataSheet'te sunucudan silme; çoklu aralık seçimi; yatay doldurma; formül | D11, 07 |
-| Expand/peek verisinin paket tarafından yüklenmesi ve önbelleklenmesi | 05 §7 |
+| Expand verisinin paket tarafından yüklenmesi ve önbelleklenmesi; önizleme (peek) paneli | 05 §7, D28 |
 | “Removing *X* would show N” önerisi; 401/403 özel ekranı | 05 §10 |
 | Telefonda DataSheet düzenleme | D14 |
 | Ülkeye göre telefon biçimlendirme (ilk sürüm) | 03 |
@@ -875,7 +870,7 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 
 - Boş durum ve No results ikonları ve illüstrasyon dili (40 px ikon kutusu kuralı içinde).
 - `cell` ile çizilen uygulama içerikleri (durum rozeti kompozisyonu, ilerleme çubuğu, onay düğmeleri) — kabuk kuralları içinde.
-- Expand alt satırı ve peek gövdesinin içeriği (uygulamanın); dokümanlardaki örnekler referans, zorunlu değil.
+- Expand alt satırının içeriği (uygulamanın); dokümanlardaki örnekler referans, zorunlu değil.
 - Toplu aksiyon onay dialog'unun uygulama tarafındaki tasarımı (6.11'deki örnek).
 - Toast, sayfa başlığı, bilgi şeridi gibi uygulamaya ait çevre öğeleri.
 - Import dialog'undaki önizleme tablosunun ayrıntı düzeyi.
@@ -890,8 +885,8 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### T1 · DataTable ana liste ekranı
 - **Oku:** 1, 3, 4, 5.1–5.2, 6.1–6.3, 6.12–6.14, 6.17.
-- **Tasarla:** 1440 px'te “Production orders” ekranı: toolbar (view switcher, arama, `Status` facet çipi, Filter (2), Display, ⋯, “New order”), iki çipli filtre satırı, header (sıralı sütun oklu, filtrelenmiş sütun işaretli, sabit sütun gölgesi), 100 satırlık gövde (seçili, hover, current, odaklı satır örnekleri; geciken tarih; percentage bar; user avatar; currency), footer (Rows 101–200 · Count total · Updated just now · Rows per page · Previous/Next), kaydırma hapı.
-- **Durumlar:** normal; 12 satır seçili + bulk bar; peek açık; bir satır expanded; üç yoğunluk.
+- **Tasarla:** 1440 px'te “Production orders” ekranı: toolbar (view switcher, arama, Filter (2), Display, ⋯, “New order”), iki çipli filtre satırı, header (sıralı sütun oklu, filtrelenmiş sütun işaretli, sabit sütun gölgesi), 100 satırlık gövde (seçili, hover, odaklı satır örnekleri; geciken tarih; percentage bar; user avatar; currency), footer (Rows 101–200 · Count total · Updated just now · Rows per page · Previous/Next), kaydırma hapı.
+- **Durumlar:** normal; 12 satır seçili + bulk bar; bir satır expanded; üç yoğunluk.
 - **Örnek veri:** bölüm 1.4 Üretim emri.
 
 ### T2 · Filtreleme deneyimi
@@ -901,7 +896,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### T3 · Görünüm yönetimi
 - **Oku:** 6.9–6.10, 5.7.
-- **Tasarla:** görünüm menüsü (Find a view, System / My / Shared bölümleri, Default ve Edited işaretleri, satır ⋯ menüsü, New view); düzenlenmiş durum (nokta + filtre satırındaki “View edited · Reset · Save view” ve Save view menüsü; system görünümde “Save as my view…”); Save as new view dialog'u (ad, özet, default ve share checkbox'ları); silme onayı; Display popover'ı (Density, Columns ›, Sort ›, çizgiler, Saved for you only, Reset).
+- **Tasarla:** görünüm menüsü (Find a view, System / My / Shared bölümleri, Default ve Edited işaretleri, satır ⋯ menüsü, New view); düzenlenmiş durum (nokta + Edited; menünün üstünde Save changes / Save as new view… / Discard changes; system görünümde “Save as my view…”); Save as new view dialog'u (ad, özet, default ve share checkbox'ları); silme onayı; Display popover'ı (Density, Columns ›, Sort ›, çizgiler, Saved for you only, Reset).
 
 ### T4 · Sütun başlıkları ve sütun yönetimi
 - **Oku:** 6.6–6.8.
@@ -913,10 +908,10 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 - **Tasarla:** checkbox sütunu ve satır durumları, header checkbox (indeterminate), yüzer bulk bar (4 selected · 3 aksiyon · ⋯ · ×), `selection-bar: 'toolbar'` varyantı, ⋯ menüsü (yıkıcı en altta), telefon düzeni (ikon üstte etiket altta). Uygulamanın onay dialog'u için örnek.
 - **Kural:** sayaç yalnızca “N selected”; all-matching ve diğer sayfalar yok.
 
-### T6 · Satır detayı: expand, peek, satır menüsü
+### T6 · Satır detayı: expand, satır menüsü
 - **Oku:** 6.12, 5.4–5.5, 5.7.
-- **Tasarla:** chevron ve alt satır (uygulama içeriği örneği: mini tablo + özet), peek paneli (başlık çubuğu: Previous/Next, kayıt no, 4 of 25, Open, ✕; gövde örneği), satır aksiyonları (Preview hover/odak, ⋯ her zaman), satır menüsü (Open, Open in new tab, Preview, Copy order number, uygulama aksiyonları, pasif gerekçeli, yıkıcı), telefonda tam ekran peek.
-- **Etkileşim:** peek'in yalnızca Prev/Next, Preview ve Space ile değişmesi; Esc odak dönüşü.
+- **Tasarla:** chevron ve alt satır (uygulama içeriği örneği: mini tablo + özet), satır aksiyonları (yalnızca ⋯, her zaman görünür), satır menüsü (Open, Open in new tab, Copy order number, uygulama aksiyonları, pasif gerekçeli, yıkıcı), “Copied” toast'ı.
+- **Etkileşim:** menü kapanınca (Esc) odağın satıra dönüşü; sağ tık ve ⇧F10 aynı menü.
 
 ### T7 · Hücre aksiyonlarının hover davranışı ve doğrudan görünen hücre butonları
 - **Oku:** 5.3–5.4, 5.1.
@@ -947,7 +942,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### T13 · Telefon düzeni (DataTable)
 - **Oku:** 6.16, 6.5 (telefon), 5.7.
-- **Tasarla:** < 640 px liste: sabit seçim + birincil sütun, kayan sütunlar ve solma, daraltılmış toolbar, tam genişlik arama, tek satır kayan çipler, Filters alt sayfası (uygulanmış + suggested satırlar, Add filter, Sort, Show results), alt sayfa olarak görünüm menüsü ve değer editörü, tam ekran peek, telefon bulk bar'ı.
+- **Tasarla:** < 640 px liste: sabit seçim + birincil sütun, kayan sütunlar ve solma, daraltılmış toolbar, tam genişlik arama, tek satır kayan çipler, Filters alt sayfası (uygulanmış + suggested satırlar, Add filter, Sort, Show results), alt sayfa olarak görünüm menüsü ve değer editörü, sağa sabit ⋯ sütunu, telefon bulk bar'ı.
 
 ---
 
@@ -958,16 +953,14 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 | Terim | Anlamı |
 |---|---|
 | Çip (chip) | Filtre satırındaki tek filtre: `alan · operatör · değer · ×` |
-| Facet | Toolbar'da doğrudan duran sık kullanılan filtre çipi (`Status: On hold`) |
 | Görünüm (view) | Kaydedilmiş filtre + sıralama + sütun düzeni; system / personal / shared |
 | Tercih | Yoğunluk, çizgiler, sayfa boyutu, varsayılan görünüm; ekran başına kişisel |
 | Talep (request) | Sunucu modunda paketin yaydığı sorgu |
 | Snapshot | Footer'ın gösterdiği, başarıyla yüklenmiş son sayfa bilgisi |
 | Bulk bar | Seçim varken altta yüzen toplu aksiyon çubuğu |
 | Expand | Satırın altında açılan detay satırı |
-| Peek | Sağdan açılan, listeyi kapatmayan önizleme paneli |
 | Open | Kaydın tam sayfasına gitmek |
-| Birincil sütun | Kaydın adı/numarası; gerçek link; telefonda sabit; peek başlığı |
+| Birincil sütun | Kaydın adı/numarası; gerçek link; telefonda sabit |
 | Roving tabindex | Tablonun tek Tab durağı olması; oklarla içeride gezinme |
 | Widget | Hücre içindeki etkileşimli öğe (link, düğme, input) |
 | Parti (batch) | DataSheet'teki satırların tamamı |
@@ -979,6 +972,8 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 İlk canvas tasarımı (20 board, kit.css, ekran görüntüleri) kararlarla çeliştiği için 2026-10-21'de kaldırıldı. Oradaki davranışlardan değişenler README'deki karar günlüğünde (D4, D6, D7, D17–D25). Yeni tasarımlar bu brief'teki görev paketleriyle üretilir; token sistemi `02-design-tokens.md`'den başlar.
 
+2026-10-21: T1–T13 tasarımları Claude Design ile üretildi; teslim belgeleri `docs/handoff/`. Tasarım sırasında alınan D26 (facet çipi yok), D27 (görünüm kaydetme menüde) ve D28 (peek paketin değil) README karar günlüğüne işlendi; bu brief buna göre güncellendi.
+
 ### 13.3 Kaynak dokümanlar
 
-`README.md` (ilkeler, D1–D25, Q2–Q3) · `01-architecture.md` · `02-design-tokens.md` · `03-column-types.md` · `04-filters-and-views.md` · `05-mode-list.md` · `06-mode-document.md` · `07-mode-sheet.md` · `08-accessibility-keyboard.md` · `09-i18n.md` · `10-roadmap.md` · `api-draft.ts` · `CLAUDE.md`.
+`README.md` (ilkeler, D1–D28, Q2–Q3) · `01-architecture.md` · `02-design-tokens.md` · `03-column-types.md` · `04-filters-and-views.md` · `05-mode-list.md` · `06-mode-document.md` · `07-mode-sheet.md` · `08-accessibility-keyboard.md` · `09-i18n.md` · `10-roadmap.md` · `api-draft.ts` · `CLAUDE.md`.
