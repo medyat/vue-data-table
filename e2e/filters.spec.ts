@@ -1,5 +1,5 @@
-// Faz 3a kabul kriterleri (gerçek tarayıcı, T2 = T1 sunucu modu): column picker, çip ve editörler, operatör menüsü,
-// D2, eksik çip, taşma (+N more), kısayol F, header'dan filtre, No results, Clear all.
+// Faz 3a kabul kriterleri (gerçek tarayıcı, T1 sunucu modu): column picker, çip ve editörler, operatör menüsü,
+// D2, eksik çip, taşma (D29), kısayol F, header'dan filtre, No results, Clear all.
 import { expect, test, type Page } from '@playwright/test'
 
 const settings = (page: Page) =>
@@ -27,10 +27,10 @@ const pick = async (page: Page, name: string) => {
   await page.getByRole('option', { name: new RegExp(`^${name}`) }).click()
 }
 
-test.describe('T2 · filtreler', () => {
+test.describe('T1 · filtreler', () => {
   test.beforeEach(async ({ page }) => {
     await settings(page)
-    await page.goto('/t2')
+    await page.goto('/t1')
     await expect(page.locator('.dt-row[data-index="0"]')).toBeVisible()
   })
 

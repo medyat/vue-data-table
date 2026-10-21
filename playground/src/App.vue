@@ -82,7 +82,8 @@ body {
   background: var(--dt-surface-3);
   color: var(--dt-text);
 }
-.pg-bar label {
+.pg-bar label,
+.pg-title label {
   display: inline-flex;
   gap: 6px;
   align-items: center;
@@ -111,6 +112,9 @@ body {
   height: 24px;
   margin-bottom: 16px;
   font-size: 13px;
+}
+.pg-title label {
+  margin-left: auto;
 }
 .pg-title h1 {
   margin: 0;

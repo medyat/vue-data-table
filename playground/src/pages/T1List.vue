@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// T1/T2 · List screen (Faz 2–3a): sunucu modu — sahte Laravel API'si (/api/orders), arama, sıralama, sayfalama, Count total,
-// filtreler (JSON `filters`), Display, ⋯ (Refresh / Export / Import / Print / Auto-refresh), birincil aksiyon. URL: ?delay=800 ?fail=1 ?failAfter=1 ?size=500
+// T1 · List screen (Faz 2–3a; T2 filtreleme aynı ekranda): sunucu modu — sahte Laravel API'si (/api/orders), arama, sıralama,
+// sayfalama, Count total, filtreler (JSON `filters`), Display, ⋯ (Refresh / Export / Import / Print / Auto-refresh), birincil aksiyon.
+// Sunucu senaryosu başlıktaki seçimle ya da URL ile: ?delay=800 ?fail=1 ?failAfter=1 ?size=500
 import { PhPlus } from '@phosphor-icons/vue'
 import { DataTable, type CountRequest, type TableError, type TableRequest } from '@swors/data-table'
 import { ref } from 'vue'
@@ -12,6 +13,16 @@ const total = ref<number>()
 const error = ref<TableError>()
 const params = new URLSearchParams(location.search)
 let calls = 0
+/** Seçim URL'yi değiştirir, sayfa yeniden yüklenir; e2e aynı parametreleri doğrudan kullanır. */
+const SCENARIOS = [
+  ['', 'Normal'],
+  ['?delay=1500', 'Slow server (1.5 s)'],
+  ['?fail=1', 'Load fails'],
+  ['?failAfter=1', 'Refresh fails (stale data)'],
+  ['?size=500', 'Page size 500'],
+] as const
+const search = location.search
+const go = (e: Event) => (location.search = (e.target as HTMLSelectElement).value)
 
 async function onRequest({ query, signal }: TableRequest) {
   const q = new URLSearchParams({ page: String(query.page.number), size: String(query.page.size), q: query.search })
@@ -48,6 +59,12 @@ async function onCount({ query, signal }: CountRequest) {
       <span class="pg-crumb">Production</span>
       <span class="pg-crumb-sep" aria-hidden="true">/</span>
       <h1>Production orders</h1>
+      <label>
+        Server
+        <select :value="search" @change="go">
+          <option v-for="[q, label] in SCENARIOS" :key="q" :value="q">{{ label }}</option>
+        </select>
+      </label>
     </header>
     <DataTable
       table-id="production-orders"
