@@ -33,7 +33,17 @@ import {
   ToggleGroupItem,
   ToggleGroupRoot,
 } from 'reka-ui'
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef, watch, type Component } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  type Component,
+  useTemplateRef,
+  watch,
+} from 'vue'
 import { comparator } from '../core/cells/compare'
 import { formatCell, isEmptyValue, optionLabel, type FormatEnv } from '../core/cells/format'
 import { RemoteLabels } from '../core/cells/remoteLabels'
@@ -625,6 +635,9 @@ const addRow = (at?: number) => {
   } else if (order.value) order.value = [...order.value, added.key]
   if (view.value !== 'all') viewKeys.value = new Set([...viewKeys.value, added.key])
   table.focus(added.key, props.keyColumn)
+  // Yeni satır görünür alana kayar (sona eklenince 5.000 satır aşağıda olabilir); sanal liste yeni sayıyı bir sonraki
+  // render'da öğrendiğinden nextTick. focusActive editör açıkken kaydırmaz.
+  void nextTick(() => grid.value?.scrollToIndex(rowsAll.value.findIndex((r) => store.keyOf(r) === added.key)))
   grid.value?.focusActive()
   if (keyDef.value) edit.start(added.row, keyDef.value, { inCell: true })
 }
