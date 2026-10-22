@@ -27,6 +27,8 @@ export function useSheetEditing<Row extends object>(o: SheetEditingOptions<Row>)
   /** `replace`: yazarak açılış — içerik yazılanla değiştirilir; yoksa F2 / çift tık — mevcut değer, imleç sonda. */
   const start = (row: Row, def: ColumnDef<Row>, opts: { inCell: boolean; replace?: string }): boolean => {
     if (!o.canEdit(row, def)) return false
+    // boolean'ın düzenleme modu yok (07 §5): Space / çift tık çevirir; özel editör verilmişse o açılır.
+    if (def.type === 'boolean' && !def.editor) return false
     const value = opts.replace !== undefined ? o.parse(def, opts.replace) : o.store.read(row, def)
     editing.value = { row, def, value, inCell: opts.inCell, text: opts.replace }
     return true

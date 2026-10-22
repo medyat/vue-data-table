@@ -609,7 +609,13 @@ const onDblclick = (e: MouseEvent) => {
   const h = hit(e)
   if (!h || isInteractive(h.target, h.cell)) return
   const def = defById.value.get(h.columnId)
-  if (def) sheet.edit.start(h.row, def, { inCell: true })
+  if (!def) return
+  // boolean: düzenleme modu yok (07 §5); çift tık Space gibi Yes ↔ No çevirir.
+  if (def.type === 'boolean' && !def.editor) {
+    if (sheet.canEdit(h.row, def)) sheet.toggle(h.row, def)
+    return
+  }
+  sheet.edit.start(h.row, def, { inCell: true })
 }
 const fillFor = (i: number): RowFill | null => {
   const f = fillDrag.value
