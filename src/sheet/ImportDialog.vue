@@ -338,6 +338,12 @@ const sheetInfo = computed(() => {
               {{ i18n.t('import.keyRequired', { key: keyHeader }) }}
             </p>
             <table class="dt-import-table">
+              <colgroup>
+                <col class="dt-import-col-excel" />
+                <col class="dt-import-col-arrow" />
+                <col class="dt-import-col-field" />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
                   <th>{{ i18n.t('import.excelColumn') }}</th>
@@ -352,7 +358,7 @@ const sheetInfo = computed(() => {
                   :key="i"
                   :class="{ 'is-skipped': i !== keyCol && (mapping[i] ?? '') === SKIP }"
                 >
-                  <td class="dt-import-col">{{ h }}</td>
+                  <td class="dt-import-col" :title="h">{{ h }}</td>
                   <td><PhArrowRight :size="14" aria-hidden="true" /></td>
                   <td>
                     <template v-if="i === keyCol">

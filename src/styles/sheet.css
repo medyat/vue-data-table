@@ -972,14 +972,17 @@
 .dt-import-muted {
   color: var(--dt-text-3);
 }
+/* Eşleşme satırı: sığmazsa Header row grubu alt satıra iner (TR etiketleri daha uzun); etiketler kırılmaz. */
 .dt-import-match {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   font-size: 12.5px;
 }
 .dt-import-match-label {
   font-weight: 500;
+  white-space: nowrap;
 }
 .dt-import-key {
   display: inline-flex;
@@ -1008,6 +1011,7 @@
 }
 .dt-import-headerrow {
   gap: 8px;
+  margin-left: auto;
 }
 .dt-import-headerrow select {
   width: 104px;
@@ -1024,13 +1028,24 @@
 .dt-import-warn > svg {
   color: var(--dt-a-dot);
 }
+/* Eşleme tablosu: sabit sütunlar 132 / 22 / 182 / kalan (handoff 06); uzun başlık ve değer kesilir, tamamı title'da. */
 .dt-import-table {
   width: 100%;
+  table-layout: fixed;
   border: 1px solid var(--dt-line);
   border-radius: var(--dt-radius-pop);
   border-spacing: 0;
   overflow: hidden;
   font-size: 12.5px;
+}
+.dt-import-col-excel {
+  width: 132px;
+}
+.dt-import-col-arrow {
+  width: 22px;
+}
+.dt-import-col-field {
+  width: 182px;
 }
 .dt-import-table th {
   height: 32px;
@@ -1053,7 +1068,9 @@
   color: var(--dt-text-3);
 }
 .dt-import-col {
-  width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .dt-import-table tr.is-skipped .dt-import-col {
   color: var(--dt-text-3);
@@ -1065,13 +1082,24 @@
   box-shadow: var(--dt-shadow-sm);
 }
 .dt-import-preview {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dt-import-preview > svg {
+  margin: 0 6px;
+  vertical-align: middle;
 }
 .dt-import-preview strong {
   font-weight: 500;
+}
+/* Anahtar satırı: "SKU" mono + "match key" soluk, 6 px aralıkla. */
+.dt-import-table .dt-mono + .dt-import-muted {
+  margin-left: 6px;
+}
+/* Özet kutusundaki satır sınırı uyarısı: anahtar uyarısının negatif marjı burada geçmez. */
+.dt-import-summary .dt-import-warn {
+  margin-top: 8px;
 }
 .dt-import-summary {
   padding: 10px 12px;

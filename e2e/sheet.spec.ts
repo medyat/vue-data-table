@@ -525,6 +525,40 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     await expect(page.getByTestId('last-export')).toHaveText('visible csv 30 rows 11 cols')
   })
 
+  test('Import dialog düzeni (TR): uzun başlık tabloyu taşırmaz, İlk değer görünür, sınır uyarısı binmez, etiketler tek satır', async ({
+    page,
+  }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem('pg:settings', JSON.stringify({ theme: 'light', density: 'compact', locale: 'tr' })),
+    )
+    await page.goto('/t11?delay=0&rows=5000&limit=1&fresh=1')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 30000 })
+    await page.locator('.dt-sheet-import').click()
+    const dlg = page.locator('.dt-import')
+    const long = 'https://secure.gravatar.com/avatar/28c67cc5e846ad78dfff9b30c12929ad?size=256'
+    const csv = `Stok Kodu;${long};Birim\nNEW-1;x;adet\nNEW-2;y;adet\n`
+    await dlg
+      .locator('input[type=file]')
+      .setInputFiles({ name: 'uzun.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+    await expect(dlg.locator('.dt-import-table tbody tr')).toHaveCount(3)
+    const box = async (sel: string) => (await dlg.locator(sel).first().boundingBox())!
+    const body = await box('.dt-import-body')
+    const right = body.x + body.width
+    expect((await box('.dt-import-table')).width).toBeLessThanOrEqual(body.width)
+    const sel = await box('.dt-import-field select')
+    expect(sel.x + sel.width).toBeLessThanOrEqual(right)
+    const preview = await box('tr:nth-child(2) .dt-import-preview')
+    expect(preview.width).toBeGreaterThan(40)
+    expect(preview.x + preview.width).toBeLessThanOrEqual(right)
+    await expect(dlg.locator('.dt-import-col').nth(1)).toHaveAttribute('title', long)
+    // Etiketler tek satır (TR daha uzun): 12.5 px metin ≈ 16 px satır.
+    for (const l of await dlg.locator('.dt-import-match-label').all())
+      expect((await l.boundingBox())!.height).toBeLessThan(24)
+    // 5.000 + 2 yeni > sınır: uyarı onay kutusunun altında, üstüne binmez.
+    const warn = await box('.dt-import-summary .dt-import-warn')
+    const check = await box('.dt-import-summary .dt-check-row')
+    expect(warn.y).toBeGreaterThanOrEqual(check.y + check.height)
+  })
   test('telefon: banner, Copy link, salt okunur, gutter yok, 44 px satır (D14)', async ({ page }) => {
     await settings(page)
     await page.setViewportSize({ width: 390, height: 844 })
