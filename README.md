@@ -148,6 +148,8 @@ async function onSave({ rows }: SheetChanges) {
 </template>
 ```
 
+Dosya okuma ve yazma uygulamanındır (D18): `parseFile` dosyayı ham satırlara çevirir (başlık tespiti ve eşleme paketindedir), `@export` yalnızca satır ve sütunları verir. Hazır tarif: `playground/src/pages/T11Sheet.vue` — exceljs ile `.xlsx` okuma (formül, zengin metin ve köprü düz değere iner) ve `.xlsx` / `;` ayrılmış BOM'lu `.csv` yazıp indirme.
+
 Sunucu notları (07 §16): her satırı bağımsız işleyin (satır başına doğrulama ve savepoint), eşleme anahtara göre (`op` ipucudur), `update` satırlarında yalnızca gelen alanları güncelleyin, benzersizlik çakışmaları alan hatası olarak dönsün (500 değil), istek başına en fazla 500 satır.
 
 Ayrılma koruması: paket `beforeunload` uyarısını kendisi verir; yönlendirici koruması için `sheet.value.isDirty()`.

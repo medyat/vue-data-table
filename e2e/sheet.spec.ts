@@ -521,7 +521,9 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     // export
     await page.locator('.dt-sheet-export').click()
     await page.locator('.dt-menu-item', { hasText: 'Export visible rows (30)' }).hover()
+    const download = page.waitForEvent('download')
     await page.locator('.dt-menu-item', { hasText: 'CSV' }).click()
+    expect((await download).suggestedFilename()).toBe('products-visible.csv')
     await expect(page.getByTestId('last-export')).toHaveText('visible csv 30 rows 11 cols')
   })
 

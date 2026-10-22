@@ -153,9 +153,69 @@ async function parseCsv(file: File): Promise<ParsedWorkbook> {
   return { sheets: [{ name: file.name.replace(/\.csv$/i, ''), rows }] }
 }
 const lastExport = shallowRef('')
-const onExport = (e: { format: string; scope: string; columns: string[]; rows: Product[] }) => {
+/** Export (07 §4): paket yalnızca olayı yayar; dosyayı uygulama yazar. .xlsx exceljs ile (başlık kalın, tipe göre sayı/tarih
+ * biçimi), .csv `;` ayrılmış ve UTF-8 BOM'lu (Excel Türkçe karakterleri doğru açsın). Gerçek uygulamada aynı tarif kullanılır. */
+const onExport = async (e: {
+  format: 'csv' | 'xlsx'
+  scope: 'all' | 'visible'
+  columns: string[]
+  rows: Product[]
+}) => {
   lastExport.value = `${e.scope} ${e.format} ${e.rows.length} rows ${e.columns.length} cols`
-  console.log('export', e)
+  const cols = e.columns.map((id) => productColumns.find((c) => c.id === id)!)
+  const name = `products-${e.scope}.${e.format}`
+  if (e.format === 'csv') {
+    const esc = (v: unknown) => {
+      const t = v instanceof Date ? v.toISOString().slice(0, 10) : v == null ? '' : String(v)
+      return /[;"\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
+    }
+    const lines = [cols.map((c) => esc(c.header)), ...e.rows.map((r) => cols.map((c) => esc(exportValue(c, r))))]
+    download(
+      new Blob(['\ufeff' + lines.map((l) => l.join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' }),
+      name,
+    )
+    return
+  }
+  const wb = new Workbook()
+  const ws = wb.addWorksheet('Products')
+  ws.columns = cols.map((c) => ({
+    header: c.header,
+    key: c.id as string,
+    width: Math.max(12, c.header.length + 4),
+    style: numFmt(c) ? { numFmt: numFmt(c) } : {},
+  }))
+  ws.getRow(1).font = { bold: true }
+  for (const r of e.rows) ws.addRow(Object.fromEntries(cols.map((c) => [c.id as string, exportValue(c, r)])))
+  download(
+    new Blob([await wb.xlsx.writeBuffer()], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+    name,
+  )
+}
+type Col = (typeof productColumns)[number]
+const numFmt = (c: Col) =>
+  c.type === 'currency' || c.type === 'float'
+    ? '#,##0.00'
+    : c.type === 'percentage'
+      ? '0"%"'
+      : c.type === 'date'
+        ? 'yyyy-mm-dd'
+        : undefined
+/** Hücre değeri → dışa aktarılan değer: select etiketi, tarih Date, diğerleri olduğu gibi (boş → null). */
+const exportValue = (c: Col, r: Product): CellValue => {
+  const v = (r as unknown as Record<string, unknown>)[c.id as string]
+  if (v === null || v === undefined || v === '') return null
+  if (c.type === 'select') return c.options.find((o) => o.value === v)?.label ?? String(v)
+  if (c.type === 'date') return new Date(String(v))
+  return v as CellValue
+}
+const download = (blob: Blob, name: string) => {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = name
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 </script>
 
