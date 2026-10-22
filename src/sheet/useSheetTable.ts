@@ -44,12 +44,18 @@ export function useSheetTable<Row extends object>(o: SheetTableOptions<Row>) {
     return a ? { rowId: a.anchorRowId, columnId: a.anchorColumnId } : null
   })
   const bounds = computed<SheetBounds | null>(() => table.getCellSelectionBounds()[0] ?? null)
+  /** Aralığın hareket eden ucu (TanStack range focus): ⇧+ok ile genişlerken görünür alana getirilir. */
+  const rangeEnd = computed<{ rowId: string; columnId: string } | null>(() => {
+    const r = table.atoms.cellSelection.get()[0]
+    return r ? { rowId: r.focusRowId, columnId: r.focusColumnId } : null
+  })
   const cell = (rowId: string, columnId: string) =>
     table.getCoreRowModel().rowsById[rowId]?.getAllCellsByColumnId()[columnId]
 
   return {
     active,
     bounds,
+    rangeEnd,
     focus: (rowId: string, columnId: string) => table.setFocusedCell(rowId, columnId),
     move: (d: Direction) => table.moveCellSelection(d),
     extend: (d: Direction) => table.extendCellSelection(d),

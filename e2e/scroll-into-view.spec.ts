@@ -63,3 +63,34 @@ test("DataTable: ↓ ile inerken satır alt kenarın, ↑ ile çıkarken header'
   expect(b.top).toBeGreaterThanOrEqual(b.headBottom - 0.5)
   expect(b.bottom).toBeLessThanOrEqual(b.visibleBottom + 0.5)
 })
+
+test('DataSheet: ⇧+ok ile seçimi genişletirken hareket eden uç görünür alana gelir; odak aktif hücrede kalır', async ({
+  page,
+}) => {
+  await settings(page, 'compact')
+  await page.goto('/t11?delay=0&rows=200&fresh=1')
+  const cell = (i: number, col: string) => page.locator(`.dt-row[data-index="${i}"] .dt-cell[data-col="${col}"]`)
+  await expect(cell(0, 'name')).toBeVisible({ timeout: 15000 })
+  await cell(0, 'name').click()
+  await press(page, 'Shift+ArrowDown', 40)
+  await expect(cell(40, 'name')).toHaveClass(/is-selected/)
+  let b = await bounds(page, '.dt-sheet-grid')
+  expect(b.tag).toContain('is-active') // odak anchor'da
+  const end = await cell(40, 'name').boundingBox()
+  expect(end!.y + end!.height).toBeLessThanOrEqual(b.visibleBottom + 0.5)
+  await press(page, 'Shift+ArrowUp', 30)
+  await expect(cell(10, 'name')).toHaveClass(/is-selected/)
+  await expect(cell(11, 'name')).not.toHaveClass(/is-selected/)
+  b = await bounds(page, '.dt-sheet-grid')
+  const top = await cell(10, 'name').boundingBox()
+  expect(top!.y).toBeGreaterThanOrEqual(b.headBottom - 0.5)
+  // Yatayda: sağa genişlerken uç sütun kabın sağ kenarını aşmaz.
+  await press(page, 'Shift+ArrowRight', 8)
+  const edge = await page.evaluate(() => {
+    const cells = [...document.querySelectorAll('.dt-row[data-index="10"] .dt-cell.is-selected')]
+    const last = cells.at(-1)!.getBoundingClientRect()
+    const s = document.querySelector('.dt-sheet-grid .dt-scroll')!.getBoundingClientRect()
+    return { right: last.right, scrollRight: s.right }
+  })
+  expect(edge.right).toBeLessThanOrEqual(edge.scrollRight + 0.5)
+})

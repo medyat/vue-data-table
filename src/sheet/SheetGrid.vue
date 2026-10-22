@@ -218,6 +218,17 @@ const revealX = (el: HTMLElement) => {
   if (r.left < left) sc.scrollLeft -= left - r.left
   else if (r.right > s.right) sc.scrollLeft += r.right - s.right
 }
+/** ⇧+ok: seçimin hareket eden ucu görünür alana gelir; odak aktif hücrede (anchor) kalır, o satır zaten DOM'da tutulur. */
+const revealEnd = () => {
+  const end = table.rangeEnd.value
+  const i = end ? indexByKey.value.get(end.rowId) : undefined
+  if (!end || i === undefined) return
+  virtualizer.value.scrollToIndex(i, { align: 'auto' })
+  requestAnimationFrame(() => {
+    const el = cellEl(i, end.columnId)
+    if (el) revealX(el)
+  })
+}
 /** Aktif hücreyi DOM'a getirip odaklar: önce üst bileşenin `rows` prop'u gelsin (görünüm değişimi, yeni/geri gelen satır
  *  dizini kaydırır), sonra sanal listede sonraki karede DOM'a girsin. */
 const focusActive = () => void nextTick(() => focusNow(0))
@@ -320,8 +331,12 @@ const onKeydown = (e: KeyboardEvent) => {
   const dir = DIR[e.key]
   if (dir) {
     e.preventDefault()
-    if (e.shiftKey) table.extend(dir)
-    else if (mod) jump(dir)
+    if (e.shiftKey) {
+      table.extend(dir)
+      void nextTick(revealEnd)
+      return
+    }
+    if (mod) jump(dir)
     else table.move(dir)
     focusActive()
     return
