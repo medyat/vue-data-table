@@ -62,6 +62,8 @@ const props = withDefaults(
     primaryHref?: (row: AnyRow) => string | undefined
     primaryLabel?: (row: AnyRow) => string
     primaryHeader?: string
+    /** Telefon (05 §11): seçim sütunu 48, satır 48 px, kısa header; sabitleme useColumnLayout'ta. */
+    phone?: boolean
   }>(),
   { density: 'standard', loading: false, rowCount: -1, rowIndexOffset: 0, sortable: false },
 )
@@ -92,10 +94,11 @@ const layout = props.layout
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 const density = computed<Density>(() => (coarse && props.density === 'compact' ? 'standard' : props.density))
 
-// Seçim (40) ve ⋯ (56) sütunları düzenin dışında: track'ler başa/sona eklenir, sabit sütun ofsetleri o kadar kayar.
+// Seçim (40; telefonda 48) ve ⋯ (56) sütunları düzenin dışında: track'ler başa/sona eklenir, sabit sütun ofsetleri o kadar kayar.
 const SELECT_W = 40
+const SELECT_W_PHONE = 48
 const MENU_W = 56
-const selW = computed(() => (props.selectable ? SELECT_W : 0))
+const selW = computed(() => (props.selectable ? (props.phone ? SELECT_W_PHONE : SELECT_W) : 0))
 const menuW = computed(() => (props.rowMenu ? MENU_W : 0))
 // Genişlikler ve sabit ofsetleri Vue render'ı dışında, senkron (05 · Resize: kare başına < 1 ms).
 watchEffect(
@@ -106,6 +109,7 @@ watchEffect(
     el.style.setProperty('--cols', cols.filter(Boolean).join(' '))
     el.style.setProperty('--dt-min-w', `${layout.minWidth.value + selW.value + menuW.value}px`)
     el.style.setProperty('--dt-sel-w', `${selW.value}px`)
+    el.style.setProperty('--dt-menu-w', `${menuW.value}px`)
     const startVars = new Set(layout.start.value.map((c) => c.offsetVar))
     const endVars = new Set(layout.end.value.map((c) => c.offsetVar))
     for (const [name, value] of Object.entries(layout.offsetVars.value)) {
@@ -123,7 +127,7 @@ const readRowHeight = () => {
   rowHeight.value = Number.isFinite(v) ? v : 40
 }
 onMounted(readRowHeight)
-watch(density, () => requestAnimationFrame(readRowHeight))
+watch([density, () => props.phone], () => requestAnimationFrame(readRowHeight))
 
 const env = computed<RenderEnv>(() => ({
   fmt: getFormat(ctx.locale),
@@ -432,6 +436,7 @@ defineExpose({
       'is-skeleton': skeleton,
       'is-dim': dim,
       'has-vlines': verticalLines,
+      'is-phone': phone,
     }"
     role="grid"
     :aria-label="label"
@@ -472,6 +477,7 @@ defineExpose({
           :filtered="filteredColumns?.has(col.id) ?? false"
           :resizing="layout.resizing.value?.id === col.id ? layout.resizing.value.size : null"
           :sortable="columnSortable(col)"
+          :phone="phone"
           @sort="(c, additive) => emit('sort', c.id, additive)"
           @filter="(c) => emit('header-filter', c.id)"
           @action="onHeaderAction"
@@ -489,6 +495,7 @@ defineExpose({
           :filtered="filteredColumns?.has(col.id) ?? false"
           :resizing="layout.resizing.value?.id === col.id ? layout.resizing.value.size : null"
           :sortable="columnSortable(col)"
+          :phone="phone"
           @sort="(c, additive) => emit('sort', c.id, additive)"
           @filter="(c) => emit('header-filter', c.id)"
           @action="onHeaderAction"

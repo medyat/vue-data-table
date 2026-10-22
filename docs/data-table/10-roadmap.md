@@ -195,9 +195,9 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 **Kapsam:** DataTable telefon düzeni (alt sayfalar, Filters sheet, bulk bar konumu, 44 px dokunma alanları), `forced-colors`, NVDA/VoiceOver turu (iki roving tabindex modeli), tüm duyurular (08 §5), yükleme/skeleton sürelerinin gerçek SWORS ekranlarında ayarı, dokümantasyon sitesi (playground'dan), README ve kullanım örnekleri (Vue Router / Inertia `row-open` tarifleri, Laravel kayıt tarifi), sürüm notları.
 
 **Kabul kriterleri**
-- [ ] T13 tasarımındaki telefon ekranları birebir.
-- [ ] Hiçbir modda kart görünümü yok (ilke 4).
+- [x] T13 tasarımındaki telefon ekranları birebir (sapmalar: CHANGELOG · Bilinen sınırlar).
+- [x] Hiçbir modda kart görünümü yok (ilke 4).
 - [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, satır menüsü, sheet'te düzenle ve kaydet senaryoları tamamlanır.
 - [x] axe-core taramasında kritik/ciddi ihlal yok (Playwright).
 - [x] `prefers-reduced-motion` ve `forced-colors` kontrolleri.
-- [x] Paket boyutu (gzip): çekirdek + DataTable ≤ 60 kB (59,4 kB: index 32,1 + ortak parça 27,3; takvim ayrı parça); `@swors/data-table/sheet` ayrı yüklenir.
+- [ ] Paket boyutu (gzip): çekirdek + DataTable ≤ 60 kB — ölçüm 63,2 kB (index 30,1 + plugin 9,5 + query 18,1 + TextEditor 4,3 + Layer 1,2; takvim ve telefon alt sayfaları ayrı parça: 5,6 + 2,1 + 3,4 + 2,4). Faz 7c telefon düzeni +3,8 kB; aşım 3,2 kB — karar bekliyor. `@swors/data-table/sheet` ayrı yüklenir (33,7 kB).

@@ -8,6 +8,7 @@ import T7Actions from './pages/T7Actions.vue'
 import T8Cells from './pages/T8Cells.vue'
 import T9States from './pages/T9States.vue'
 import T11Sheet from './pages/T11Sheet.vue'
+import T13Phone from './pages/T13Phone.vue'
 
 const REAL: Record<string, Component> = {
   t1: T1List,
@@ -16,6 +17,7 @@ const REAL: Record<string, Component> = {
   t8: T8Cells,
   t9: T9States,
   t11: T11Sheet,
+  t13: T13Phone,
 }
 
 /** DESIGN-BRIEF görev paketleri; her biri bir rota. Sayfa, ilgili fazda gerçek senaryoyla değişir.

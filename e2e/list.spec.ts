@@ -104,7 +104,9 @@ test.describe('T1 · sunucu modu', () => {
     await expect(footer(page)).toContainText('Rows 1–100')
   })
 
-  test('toolbar daralması: 800 px → ikonlar; 500 px → Display ⋯ içinde, birincil ikon', async ({ page }) => {
+  test('toolbar daralması: 800 px → ikonlar; 500 px → telefon: Display ⋯ alt sayfasında, birincil ikon', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 800, height: 700 })
     await expect(page.locator('.dt-toolbar')).toHaveClass(/is-narrow/)
     await expect(page.getByRole('button', { name: 'Display' })).not.toContainText('Display')
@@ -114,8 +116,8 @@ test.describe('T1 · sunucu modu', () => {
     await expect(page.locator('.dt-toolbar')).toHaveClass(/is-phone/)
     await expect(page.getByRole('button', { name: 'New order' })).not.toContainText('New order')
     await page.getByRole('button', { name: 'More actions' }).click()
-    await page.getByRole('menuitem', { name: 'Display' }).click()
-    await expect(page.locator('.dt-display')).toBeVisible()
+    await expect(page.locator('.dt-bsheet')).toContainText('Display')
+    await expect(page.locator('.dt-bsheet .dt-bsheet-row').filter({ hasText: 'Density' })).toBeVisible()
   })
 
   test('Auto-refresh açıkken footer Live', async ({ page }) => {

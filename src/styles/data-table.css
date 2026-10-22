@@ -6,6 +6,7 @@
 @import './filters.css';
 @import './views.css';
 @import './sheet.css';
+@import './phone.css';
 
 /* Bileşen kökü. Tüm ölçü ve renkler --dt-* token'larından (02); sabit değer yok. */
 .dt {

@@ -310,6 +310,7 @@ Sütun gizleme/gösterme, sıra (menü ve klavye; D22), genişlik ve sabitleme g
 - Alt sayfa (`--dt-radius-bottom-sheet`, üstte tutamaç): başlık “Filters” + **Clear all**; önce uygulanmış filtreler, sonra uygulanmamış `suggested` sütunlar — her biri 52 px'lik bir satır (`Alan` solda, değer özeti sağda, `›`); uygulanmamış olanlar `Any` yazar; **Add filter**; **Sort** bölümü (aktif sıralama + hızlı seçenekler); altta tam genişlik **Show results**.
 - Alt sayfadaki değişiklikler **Show results**'a basınca uygulanır (masaüstündeki anında uygulamadan farklı — her dokunuşta tablo arkada yenilenip dikkat dağıtmasın diye).
 - Satıra dokunmak o filtrenin editörünü aynı alt sayfa içinde ikinci seviye olarak açar (geri oku ile döner).
+- Sort bölümü tek kuraldır (sütun + yön); masaüstünde eklenmiş ikincil kurallar Show results'ta düşer. Çoklu sıralama masaüstü Display › Sort'ta kalır.
 
 ---
 

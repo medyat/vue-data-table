@@ -10,16 +10,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from 'reka-ui'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { BulkAction } from '../types/list'
 import { useDataTableContext } from '../core/plugin'
+import Layer from '../core/ui/Layer.vue'
 
-const props = defineProps<{ rows: Row[]; actions: Array<BulkAction<Row>>; variant: 'floating' | 'toolbar' }>()
+const props = defineProps<{
+  rows: Row[]
+  actions: Array<BulkAction<Row>>
+  variant: 'floating' | 'toolbar'
+  /** Telefon (handoff 04 §7): en çok 2 aksiyon + More alt sayfası; ikon üstte, etiket altta. */
+  phone?: boolean
+}>()
 const emit = defineEmits<{ clear: [] }>()
 defineSlots<{ default?: () => unknown }>()
 const { i18n } = useDataTableContext()
 
-const inBar = computed(() => props.actions.filter((a) => a.inBar).slice(0, 3))
+const inBar = computed(() => props.actions.filter((a) => a.inBar).slice(0, props.phone ? 2 : 3))
 /** ⋯ menüsü: bar'da olmayanlar; yıkıcılar en altta, ayırıcıdan sonra. */
 const rest = computed(() => {
   const bar = new Set(inBar.value)
@@ -32,14 +39,22 @@ const tipOf = (a: BulkAction<Row>): string | undefined => {
   const d = disabledOf(a)
   return typeof d === 'string' ? d : undefined
 }
+const moreOpen = ref(false)
 const run = (a: BulkAction<Row>) => {
-  if (!disabledOf(a)) void a.run(props.rows)
+  if (disabledOf(a)) return
+  moreOpen.value = false
+  void a.run(props.rows)
 }
 const btn = computed(() => (props.variant === 'toolbar' ? 'dt-btn has-icon' : 'dt-bulk-btn'))
 </script>
 
 <template>
-  <div class="dt-bulk" :class="`is-${variant}`" role="toolbar" :aria-label="i18n.t('bulk.aria')">
+  <div
+    class="dt-bulk"
+    :class="[`is-${variant}`, { 'is-phone': phone }]"
+    role="toolbar"
+    :aria-label="i18n.t('bulk.aria')"
+  >
     <button
       v-if="variant === 'toolbar'"
       type="button"
@@ -62,10 +77,34 @@ const btn = computed(() => (props.variant === 'toolbar' ? 'dt-btn has-icon' : 'd
         :data-dt-tip="tipOf(a)"
         @click="run(a)"
       >
-        <component :is="a.icon" v-if="a.icon" :size="16" aria-hidden="true" />
-        {{ a.label }}
+        <component :is="a.icon" v-if="a.icon" :size="phone ? 18 : 16" aria-hidden="true" />
+        <span>{{ a.label }}</span>
       </button>
-      <DropdownMenuRoot v-if="rest.length">
+      <Layer v-if="rest.length && phone" v-model:open="moreOpen" sheet hide-title :title="i18n.t('bulk.moreAria')">
+        <template #trigger>
+          <button type="button" class="dt-bulk-btn dt-bulk-more" :aria-label="i18n.t('bulk.moreAria')">
+            <PhDotsThree :size="18" weight="bold" aria-hidden="true" />
+            <span>{{ i18n.t('common.more') }}</span>
+          </button>
+        </template>
+        <div class="dt-bsheet-label">{{ i18n.t('selection.selected', { count: rows.length }) }}</div>
+        <template v-for="(a, i) in rest" :key="a.id">
+          <div v-if="i === firstDestructive" class="dt-bsheet-sep" />
+          <button
+            type="button"
+            class="dt-bsheet-row"
+            :class="{ 'is-destructive': a.destructive }"
+            :disabled="!!disabledOf(a)"
+            @click="run(a)"
+          >
+            <span class="dt-menu-text">
+              <span>{{ a.label }}</span>
+              <span v-if="tipOf(a)" class="dt-menu-sub">{{ tipOf(a) }}</span>
+            </span>
+          </button>
+        </template>
+      </Layer>
+      <DropdownMenuRoot v-else-if="rest.length">
         <DropdownMenuTrigger as-child>
           <button
             type="button"

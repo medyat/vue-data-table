@@ -18,6 +18,8 @@ import { useDataTableContext } from '../plugin'
 import { MOVE_KBD, type HeaderAction } from './headerActions'
 
 const props = defineProps<{
+  /** Telefon: `headerShort` varsa o. */
+  phone?: boolean
   column: LayoutColumn<Row>
   sort?: 'asc' | 'desc' | null
   /** Çoklu sıralamada öncelik (1 tabanlı). */
@@ -124,7 +126,7 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
         <span v-if="sortIndex" class="dt-head-sort-index">{{ sortIndex }}</span>
         <PhArrowUp :size="12" :class="{ 'is-desc': sort === 'desc' }" />
       </span>
-      <span class="dt-head-text">{{ def.header }}</span>
+      <span class="dt-head-text">{{ (phone && def.headerShort) || def.header }}</span>
       <span v-if="unit" class="dt-head-unit">{{ unit }}</span>
       <span v-if="sort && !numeric" class="dt-head-sort" aria-hidden="true">
         <PhArrowUp :size="12" :class="{ 'is-desc': sort === 'desc' }" />

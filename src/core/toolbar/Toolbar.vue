@@ -1,11 +1,14 @@
 <script setup lang="ts">
-// Toolbar (05 §3, T1): yalnızca yapılandırılmış yuvalar; daralma toolbar'ın kendi genişliğiyle ölçülür (ResizeObserver).
-// ≥1024 etiketli · 640–1023 arama ve Display ikon · <640 Display ⋯ içine, #toolbar-end compact.
+// Toolbar (05 §3, §11; T1, T13): yalnızca yapılandırılmış yuvalar; daralma kartın genişliğiyle (`size`, DataTable ölçer).
+// ≥1024 etiketli · 640–1023 arama ve Display ikon · <640 telefon: görünüm · boşluk · arama · Filter · ⋯ · ayırıcı · birincil;
+// arama açılınca toolbar'ın yerini alır (T13-03), Cancel temizleyip kapatır.
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useDataTableContext } from '../plugin'
 import SearchBox from './SearchBox.vue'
 
 const props = defineProps<{
+  size: 'full' | 'narrow' | 'phone'
   /** null: arama yuvası yok. */
   search: string | null
   searchPlaceholder: string
@@ -15,72 +18,72 @@ const props = defineProps<{
   hasMore: boolean
 }>()
 const emit = defineEmits<{ 'update:search': [value: string] }>()
+const { i18n } = useDataTableContext()
 
-const el = ref<HTMLElement | null>(null)
-const size = ref<'full' | 'narrow' | 'phone'>('full')
 const searchOpen = ref(false)
 const searchBox = ref<InstanceType<typeof SearchBox> | null>(null)
-let ro: ResizeObserver | undefined
-onMounted(() => {
-  const measure = () => {
-    const w = el.value?.clientWidth ?? 1440
-    size.value = w >= 1024 ? 'full' : w >= 640 ? 'narrow' : 'phone'
-  }
-  measure()
-  if (typeof ResizeObserver !== 'undefined' && el.value) {
-    ro = new ResizeObserver(measure)
-    ro.observe(el.value)
-  }
-})
-onBeforeUnmount(() => ro?.disconnect())
-
+const phone = computed(() => props.size === 'phone')
+const phoneSearch = computed(() => phone.value && (searchOpen.value || !!props.search))
 const openSearch = () => {
   searchOpen.value = true
   requestAnimationFrame(() => searchBox.value?.focus())
 }
+const cancelSearch = () => {
+  searchOpen.value = false
+  emit('update:search', '')
+}
 defineExpose({
   focusSearch: () => {
-    if (size.value !== 'full' && !searchOpen.value && !props.search) openSearch()
+    if (props.size !== 'full' && !searchOpen.value && !props.search) openSearch()
     else searchBox.value?.focus()
   },
-  size,
 })
 </script>
 
 <template>
-  <div ref="el" class="dt-toolbar" :class="`is-${size}`" role="toolbar">
-    <slot name="view" />
-    <template v-if="search !== null">
-      <button
-        v-if="size !== 'full' && !searchOpen && !search"
-        type="button"
-        class="dt-btn dt-btn-icon"
-        :aria-label="searchPlaceholder"
-        :data-dt-tip="searchPlaceholder"
-        @click="openSearch"
-      >
-        <PhMagnifyingGlass :size="16" aria-hidden="true" />
-      </button>
+  <div class="dt-toolbar" :class="`is-${size}`" role="toolbar">
+    <template v-if="phoneSearch">
       <SearchBox
-        v-else
         ref="searchBox"
-        :model-value="search"
+        :model-value="search ?? ''"
         :placeholder="searchPlaceholder"
+        phone
         @update:model-value="(v) => emit('update:search', v)"
-        @focusout="searchOpen = false"
       />
+      <button type="button" class="dt-btn dt-btn-ghost dt-search-cancel" @click="cancelSearch">
+        {{ i18n.t('common.cancel') }}
+      </button>
     </template>
-    <slot v-if="hasFilter" name="filter" :icon-only="size === 'phone'" />
-    <span class="dt-toolbar-spacer" />
-    <slot v-if="hasDisplay && size !== 'phone'" name="display" :icon-only="size !== 'full'" />
-    <slot
-      v-if="hasMore || (hasDisplay && size === 'phone')"
-      name="more"
-      :with-display="hasDisplay && size === 'phone'"
-    />
-    <template v-if="$slots.end">
-      <span class="dt-toolbar-sep" aria-hidden="true" />
-      <slot name="end" :compact="size === 'phone'" />
+    <template v-else>
+      <slot name="view" />
+      <span class="dt-toolbar-spacer" />
+      <template v-if="search !== null">
+        <button
+          v-if="size !== 'full' && !searchOpen && !search"
+          type="button"
+          class="dt-btn dt-btn-icon dt-search-open"
+          :aria-label="searchPlaceholder"
+          :data-dt-tip="searchPlaceholder"
+          @click="openSearch"
+        >
+          <PhMagnifyingGlass :size="phone ? 20 : 16" aria-hidden="true" />
+        </button>
+        <SearchBox
+          v-else
+          ref="searchBox"
+          :model-value="search"
+          :placeholder="searchPlaceholder"
+          @update:model-value="(v) => emit('update:search', v)"
+          @focusout="searchOpen = false"
+        />
+      </template>
+      <slot v-if="hasFilter" name="filter" :icon-only="phone" :phone="phone" />
+      <slot v-if="hasDisplay && !phone" name="display" :icon-only="size !== 'full'" />
+      <slot v-if="hasMore || (hasDisplay && phone)" name="more" :phone="phone" />
+      <template v-if="$slots.end">
+        <span class="dt-toolbar-sep" aria-hidden="true" />
+        <span class="dt-toolbar-end"><slot name="end" :compact="phone" /></span>
+      </template>
     </template>
   </div>
 </template>

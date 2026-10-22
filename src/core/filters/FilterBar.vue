@@ -17,12 +17,15 @@ const props = defineProps<{
   labels: RemoteLabels
   summaryOf: (chip: Chip) => Summary
   currenciesOf: (def: ColumnDef) => string[]
+  /** Telefon (handoff 04 §3): çipler tek düğme (`open`), Add filter ve Clear all yok (Filters alt sayfasında). */
+  phone?: boolean
 }>()
 const emit = defineEmits<{
   'update:chip': [chip: Chip]
   remove: [column: string]
   'update:editing': [column: string | null]
   'clear-all': []
+  open: [column: string]
 }>()
 const { i18n } = useDataTableContext()
 const defOf = (column: string) => props.defs.get(column)!
@@ -84,13 +87,15 @@ const remove = (column: string) => {
         :rows="rows"
         :labels="labels"
         :currencies="currenciesOf(defOf(c.column))"
+        :phone="phone"
+        @open="emit('open', c.column)"
         @update:chip="(chip) => emit('update:chip', chip)"
         @update:editing="(open) => emit('update:editing', open ? c.column : null)"
         @remove="remove(c.column)"
       />
     </div>
-    <slot name="add" />
-    <button type="button" class="dt-btn dt-btn-ghost dt-filter-clear" @click="emit('clear-all')">
+    <slot v-if="!phone" name="add" />
+    <button v-if="!phone" type="button" class="dt-btn dt-btn-ghost dt-filter-clear" @click="emit('clear-all')">
       {{ i18n.t('filter.clearAll') }}
     </button>
   </div>

@@ -1,10 +1,17 @@
 <script setup lang="ts">
 // Toolbar araması (04 §5, D3): çip üretmez; 250 ms debounce; Esc önce temizler, ikinci Esc odaktan çıkar; `/` dışarıdan odaklar.
-import { PhMagnifyingGlass, PhX } from '@phosphor-icons/vue'
+import { PhMagnifyingGlass, PhX, PhXCircle } from '@phosphor-icons/vue'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useDataTableContext } from '../plugin'
 
-const props = defineProps<{ modelValue: string; placeholder: string; collapsed?: boolean; kbd?: string }>()
+/** `phone`: telefon toolbar araması (T13-03) — 40 px, ikon 18, dolu XCircle temizleme, kısayol rozeti yok. */
+const props = defineProps<{
+  modelValue: string
+  placeholder: string
+  collapsed?: boolean
+  kbd?: string
+  phone?: boolean
+}>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 const { i18n } = useDataTableContext()
 
@@ -34,7 +41,7 @@ defineExpose({ focus: () => input.value?.focus() })
 
 <template>
   <label class="dt-input dt-search has-icon" :class="{ 'is-collapsed': collapsed && !draft }">
-    <span class="dt-input-icon"><PhMagnifyingGlass :size="16" aria-hidden="true" /></span>
+    <span class="dt-input-icon"><PhMagnifyingGlass :size="phone ? 18 : 16" aria-hidden="true" /></span>
     <input
       ref="input"
       type="search"
@@ -53,9 +60,10 @@ defineExpose({ focus: () => input.value?.focus() })
         :aria-label="i18n.t('common.clear')"
         @click="commit('', true)"
       >
-        <PhX :size="14" aria-hidden="true" />
+        <PhXCircle v-if="phone" :size="20" weight="fill" aria-hidden="true" />
+        <PhX v-else :size="14" aria-hidden="true" />
       </button>
-      <kbd v-else class="dt-kbd" aria-hidden="true">{{ kbd ?? '/' }}</kbd>
+      <kbd v-else-if="!phone" class="dt-kbd" aria-hidden="true">{{ kbd ?? '/' }}</kbd>
     </span>
   </label>
 </template>

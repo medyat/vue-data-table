@@ -26,6 +26,8 @@ const props = defineProps<{
   updatedAt: Date | null
   freshness: 'normal' | 'refreshing' | 'stale' | 'live'
   canRefresh: boolean
+  /** Telefon (handoff 04 §5): sayfa boyutu ve tazelik yok; 44 px Önceki / Sonraki. */
+  phone?: boolean
 }>()
 const emit = defineEmits<{ count: []; page: [number: number]; 'page-size': [size: number]; refresh: [] }>()
 const { i18n, locale } = useDataTableContext()
@@ -49,7 +51,7 @@ const updatedText = computed(() => {
 </script>
 
 <template>
-  <div class="dt-footer">
+  <div class="dt-footer" role="navigation" :aria-label="i18n.t('page.nav')">
     <div class="dt-footer-left">
       <span v-if="firstLoad" class="dt-footer-muted">{{ i18n.t('common.loading') }}</span>
       <span v-else-if="rowCount === 0" class="dt-footer-rows">{{ i18n.t(empty ? 'page.none' : 'page.zero') }}</span>
@@ -76,7 +78,7 @@ const updatedText = computed(() => {
           · {{ i18n.t('page.countTotal') }}
         </button>
       </template>
-      <template v-if="updatedAt || freshness !== 'normal'">
+      <template v-if="!phone && (updatedAt || freshness !== 'normal')">
         <span class="dt-footer-vsep" aria-hidden="true" />
         <span v-if="freshness === 'live'" class="dt-footer-live">
           <span class="dt-live-dot" aria-hidden="true" />
@@ -101,7 +103,7 @@ const updatedText = computed(() => {
       </template>
     </div>
     <div class="dt-footer-right">
-      <label class="dt-footer-size">
+      <label v-if="!phone" class="dt-footer-size">
         <span class="dt-footer-size-label">{{ i18n.t('page.perPage') }}</span>
         <span class="dt-select">
           <select
@@ -114,24 +116,26 @@ const updatedText = computed(() => {
           <PhCaretDown :size="12" aria-hidden="true" />
         </span>
       </label>
-      <span class="dt-footer-vsep" aria-hidden="true" />
+      <span v-if="!phone" class="dt-footer-vsep" aria-hidden="true" />
       <button
         type="button"
         class="dt-btn dt-btn-sm has-icon dt-footer-prev"
+        :aria-label="phone ? i18n.t('page.previous') : undefined"
         :disabled="!canPrev"
         @click="emit('page', page.number - 1)"
       >
-        <PhCaretLeft :size="14" aria-hidden="true" />
+        <PhCaretLeft :size="phone ? 18 : 14" aria-hidden="true" />
         <span>{{ i18n.t('page.previous') }}</span>
       </button>
       <button
         type="button"
         class="dt-btn dt-btn-sm dt-footer-next"
+        :aria-label="phone ? i18n.t('page.next') : undefined"
         :disabled="!canNext"
         @click="emit('page', page.number + 1)"
       >
         <span>{{ i18n.t('page.next') }}</span>
-        <PhCaretRight :size="14" aria-hidden="true" />
+        <PhCaretRight :size="phone ? 18 : 14" aria-hidden="true" />
       </button>
     </div>
   </div>

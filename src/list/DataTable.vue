@@ -3,7 +3,16 @@
 // tercihler, filtreler, görünümler. Paket veri çekmez (D18): sorguyu yayar, `rows`/`hasMore`/`loading`/`error` alır.
 // Seçim ve satır menüsü Faz 4.
 import { PhCheck, PhCircleNotch, PhFunnel, PhPlus, PhWarning } from '@phosphor-icons/vue'
-import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  getCurrentInstance,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 import { optionLabel } from '../core/cells/format'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import { TYPE_SPECS } from '../core/cells/specs'
@@ -53,6 +62,10 @@ import BulkBar from './BulkBar.vue'
 import Footer from './footer/Footer.vue'
 import { isSearchable, useListTable } from './useListTable'
 import { useRequest } from './useRequest'
+
+// Telefon alt sayfaları yalnızca telefonda yüklenir: çekirdek paket boyutu (10 · ≤ 60 kB).
+const FiltersSheet = defineAsyncComponent(() => import('../core/filters/FiltersSheet.vue'))
+const PhoneMoreSheet = defineAsyncComponent(() => import('../core/toolbar/PhoneMoreSheet.vue'))
 
 const props = withDefaults(
   defineProps<{
@@ -152,6 +165,21 @@ if (import.meta.env?.DEV && props.mode === 'server' && !listens('onRequest'))
 const entity = computed<Plural>(() => props.entityName ?? { one: props.tableId, other: props.tableId })
 const ariaLabel = computed(() => entity.value.other)
 
+// Telefon düzeni (05 §11, handoff 04): kartın kendi genişliği < 640 → is-phone; Toolbar daralma eşikleri de buradan (ResizeObserver).
+const rootEl = ref<HTMLElement | null>(null)
+const width = ref(1440)
+const size = computed(() => (width.value >= 1024 ? 'full' : width.value >= 640 ? 'narrow' : 'phone'))
+const phone = computed(() => size.value === 'phone')
+let ro: ResizeObserver | undefined
+onMounted(() => {
+  const measure = () => (width.value = rootEl.value?.clientWidth || 1440)
+  measure()
+  if (typeof ResizeObserver !== 'undefined' && rootEl.value) {
+    ro = new ResizeObserver(measure)
+    ro.observe(rootEl.value)
+  }
+})
+
 // Tercihler (05 §9): yoğunluk, dikey çizgiler, sayfa boyutu; adapter yoksa oturumluk.
 const pref = usePreferences(() => props.tableId, ctx.preferences, {
   density: 'standard',
@@ -165,6 +193,7 @@ const layout = useColumnLayout<Row>({
   columns: () => props.columns,
   rows: () => props.rows,
   rowKey: () => props.rowKey,
+  phone: () => phone.value,
 })
 
 // Sorgu durumu. Arama/sıralama değişince sayfa 1 (aynı tick → tek talep).
@@ -216,6 +245,10 @@ const currenciesOf = (def: ColumnDef): string[] => {
 const pick = (column: string) => {
   const def = defs.value.get(column)
   if (!def) return
+  if (phone.value) {
+    filtersSheet.value?.show(column)
+    return
+  }
   if (!chips.value.some((c) => c.column === column)) {
     const op = defaultOperator(def)
     chips.value = [...chips.value, def.type === 'boolean' ? { column, op, value: true } : { column, op }]
@@ -240,6 +273,14 @@ const setEditing = (column: string | null) => {
 const clearFilters = () => {
   chips.value = []
   editing.value = null
+}
+/** Telefon Filters sayfası (04 §9): çipler ve sıralama Show results'la tek adımda uygulanır. */
+const filtersSheet = ref<{ show: (column?: string) => void } | null>(null)
+const applySheet = (next: Chip[], s: SortRule[]) => {
+  chips.value = next
+  editing.value = null
+  sort.value = s
+  goTo(1)
 }
 
 const visibleColumns = computed(() => layout.columns.value.map((c) => c.id))
@@ -550,10 +591,6 @@ const more = computed(() => ({
 const hasMore = computed(() => props.toolbar === 'auto' && Object.values(more.value).some(Boolean))
 const searchPlaceholder = computed(() => props.searchPlaceholder ?? i18n.t('toolbar.search', { entity: entity.value }))
 const toolbarRef = ref<InstanceType<typeof Toolbar> | null>(null)
-const moreMenu = ref<InstanceType<typeof MoreMenu> | null>(null)
-const displayOpen = ref(false)
-// ⋯ menüsü kapanırken dışarı tıklama katmanı yeni popover'ı da kapatmasın: bir makro görev sonra aç.
-const openDisplayLater = () => setTimeout(() => (displayOpen.value = true), 0)
 const displayProps = computed(() => ({
   density: density.value,
   verticalLines: pref.prefs.verticalLines,
@@ -565,7 +602,6 @@ const displayProps = computed(() => ({
 // v-on nesnesi: anahtarlar olay adı (Vue `on` önekini kendisi ekler).
 const displayOn = {
   'update:density': (d: Density) => pref.set({ density: d }),
-  'update:verticalLines': (on: boolean) => pref.set({ verticalLines: on }),
   'column-visible': (id: string, visible: boolean) => layout.setVisible(id, visible),
   'column-move': (id: string, delta: -1 | 1) => layout.move(id, delta),
   'columns-all': (visible: boolean) => {
@@ -712,7 +748,8 @@ const onKey = (e: KeyboardEvent) => {
     toolbarRef.value?.focusSearch()
   } else if ((e.key === 'f' || e.key === 'F') && hasFilter.value) {
     e.preventDefault()
-    pickerOpen.value = true
+    if (phone.value) filtersSheet.value?.show()
+    else pickerOpen.value = true
   } else if ((e.key === 'r' || e.key === 'R') && listens('onRequest')) {
     e.preventDefault()
     req.refresh()
@@ -724,6 +761,7 @@ const onKey = (e: KeyboardEvent) => {
 onMounted(() => window.addEventListener('keydown', onKey))
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey)
+  ro?.disconnect()
   clearTimeout(slowTimer)
   clearTimeout(barTimer)
   clearInterval(autoTimer)
@@ -753,14 +791,13 @@ watch(req.errorKind, (k) => {
 })
 
 // Tek tooltip, kart kökünde: hücreler, başlıklar ve çipler (02 · Tooltip).
-const rootEl = ref<HTMLElement | null>(null)
 const tooltip = useDelegatedTooltip(rootEl)
 
 defineExpose({ refresh: req.refresh, clearSelection })
 </script>
 
 <template>
-  <div ref="rootEl" class="dt dt-list" :data-density="density">
+  <div ref="rootEl" class="dt dt-list" :class="{ 'is-phone': phone }" :data-density="density">
     <BulkBar
       v-if="selectionBar === 'toolbar' && selectedRows.length && toolbar !== false"
       variant="toolbar"
@@ -773,6 +810,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
     <Toolbar
       v-else-if="toolbar !== false"
       ref="toolbarRef"
+      :size="size"
       :search="hasSearch ? search : null"
       :search-placeholder="searchPlaceholder"
       :has-filter="hasFilter"
@@ -790,6 +828,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
           :default-id="pref.prefs.defaultViewId"
           :can-save="!!ctx.viewsAdapter"
           :can-write="vw.writable(vw.active.value)"
+          :sheet="phone"
           @select="vw.select"
           @save-changes="vw.saveChanges()"
           @save-as="openSaveAs()"
@@ -801,8 +840,19 @@ defineExpose({ refresh: req.refresh, clearSelection })
           @delete="(v) => (confirmDelete = v)"
         />
       </template>
-      <template #filter="{ iconOnly }">
-        <ColumnPicker v-model:open="pickerOpen" :columns="columns" :chips="chips" @pick="pick">
+      <template #filter="{ iconOnly, phone: p }">
+        <button
+          v-if="p"
+          type="button"
+          class="dt-btn dt-btn-icon dt-filter-trigger"
+          :class="{ 'is-active': filters.length }"
+          :aria-label="i18n.t('toolbar.filter')"
+          @click="filtersSheet?.show()"
+        >
+          <PhFunnel :size="20" aria-hidden="true" />
+          <span v-if="filters.length" class="dt-counter">{{ filters.length }}</span>
+        </button>
+        <ColumnPicker v-else v-model:open="pickerOpen" :columns="columns" :chips="chips" @pick="pick">
           <template #trigger>
             <button
               type="button"
@@ -818,27 +868,39 @@ defineExpose({ refresh: req.refresh, clearSelection })
         </ColumnPicker>
       </template>
       <template #display="{ iconOnly }">
-        <DisplayPopover v-bind="displayProps" :icon-only="iconOnly" v-on="displayOn" />
+        <DisplayPopover
+          v-bind="displayProps"
+          :icon-only="iconOnly"
+          v-on="displayOn"
+          @update:vertical-lines="(on) => pref.set({ verticalLines: on })"
+        />
       </template>
-      <template #more="{ withDisplay }">
-        <MoreMenu
-          ref="moreMenu"
+      <template #more="{ phone: p }">
+        <PhoneMoreSheet
+          v-if="p"
           v-bind="more"
-          :display="withDisplay"
+          :density="density"
+          :columns="layout.panel.value"
+          :counts="layout.counts.value"
+          :sort="sort"
+          :persistent="pref.persistent"
+          :auto-refresh-on="autoRefreshOn"
+          v-on="displayOn"
+          @update:auto-refresh-on="(v) => (autoRefreshOn = v)"
+          @refresh="req.refresh()"
+          @export="onExport"
+          @import="emit('import')"
+          @print="onPrint"
+        />
+        <MoreMenu
+          v-else
+          v-bind="more"
           :auto-refresh-on="autoRefreshOn"
           @update:auto-refresh-on="(v) => (autoRefreshOn = v)"
           @refresh="req.refresh()"
           @export="onExport"
           @import="emit('import')"
           @print="onPrint"
-          @display="openDisplayLater"
-        />
-        <DisplayPopover
-          v-if="withDisplay"
-          v-bind="displayProps"
-          v-model:open="displayOpen"
-          :anchor="moreMenu?.trigger ?? null"
-          v-on="displayOn"
         />
       </template>
       <template v-if="$slots['toolbar-end']" #end="{ compact }">
@@ -855,6 +917,8 @@ defineExpose({ refresh: req.refresh, clearSelection })
       :labels="labels"
       :summary-of="summaryOf"
       :currencies-of="currenciesOf"
+      :phone="phone"
+      @open="(c) => filtersSheet?.show(c)"
       @update:chip="updateChip"
       @remove="removeChip"
       @update:editing="setEditing"
@@ -871,6 +935,19 @@ defineExpose({ refresh: req.refresh, clearSelection })
         </ColumnPicker>
       </template>
     </FilterBar>
+
+    <FiltersSheet
+      v-if="phone && hasFilter"
+      ref="filtersSheet"
+      :columns="columns"
+      :chips="chips"
+      :sort="sort"
+      :rows="rows"
+      :labels="labels"
+      :summary-of="summaryOf"
+      :currencies-of="currenciesOf"
+      @apply="applySheet"
+    />
 
     <div v-if="req.errorKind.value === 'stale' && req.updatedAt.value" class="dt-strip" role="status">
       <PhWarning :size="16" aria-hidden="true" />
@@ -907,6 +984,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
       :primary-href="primaryHref"
       :primary-label="primaryLabel"
       :primary-header="primaryDef?.header"
+      :phone="phone"
       @header-filter="pick"
       @row-click="(row, e) => onRowClick(row as Row, e)"
       @row-open="(row, e) => onRowOpen(row as Row, e)"
@@ -971,6 +1049,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
     <BulkBar
       v-if="selectionBar === 'floating' && selectedRows.length"
       variant="floating"
+      :phone="phone"
       :rows="selectedRows"
       :actions="bulkActions ?? []"
       @clear="clearSelection"
@@ -1002,6 +1081,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
       :updated-at="listens('onRequest') ? req.updatedAt.value : null"
       :freshness="freshness"
       :can-refresh="listens('onRequest')"
+      :phone="phone"
       @count="count"
       @page="goTo"
       @page-size="setPageSize"

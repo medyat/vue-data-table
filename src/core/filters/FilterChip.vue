@@ -26,7 +26,7 @@ import OptionsEditor from '../editors/OptionsEditor.vue'
 import StarEditor from '../editors/StarEditor.vue'
 import TextEditor from '../editors/TextEditor.vue'
 import { useDataTableContext } from '../plugin'
-import { changeOperator, isComplete, opLabel, operatorsOf, shapeOf, type Chip, type Summary } from './model'
+import { changeOperator, editorOf, isComplete, opLabel, operatorsOf, shapeOf, type Chip, type Summary } from './model'
 import { TYPE_ICONS } from './typeIcons'
 
 const props = defineProps<{
@@ -37,8 +37,10 @@ const props = defineProps<{
   rows: object[]
   labels: RemoteLabels
   currencies: string[]
+  /** Telefon çipi (handoff 04 §3): operatör ve × yok; tamamı tek düğme, `open` yayar (Filters alt sayfası). */
+  phone?: boolean
 }>()
-const emit = defineEmits<{ 'update:chip': [chip: Chip]; remove: []; 'update:editing': [open: boolean] }>()
+const emit = defineEmits<{ 'update:chip': [chip: Chip]; remove: []; 'update:editing': [open: boolean]; open: [] }>()
 const { i18n } = useDataTableContext()
 
 const type = computed(() => props.column.type)
@@ -57,16 +59,7 @@ const aria = computed(() =>
     ? i18n.t('filter.valueAria', { column: props.column.header, op: opText.value, value: props.summary.text })
     : i18n.t('filter.chooseValueAria', { column: props.column.header }),
 )
-/** Editör: liste şekli `id`'de metin (yapıştırılan liste), diğerlerinde seçenek listesi. */
-const editor = computed(() => {
-  const s = shape.value
-  if (s === 'none' || s === 'boolean') return null
-  if (s === 'list') return type.value === 'id' ? 'text' : 'options'
-  if (s === 'text') return 'text'
-  if (s === 'date' || s === 'dateRange') return 'date'
-  if (type.value === 'star') return 'star'
-  return 'number'
-})
+const editor = computed(() => editorOf(props.chip.op, type.value))
 const status = computed(() => {
   if (editor.value === 'options' && valueCount.value && Array.isArray(props.chip.value) && props.chip.value.length)
     return i18n.t('option.selected', { count: props.chip.value.length })
@@ -96,8 +89,23 @@ const toggleBool = () => update({ value: !(props.chip.value === true) })
 </script>
 
 <template>
-  <span class="dt-chip" :class="{ 'is-editing': editing, 'is-incomplete': !complete }" :data-col="chip.column">
-    <PopoverRoot v-if="!isBoolean" :open="editing" @update:open="(o) => emit('update:editing', o)">
+  <span
+    class="dt-chip"
+    :class="{ 'is-editing': editing, 'is-incomplete': !complete, 'is-phone': phone }"
+    :data-col="chip.column"
+  >
+    <button
+      v-if="phone"
+      type="button"
+      class="dt-chip-body"
+      :aria-label="i18n.t('mobile.chipAria', { summary: `${column.header} ${opText} ${summary.text}`.trim() })"
+      @click="emit('open')"
+    >
+      <component :is="TYPE_ICONS[type]" :size="14" class="dt-chip-icon" aria-hidden="true" />
+      <span class="dt-chip-field">{{ column.header }}</span>
+      <span class="dt-chip-value">{{ summary.text }}</span>
+    </button>
+    <PopoverRoot v-else-if="!isBoolean" :open="editing" @update:open="(o) => emit('update:editing', o)">
       <PopoverTrigger as-child>
         <button type="button" class="dt-chip-body" :aria-label="aria">
           <component :is="TYPE_ICONS[type]" :size="14" class="dt-chip-icon" aria-hidden="true" />
@@ -214,6 +222,7 @@ const toggleBool = () => update({ value: !(props.chip.value === true) })
       <span class="dt-chip-value">{{ summary.text }}</span>
     </button>
     <button
+      v-if="!phone"
       type="button"
       class="dt-chip-remove"
       :aria-label="i18n.t('filter.removeAria', { column: column.header })"

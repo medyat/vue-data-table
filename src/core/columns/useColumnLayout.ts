@@ -49,6 +49,8 @@ export interface LayoutColumn<Row extends object = object> {
 }
 
 export interface ColumnLayoutOptions<Row extends object> {
+  /** Telefon (05 §11): yalnızca birincil sütun sola sabit; sağa sabit yok. */
+  phone?: MaybeRefOrGetter<boolean>
   columns: MaybeRefOrGetter<Array<ColumnDef<Row>>>
   rows: MaybeRefOrGetter<Row[]>
   /** Satır kimliği yolu. Varsayılan 'id'. */
@@ -132,12 +134,21 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     header: headerById.value.get(col.id)!,
   })
 
-  const start = computed(() => {
-    const cols = table.getStartVisibleLeafColumns()
-    return cols.map((c, i) => toLayoutColumn(c, 'start', i === cols.length - 1))
-  })
-  const center = computed(() => table.getCenterVisibleLeafColumns().map((c) => toLayoutColumn(c, null, false)))
-  const end = computed(() => table.getEndVisibleLeafColumns().map((c, i) => toLayoutColumn(c, 'end', i === 0)))
+  // Telefonda (05 §11) yalnızca birincil sütun sola sabit, sağa sabit yok; kayıtlı sabitleme durumu (`state`) değişmez.
+  const phone = computed(() => !!toValue(options.phone))
+  const isPrimary = (c: Column<Features, Row, unknown>) => !!defById.value.get(c.id)?.primary
+  const startCols = computed(() =>
+    phone.value ? table.getVisibleLeafColumns().filter(isPrimary) : table.getStartVisibleLeafColumns(),
+  )
+  const centerCols = computed(() =>
+    phone.value ? table.getVisibleLeafColumns().filter((c) => !isPrimary(c)) : table.getCenterVisibleLeafColumns(),
+  )
+  const endCols = computed(() => (phone.value ? [] : table.getEndVisibleLeafColumns()))
+  const isPinnedCol = (c: Column<Features, Row, unknown>) => (phone.value ? isPrimary(c) : c.getIsPinned() !== false)
+
+  const start = computed(() => startCols.value.map((c, i, all) => toLayoutColumn(c, 'start', i === all.length - 1)))
+  const center = computed(() => centerCols.value.map((c) => toLayoutColumn(c, null, false)))
+  const end = computed(() => endCols.value.map((c, i) => toLayoutColumn(c, 'end', i === 0)))
   const columns = computed(() => [...start.value, ...center.value, ...end.value])
 
   /** Sütunun gerçek track'i: sabit ve resize edilmiş sütunlar px, diğerleri tip varsayılanı (minmax olabilir). */
@@ -149,26 +160,28 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
   /** grid-template-columns: sabit px, orta track'ler, bölge sonunda `auto` dolgu (05 · Resize). */
   const colsVar: ComputedRef<string> = computed(() =>
     [
-      ...table
-        .getStartVisibleLeafColumns()
-        .map((c, i, all) => trackCss(trackOf(c, !(options.flexLastStart && i === all.length - 1)))),
-      ...table.getCenterVisibleLeafColumns().map((c) => trackCss(trackOf(c, false))),
+      ...startCols.value.map((c, i, all) => trackCss(trackOf(c, !(options.flexLastStart && i === all.length - 1)))),
+      ...centerCols.value.map((c) => trackCss(trackOf(c, false))),
       'auto',
-      ...table.getEndVisibleLeafColumns().map((c) => trackCss(trackOf(c, true))),
+      ...endCols.value.map((c) => trackCss(trackOf(c, true))),
     ].join(' '),
   )
 
   /** Sabit hücrelerin sticky ofsetleri: start için left, end için right (TanStack getStart / getAfter). */
   const offsetVars = computed<Record<string, string>>(() => {
     const out: Record<string, string> = {}
-    for (const c of table.getStartVisibleLeafColumns()) out[offsetVarName(c.id)] = `${c.getStart('start')}px`
-    for (const c of table.getEndVisibleLeafColumns()) out[offsetVarName(c.id)] = `${c.getAfter('end')}px`
+    let left = 0
+    for (const c of startCols.value) {
+      out[offsetVarName(c.id)] = `${left}px`
+      left += c.getSize()
+    }
+    for (const c of endCols.value) out[offsetVarName(c.id)] = `${c.getAfter('end')}px`
     return out
   })
 
   /** Satır ve header'ın en az genişliği; kabı aşarsa yatay kayar. */
   const minWidth = computed(() =>
-    table.getVisibleLeafColumns().reduce((sum, c) => sum + trackMin(trackOf(c, c.getIsPinned() !== false)), 0),
+    table.getVisibleLeafColumns().reduce((sum, c) => sum + trackMin(trackOf(c, isPinnedCol(c))), 0),
   )
 
   /** Columns paneli (05 §5): tüm yaprak sütunlar etkin sırada; Pinned / Shown / Hidden bölümleri buradan türer. */

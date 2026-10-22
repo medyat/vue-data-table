@@ -208,7 +208,7 @@ async function onCount({ query, signal }: CountRequest) {
           :class="{ 'dt-btn-icon': compact }"
           aria-label="New order"
         >
-          <PhPlus :size="16" aria-hidden="true" />
+          <PhPlus :size="compact ? 18 : 16" aria-hidden="true" />
           <span v-if="!compact">New order</span>
         </button>
       </template>

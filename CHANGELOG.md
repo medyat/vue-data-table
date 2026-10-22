@@ -10,6 +10,7 @@
 - Sunucu ve istemci modu; `@request` / `@count`; durumlar (ilk yükleme, sorgu değişimi, yenileme, hata, stale, boş).
 - Filtre çipleri (operatör + tipe göre editör, hazır tarih aralıkları), toolbar araması, sistem ve kişisel görünümler (`viewsAdapter`), Display.
 - Seçim (sayfa kapsamlı), bulk bar, satır menüsü, satır detayı (expand), `row-click` / `row-open`.
+- Telefon düzeni (kart < 640 px): birincil sütun sola sabit, 48 px satır ve seçim sütunu, 44 px dokunma hedefleri, sağ kenar solması; toolbar (görünüm · arama modu · Filter sayaçlı · ⋯); çip satırı tek düğme; alt sayfalar — Filters (taslak + Show results, değer editörü ve sütun seçici alt seviyeler, Sort), görünümler, ⋯ (Density/Columns/Sort/Export/…), bulk bar More; footer yalnızca Önceki / Sonraki.
 
 ### DataSheet (`@swors/data-table/sheet`)
 
@@ -25,5 +26,5 @@
 
 ### Bilinen sınırlar
 
-- DataTable telefon düzeni (alt sayfalar, Filters sheet) kısmi; NVDA/VoiceOver turu elle yapılmadı.
+- Telefonda satır ⋯ menüsü ve sütun başlığı menüsü alt sayfa değil, açılır menü olarak kalır; Filters alt sayfasındaki Sort tek kuraldır (ikincil kurallar Show results'ta düşer); kişi listesindeki Me satırında gerçek ad gösterilmez. NVDA/VoiceOver turu elle yapılmadı.
 - Sheet'te `multiselect`/`tags`/`ajax`/`user` hücreleri yalnızca özel editörle düzenlenir; `Alt↓` seçici açma yok.

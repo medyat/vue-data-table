@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // More ⋯ menüsü (05 §3): yalnızca uygulamanın dinlediği olaylar ve verilen ayarlar; Refresh `R`, Auto-refresh switch.
-// Telefon genişliğinde Display de buradan açılır (`display` prop'u).
+// Telefonda yerini ⋯ alt sayfası (PhoneMoreSheet) alır.
 import { PhDotsThree } from '@phosphor-icons/vue'
 import {
   DropdownMenuCheckboxItem,
@@ -14,7 +14,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from 'reka-ui'
-import { ref } from 'vue'
 import { useDataTableContext } from '../plugin'
 
 const props = defineProps<{
@@ -25,19 +24,15 @@ const props = defineProps<{
   /** `autoRefresh` prop'u verilmişse switch görünür. */
   autoRefresh: boolean
   autoRefreshOn: boolean
-  display?: boolean
 }>()
 const emit = defineEmits<{
   refresh: []
   export: [format: 'csv' | 'xlsx']
   import: []
   print: []
-  display: []
   'update:autoRefreshOn': [on: boolean]
 }>()
 const { i18n } = useDataTableContext()
-const trigger = ref<HTMLElement | null>(null)
-defineExpose({ trigger })
 const hasActions = () => props.export || props.import || props.print
 </script>
 
@@ -45,7 +40,6 @@ const hasActions = () => props.export || props.import || props.print
   <DropdownMenuRoot>
     <DropdownMenuTrigger as-child>
       <button
-        ref="trigger"
         type="button"
         class="dt-btn dt-btn-icon"
         :aria-label="i18n.t('toolbar.more')"
@@ -56,12 +50,6 @@ const hasActions = () => props.export || props.import || props.print
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
       <DropdownMenuContent class="dt-menu dt-more" align="end" :side-offset="4">
-        <template v-if="display">
-          <DropdownMenuItem class="dt-menu-item" @select="emit('display')">
-            {{ i18n.t('toolbar.display') }}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator v-if="hasActions() || refresh || autoRefresh" class="dt-menu-sep" />
-        </template>
         <DropdownMenuSub v-if="$props.export">
           <DropdownMenuSubTrigger class="dt-menu-item">{{ i18n.t('toolbar.export') }}</DropdownMenuSubTrigger>
           <DropdownMenuPortal>

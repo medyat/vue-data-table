@@ -73,6 +73,17 @@ export function shapeOf(op: FilterOp, type: ColumnType): Shape {
 }
 
 /** Ekrandaki çip: değeri henüz seçilmemiş olabilir (eksik çip sorguya girmez). */
+/** Çip editörü (FilterChip ve telefon Filters sayfası): liste şekli `id`'de metin (yapıştırılan liste), diğerlerinde seçenek listesi. */
+export type Editor = 'options' | 'text' | 'number' | 'star' | 'date' | null
+export function editorOf(op: FilterOp, type: ColumnType): Editor {
+  const s = shapeOf(op, type)
+  if (s === 'none' || s === 'boolean') return null
+  if (s === 'list') return type === 'id' ? 'text' : 'options'
+  if (s === 'text') return 'text'
+  if (s === 'date' || s === 'dateRange') return 'date'
+  return type === 'star' ? 'star' : 'number'
+}
+
 export interface Chip {
   column: string
   op: FilterOp

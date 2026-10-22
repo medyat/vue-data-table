@@ -102,6 +102,16 @@ body {
   min-height: 0;
   flex-direction: column;
 }
+@media (max-width: 639px) {
+  .pg-stage {
+    padding: 0;
+  }
+  /* Üst çubuk telefon genişliğinde taşmasın (sayfa genişlerse mobil tarayıcı küçültür). */
+  .pg-bar {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
 .pg-scroll {
   overflow: auto;
 }

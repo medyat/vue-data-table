@@ -1,17 +1,20 @@
 // jsdom ölçüm yapmaz: virtual-core kabı clientWidth/clientHeight ile okur → kaydırma kabına 600 px, diğerlerine 40/100 ver.
 import { nextTick } from 'vue'
 
+// Kart genişliği modül değişkeni: vitest, parametreli hook fonksiyonunu fixture sanır (beforeAll(mockLayout) çağrısı).
+let cardWidth = 1200
+export const mockCardWidth = (w: number) => (cardWidth = w)
 export function mockLayout() {
-  // Kaydırma kabı 1000 × 600; toolbar 1200 geniş (daralma eşiklerinin üstü); diğerleri 100 × 40.
+  // Kaydırma kabı 1000 × 600; kart ve toolbar `cardWidth` (varsayılan daralma eşiklerinin üstü; telefon testleri 390); diğerleri 100 × 40.
   const size = (el: HTMLElement, axis: 'w' | 'h') =>
     el.classList.contains('dt-scroll')
       ? axis === 'h'
         ? 600
         : 1000
-      : el.classList.contains('dt-toolbar')
+      : el.classList.contains('dt-toolbar') || el.classList.contains('dt-list')
         ? axis === 'h'
           ? 52
-          : 1200
+          : cardWidth
         : axis === 'h'
           ? 40
           : 100
