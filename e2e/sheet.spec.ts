@@ -112,6 +112,23 @@ test.describe('T11 · DataSheet', () => {
     await expect(page.getByTestId('last-save')).toContainText('rows')
   })
 
+  test("combobox: seçenek rozetine tek tık seçer (rozet vurgu değişiminde DOM'da yerinde kalır)", async ({ page }) => {
+    await page.goto('/t11?delay=0')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
+    await cell(page, 7, 'category').click()
+    await page.keyboard.press('F2')
+    const list = page.locator('.dt-cell-list')
+    await expect(list).toBeVisible()
+    const item = list.locator('.dt-cell-option', { hasText: 'Pumps' })
+    await item.hover() // vurgu seçenekte; mousedown odağı seçeneğe taşıyınca reka vurguyu sıfırlar
+    await item.locator(':scope > *').first().click() // rozet metni
+    await expect(list).toHaveCount(0)
+    await expect(page.locator('.dt-cell-input')).toHaveValue('Pumps')
+    await page.keyboard.press('Enter')
+    await expect(cell(page, 7, 'category')).toHaveClass(/is-changed/)
+    await expect(cell(page, 7, 'category')).toContainText('Pumps')
+  })
+
   test("portallı editörler: combobox listesi ↓/Enter/Esc önce widget'ta; listede olmayan metin Tab ile hata; tarih popover'ı", async ({
     page,
   }) => {

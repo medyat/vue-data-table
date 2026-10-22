@@ -107,12 +107,10 @@ const toggle = (v: string | number) => {
 const only = (v: string | number) => emit('update:modelValue', [v])
 const unassigned = computed(() => props.op === 'is_empty')
 
-const render = (o: OptionDef) => {
-  const d = def.value
-  if (d.type === 'select' || d.type === 'multiselect') return () => badge(o.tone ?? 'gray', o.label)
-  if (d.type === 'user') return () => [avatar(o as UserOption), ' ', o.label]
-  return null
-}
+// Sabit bileşen: her render'da yeni bileşen üretmek rozeti DOM'da değiştirir ve tıkı yutabilir (bkz. sheet/editors/OptionCell).
+const rich = computed(() => ['select', 'multiselect', 'user'].includes(def.value.type))
+const Opt = (p: { o: OptionDef }) =>
+  def.value.type === 'user' ? [avatar(p.o as UserOption), ' ', p.o.label] : badge(p.o.tone ?? 'gray', p.o.label)
 </script>
 
 <template>
@@ -142,7 +140,7 @@ const render = (o: OptionDef) => {
       <label v-for="o in options" :key="String(o.value)" class="dt-option" :class="{ 'is-on': isOn(o.value) }">
         <input type="checkbox" class="dt-checkbox" :checked="isOn(o.value)" @change="toggle(o.value)" />
         <span class="dt-option-body">
-          <component :is="render(o)" v-if="render(o)" />
+          <Opt v-if="rich" :o="o" />
           <template v-else-if="def.type === 'color'">
             <span class="dt-swatch" :style="{ background: String(o.value) }" aria-hidden="true" />
             <span class="dt-mono">{{ o.label }}</span>

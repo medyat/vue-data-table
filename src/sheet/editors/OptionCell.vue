@@ -60,7 +60,8 @@ const onKeydown = (e: KeyboardEvent) => {
     open.value = true
   }
 }
-const item = (o: OptionDef) => () => badge(o.tone, o.label)
+// Sabit bileşen: her render'da yeni bileşen üretmek rozeti mousedown–mouseup arasında DOM'da değiştirir, click kaybolur.
+const Item = (p: { o: OptionDef }) => badge(p.o.tone, p.o.label)
 </script>
 
 <template>
@@ -101,7 +102,7 @@ const item = (o: OptionDef) => () => badge(o.tone, o.label)
             :value="o.value"
             :text-value="o.label"
           >
-            <component :is="item(o)" />
+            <Item :o="o" />
             <kbd class="dt-kbd dt-cell-option-enter" aria-hidden="true">↵</kbd>
           </ComboboxItem>
           <ComboboxEmpty class="dt-options-empty">{{ i18n.t('picker.noMatch') }}</ComboboxEmpty>
