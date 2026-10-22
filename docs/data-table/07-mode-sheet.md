@@ -114,7 +114,7 @@ Editörler filtre değer girişleriyle **aynı bileşenler** (03):
 
 - `string` · `text` — metin input'u; `text` daha büyük kutu açar, ⇧Enter yeni satır.
 - `int` · `float` · `currency` — sağa yaslı; `2240`, `2.240,00`, `2,240.00` kabul edilir (§7 yerel ayar kuralı). Para birimi sabitse soluk kod sağda.
-- `select` · `ajax` — combobox; yazmak süzer, Enter seçer. Listede olmayan değer → hata “**“Pump” isn't an option**”, yakın eşleşme varsa balonda **Use Pumps** düğmesi.
+- `select` · `ajax` — combobox; yazmak süzer, Enter seçer. Listede olmayan değer → hata “**“Pump” isn't an option**”, yakın eşleşme varsa balonda **Use Pumps** düğmesi. `optionEnabled(option, row)` verilmişse satıra göre kapalı seçenekler listede görünmez (satırın taslak hali; aynı satırda başka hücre değişince liste yeniden hesaplanır); yapıştırma/doldurma ile gelen kapalı değer aynı hatayı verir, ama yalnızca **değişen** hücrede — mevcut değer kural değişince hata olmaz. `options` tam liste kalır: etiket, filtre ve dışa aktarma ondan okur.
 - `date` · `datetime` — “24.10”, “24.10.2026”, “+7d”, “today” yazılabilir veya seçici açılır.
 - `boolean` — Space değiştirir.
 - `multiselect` · `tags` — ComboboxMultiple; yapıştırmada `;` veya `,` ayrılmış liste.

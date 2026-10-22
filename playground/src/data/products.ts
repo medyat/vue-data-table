@@ -39,6 +39,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
     header: 'Category',
     type: 'select',
     options: categoryOptions,
+    optionEnabled: (o, row) => o.value !== 'hoses' || row.unit === 'm',
     width: 148,
     editable: true,
     required: true,

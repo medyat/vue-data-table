@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import DataSheet from '../src/sheet/DataSheet.vue'
-import type { ColumnDef, SheetChanges } from '../src/types'
+import type { ColumnDef, OptionDef, SheetChanges } from '../src/types'
 import { flush, mockLayout } from './helpers/dom'
 
 interface Product {
@@ -737,5 +737,38 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     } finally {
       window.matchMedia = orig
     }
+  })
+
+  it('optionEnabled: editör listesi satırın taslak haline göre süzülür', async () => {
+    const cols = columns.map((c) =>
+      c.id === 'category'
+        ? {
+            ...c,
+            editable: true,
+            options: [
+              { value: 'hyd', label: 'Hydraulics' },
+              { value: 'pumps', label: 'Pumps' },
+            ],
+            optionEnabled: (o: OptionDef, row: Product) => o.value !== 'pumps' || row.name === 'Pump',
+          }
+        : c,
+    ) as Array<ColumnDef<Product>>
+    const w = await mountSheet({ columns: cols })
+    const labels = () =>
+      [...document.querySelectorAll('.dt-cell-option')].map((e) => e.textContent?.replace('↵', '').trim())
+    await click(w, 0, 'category')
+    await key(w, { key: 'F2' })
+    expect(labels()).toEqual(['Hydraulics'])
+    await key(w, { key: 'Escape' })
+    await key(w, { key: 'Escape' })
+    expect(document.querySelector('.dt-cell-input')).toBeNull()
+    // Ad taslakta "Pump" olunca aynı satırda Pumps açılır (kaynak satır değil, taslak)
+    await click(w, 0, 'name')
+    await key(w, { key: 'P' })
+    await typeInto('Pump')
+    await key(w, { key: 'Enter' })
+    await click(w, 0, 'category')
+    await key(w, { key: 'F2' })
+    expect(labels()).toEqual(['Hydraulics', 'Pumps'])
   })
 })

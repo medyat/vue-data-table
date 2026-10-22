@@ -25,6 +25,11 @@ const emit = defineEmits<{ 'update:modelValue': [value: unknown] }>()
 const { i18n } = useDataTableContext()
 const env = useParseEnv()
 const def = computed(() => props.column as Extract<ColumnDef, { type: 'select' }>)
+// Satıra göre kapalı seçenekler listede yok (`row` taslak satır); etiket çözümü tam listeden.
+const options = computed(() => {
+  const d = def.value
+  return d.optionEnabled ? d.options.filter((o) => d.optionEnabled!(o, props.row)) : d.options
+})
 const open = ref(true)
 // reka listenin id'sini input'a geç yazıyor (aria-controls=""): açılınca DOM'daki gerçek id okunur (axe aria-valid-attr-value).
 const listId = ref<string | undefined>()
@@ -96,7 +101,7 @@ const Item = (p: { o: OptionDef }) => badge(p.o.tone, p.o.label)
       >
         <ComboboxViewport>
           <ComboboxItem
-            v-for="o in def.options"
+            v-for="o in options"
             :key="String(o.value)"
             class="dt-pop-item dt-cell-option"
             :value="o.value"

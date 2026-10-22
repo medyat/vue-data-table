@@ -777,6 +777,7 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
                 :read="store.read"
                 :original="store.original"
                 :can-edit="sheet.canEdit"
+                :current="store.current"
                 :editor-for="sheet.editorFor"
                 :draft="store.rowDraft(keyOf(rows[item.index]))"
                 :issues="store.rowIssues(keyOf(rows[item.index]))"

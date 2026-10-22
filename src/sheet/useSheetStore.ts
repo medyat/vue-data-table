@@ -8,7 +8,7 @@
 // temizlenir. Komut yığını (07 §12): adım = `{ patches, added, removed }`, 100 adım; `apply` toplu yazar.
 // Satır Map'leri her değişimde yeni nesnedir: yalnızca o satır yeniden çizilir.
 import { computed, shallowReactive, shallowRef, toRaw, toValue, watch, type MaybeRefOrGetter } from 'vue'
-import { isEmptyValue } from '../core/cells/format'
+import { isEmptyValue, optionLabel } from '../core/cells/format'
 import { TYPE_SPECS } from '../core/cells/specs'
 import { readPath } from '../core/columns/readPath'
 import { toDate } from '../core/format'
@@ -206,6 +206,19 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     }
     return null
   }
+  /** `optionEnabled`: satıra göre kapalı seçenek yalnızca değişen hücrede hata (mevcut değer kural değişince değil). */
+  const optionIssue = (def: ColumnDef<Row>, value: unknown, ctx: { row: Row; original: unknown }): Issue | null => {
+    if ((def.type !== 'select' && def.type !== 'multiselect') || !def.optionEnabled) return null
+    if (isEmptyValue(value) || same(value, ctx.original)) return null
+    const { options, optionEnabled } = def
+    const bad = (Array.isArray(value) ? value : [value]).find((v) => {
+      const opt = options.find((o) => o.value === v)
+      return opt && !optionEnabled(opt, ctx.row)
+    })
+    return bad === undefined
+      ? null
+      : { level: 'error', message: t('sheet.notAnOption', { value: optionLabel(options, bad) }) }
+  }
   const duplicateIssue = (key: string, value: unknown): Issue | null => {
     if (isEmptyValue(value)) return null
     const others = keyIndex.value.get(String(value))
@@ -227,6 +240,7 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
       const required = def.required || (isNewRow && isKey)
       const issue =
         typeIssue(def, value) ??
+        optionIssue(def, value, ctx) ??
         (required && isEmptyValue(value) ? { level: 'error' as const, message: t('sheet.required') } : null) ??
         // Yüklenmiş satırların anahtarı salt okunur: çift anahtar yalnızca yeni satır varken mümkün (10k indeks boşa kurulmaz).
         (isKey && (isNewRow || added.value.length) ? duplicateIssue(key, value) : null) ??

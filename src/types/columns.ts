@@ -101,6 +101,12 @@ export interface ValidationContext<Row> {
 
 /** null/undefined/'' → geçerli; string → hata veya uyarı metni (i18n'lenmiş). */
 export type Validator<Row> = (value: unknown, ctx: ValidationContext<Row>) => string | null | undefined
+/**
+ * Satıra göre kapalı seçenek (DataSheet). `options` tam liste kalır (etiket, filtre, dışa aktarma); kapalı seçenekler
+ * editör listesinde görünmez, yapıştırma/doldurma ile gelirse "isn't an option" hatası — yalnızca **değişen** hücrede
+ * (mevcut değer kural değişince hata olmaz). Satırın taslak halini alır.
+ */
+export type OptionEnabled<Row> = (option: OptionDef, row: Row) => boolean
 
 export interface ColumnFilterOptions {
   /** Tipin listesinden alt küme. */
@@ -181,8 +187,16 @@ export type ColumnDef<Row = any> =
   | (BaseColumn<Row, string | null> & { type: 'phone' })
   | (BaseColumn<Row, string | null> & { type: 'color'; display?: 'swatch' | 'fill'; palette?: string[] })
   | (BaseColumn<Row, boolean | null> & { type: 'boolean'; falseTone?: 'neutral' | 'destructive' })
-  | (BaseColumn<Row, string | number | null> & { type: 'select'; options: OptionDef[] })
-  | (BaseColumn<Row, Array<string | number> | null> & { type: 'multiselect'; options: OptionDef[] })
+  | (BaseColumn<Row, string | number | null> & {
+      type: 'select'
+      options: OptionDef[]
+      optionEnabled?: OptionEnabled<Row>
+    })
+  | (BaseColumn<Row, Array<string | number> | null> & {
+      type: 'multiselect'
+      options: OptionDef[]
+      optionEnabled?: OptionEnabled<Row>
+    })
   | (BaseColumn<Row, string[] | null> & { type: 'tags' })
   | (BaseColumn<Row, string | number | null> & { type: 'ajax'; remote: RemoteOptions })
   | (BaseColumn<Row, string | number | Array<string | number> | null> & {

@@ -52,8 +52,8 @@ Sıralama ve filtreleme her zaman **ham değer** üzerinden çalışır; göster
 | Tip | Hücre | Seçenekler | Filtre operatörleri | Değer girişi / editör |
 |---|---|---|---|---|
 | `boolean` | Yes: yeşil rozet + ✓ ikon. No: nötr rozet + – ikon. `falseTone: 'destructive'` → No kırmızı + ✕ | `falseTone` | is (Yes / No), is empty — çipte operatör “is”, değer “Yes” | Yes/No segmented — popover yok; sheet'te Space değiştirir |
-| `select` | Seçeneğin tonunda yumuşak rozet (nokta + etiket). Açık/koyu tema renkleri ayrı verilebilir | `options[]` (`value, label, tone` veya `{ light, dark }`) | is any of, is none of, is empty | Combobox — filtrede çoklu seçim, sheet'te tekli. Arama, `Only` kısayolu (hover) |
-| `multiselect` | En fazla 2 rozet, sonra `+N` (popover) | `options[]` | is any of (`in`: şunlardan birini içerir), is none of (`not_in`), is empty | ComboboxMultiple |
+| `select` | Seçeneğin tonunda yumuşak rozet (nokta + etiket). Açık/koyu tema renkleri ayrı verilebilir | `options[]` (`value, label, tone` veya `{ light, dark }`); `optionEnabled(option, row)` satıra göre seçenek kapatır (sheet editörü ve doğrulama; 07 §5) | is any of, is none of, is empty | Combobox — filtrede çoklu seçim, sheet'te tekli. Arama, `Only` kısayolu (hover) |
+| `multiselect` | En fazla 2 rozet, sonra `+N` (popover) | `options[]`, `optionEnabled` | is any of (`in`: şunlardan birini içerir), is none of (`not_in`), is empty | ComboboxMultiple |
 | `tags` | Nötr çerçeveli tag'ler (asla renkli değil), 2 + `+N`; seçenekler yüklü satırlardaki mevcut değerlerden (uzaktan öneri yok, D3) | — | is any of (`in`), is none of (`not_in`), is empty | ComboboxMultiple (mevcut tag'lerde arar, yeni tag yazılabilir) |
 | `ajax` | Sunucudan gelen etiket; kaydın URL'i varsa link | `remote` (`search(q, page)`, `resolve(ids)`) | is any of, is none of, is empty | Async combobox: yazdıkça arar, 20'şer yükler, yükleniyor/boş durumları |
 | `user` **(yeni)** | Avatar + isim; çoklu → avatar yığını (3 + `+N`); boş → “Unassigned” (kesik çizgili avatar) | `remote` veya `options` | is any of, is none of, **is me**, is empty | Kişi combobox'u, “Me” en üstte, “Unassigned” seçeneği |

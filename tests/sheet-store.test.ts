@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { createI18n } from '../src/core/i18n'
 import { inputText, parseDateInput, parseInput } from '../src/sheet/parse'
 import { useSheetStore } from '../src/sheet/useSheetStore'
-import type { ColumnDef } from '../src/types'
+import type { ColumnDef, OptionDef } from '../src/types'
 
 interface Product {
   id: number
@@ -100,6 +100,24 @@ describe('useSheetStore', () => {
     expect(s.counts.value).toMatchObject({ errorRows: 1, warningRows: 1 })
     s.set(rows[0]!, def('category'), 'Pump')
     expect(s.rowIssues('1')?.get('category')?.message).toBe("“Pump” isn't an option")
+  })
+  it('optionEnabled: satıra göre kapalı seçenek yalnızca değişen hücrede hata; aynı satır değişince yenilenir', () => {
+    const cols = columns.map((c) =>
+      c.id === 'category'
+        ? { ...c, optionEnabled: (o: OptionDef, row: Product) => o.value !== 'pumps' || row.name === 'Pump' }
+        : c,
+    ) as Array<ColumnDef<Product>>
+    const col = (id: string) => cols.find((c) => c.id === id)!
+    const s = useSheetStore<Product>({ rows, columns: cols, rowKey: 'id', keyColumn: 'sku', i18n, locale: 'en' })
+    // Satır 2: adı değişince "pumps" o satırda kapanır ama kategori değişmedi → hata yok
+    s.set(rows[1]!, col('name'), 'Pump X')
+    expect(s.rowIssues('2')).toBeUndefined()
+    // Satır 1 (Cylinder): pumps seçilemez → etiketle hata
+    s.set(rows[0]!, col('category'), 'pumps')
+    expect(s.rowIssues('1')?.get('category')?.message).toBe("“Pumps” isn't an option")
+    // Aynı satırda ad "Pump" olunca seçenek açılır, hata düşer
+    s.set(rows[0]!, col('name'), 'Pump')
+    expect(s.rowIssues('1')).toBeUndefined()
   })
   it('getChanges: yalnızca değişmiş ve hatasız satırlar, yalnızca değişen alanlar, anahtar sütun değeri', () => {
     const s = make()

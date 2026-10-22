@@ -58,6 +58,8 @@ export default defineComponent({
     read: { type: Function as PropType<(row: AnyRow, def: ColumnDef<AnyRow>) => unknown>, required: true },
     original: { type: Function as PropType<(row: AnyRow, def: ColumnDef<AnyRow>) => unknown>, required: true },
     canEdit: { type: Function as PropType<(row: AnyRow, def: ColumnDef<AnyRow>) => boolean>, required: true },
+    /** Satırın taslak hali: editör (`optionEnabled`) `editable` ve doğrulayıcılarla aynı güncel satırı görür. */
+    current: { type: Function as PropType<(row: AnyRow) => AnyRow>, required: true },
     editorFor: { type: Function as PropType<(def: ColumnDef<AnyRow>) => Component | null>, required: true },
     draft: { type: Map as PropType<Map<string, unknown>>, default: undefined },
     issues: { type: Map as PropType<Map<string, Issue>>, default: undefined },
@@ -107,7 +109,7 @@ export default defineComponent({
         const Editor = props.editorFor(def)!
         content = h(Editor, {
           modelValue: ed.value,
-          row: props.row,
+          row: props.current(props.row),
           column: def,
           'onUpdate:modelValue': (v: unknown) => emit('edit-value', v),
         })
