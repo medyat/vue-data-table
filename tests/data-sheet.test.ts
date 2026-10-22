@@ -230,6 +230,17 @@ describe('düzenleme kuralları (07 §5)', () => {
     await key(w, { key: 'Escape' })
     expect(cell(w, 4, 'category').classes()).not.toContain('is-selected')
   })
+
+  it('editable fonksiyonu satırın taslak haliyle çağrılır: başka hücre değişince kilit güncellenir', async () => {
+    const cols = columns.map((c) => (c.id === 'cost' ? { ...c, editable: (row: Product) => row.name !== 'locked' } : c))
+    const w = await mountSheet({ columns: cols })
+    expect(cell(w, 0, 'cost').attributes('aria-readonly')).toBeUndefined()
+    await click(w, 0, 'name')
+    await key(w, { key: 'l' })
+    await typeInto('locked')
+    await key(w, { key: 'Enter' })
+    expect(cell(w, 0, 'cost').attributes('aria-readonly')).toBe('true')
+  })
 })
 
 describe('formül çubuğu, Save, Discard, handle', () => {

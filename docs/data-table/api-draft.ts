@@ -220,7 +220,7 @@ interface BaseColumn<Row, V = unknown> {
   actions?: Array<CellAction<Row>>
 
   /* ---- DataSheet ---- */
-  /** Varsayılan false (sütun salt okunur). Fonksiyon satır bazında kilitleyebilir. Anahtar sütun yüklenmiş satırlarda her zaman salt okunurdur. */
+  /** Varsayılan false (sütun salt okunur). Fonksiyon satır bazında kilitleyebilir; satırın güncel (taslak uygulanmış) halini alır, başka bir hücre değişince yeniden değerlendirilir. Anahtar sütun yüklenmiş satırlarda her zaman salt okunurdur. */
   editable?: boolean | ((row: Row, ctx: { isNew: boolean }) => boolean)
   /** Tipin editörü yerine özel editör. */
   editor?: CellEditor

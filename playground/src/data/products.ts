@@ -49,7 +49,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
     header: 'Unit',
     type: 'string',
     width: 64,
-    editable: true,
+    editable: (row) => row.category !== 'valves',
     validate: (v) => (typeof v === 'string' && !UNITS.includes(v) ? `Use ${UNITS.join(', ')}` : null),
   },
   {

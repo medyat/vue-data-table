@@ -76,7 +76,7 @@ Bulk edit products                                                              
 - Zorunlu sütun header'ında kırmızı `*` (`aria-label="required"`). Birim header'da soluk (`Lead time d`).
 - **Gutter numarası kararlıdır:** yükleme sırasındaki sıra; yeni satırlar sonraki numaraları alır (10,001, 10,002…). Sıralama ve filtreleme numaraları **değiştirmez** (Excel'deki gibi), böylece “HC-080-S is already in row 1” gibi mesajlar ve hata listesi tutarlı kalır.
 - Sütun genişliği ve gizleme bu oturuma özeldir (görünüm yok); sütun sırası sabittir.
-- Sütunlar **varsayılan olarak salt okunurdur**; düzenlenecek her sütun `editable: true` (veya fonksiyon) ile açılır.
+- Sütunlar **varsayılan olarak salt okunurdur**; düzenlenecek her sütun `editable: true` (veya fonksiyon) ile açılır. Fonksiyon satırın güncel (taslak uygulanmış) halini alır; aynı satırda başka bir hücre değişince kilit yeniden değerlendirilir.
 - Anahtar sütunun header'ında 12 px `--dt-text-3` kilit ikonu (yüklenmiş satırlarda değişmez olduğunu söyler).
 
 ## 4. Hücre durumları

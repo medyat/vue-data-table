@@ -271,7 +271,7 @@ const canEdit = (row: Row, def: ColumnDef<Row>): boolean => {
   const isNew = store.isNew(store.keyOf(row))
   if (def.id === props.keyColumn) return isNew
   if (def.type !== 'boolean' && !editorFor(def) && !PASTE_ONLY.has(def.type)) return false
-  return typeof def.editable === 'function' ? def.editable(row, { isNew }) : def.editable === true
+  return typeof def.editable === 'function' ? def.editable(store.current(row), { isNew }) : def.editable === true
 }
 
 const parseEnv = (locale = ctx.locale): ParseEnv => ({
