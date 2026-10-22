@@ -188,7 +188,6 @@ export default defineComponent({
           role: 'row',
           'aria-rowindex': props.rowIndex,
           'aria-selected': props.selectable ? (props.selected ? 'true' : 'false') : undefined,
-          'aria-expanded': props.expandable && props.canExpand ? (props.expanded ? 'true' : 'false') : undefined,
           tabindex: props.focused ? 0 : -1,
           'data-index': props.index,
           style: props.style,

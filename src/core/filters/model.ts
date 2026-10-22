@@ -1,6 +1,5 @@
 // Filtre modeli (04 §1–3, 03 · Operatör anahtarları): tipe göre operatörler ve varsayılan, değer şekli (operatör değişiminde
 // koruma kuralı), eksik çip, hazır tarih aralıkları, istemci modu eşleme ve çip değer özeti. Vue'dan bağımsız; sahte API de kullanır.
-import { endOfMonth, endOfWeek, parseDate, startOfMonth, startOfWeek, type CalendarDate } from '@internationalized/date'
 import type { ColumnDef, ColumnType } from '../../types/columns'
 import type { Plural } from '../../types/core'
 import type { DatePreset, FilterCondition, FilterOp } from '../../types/query'
@@ -134,30 +133,48 @@ export interface IsoRange {
   from: string | null
   to: string | null
 }
-const iso = (d: CalendarDate) => d.toString()
 export const isoDay = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const addDays = (d: Date, n: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
+/** Haftanın ilk günü (1 = Pazartesi … 7 = Pazar) yerel ayardan (`Intl.Locale` weekInfo); desteklenmeyen tarayıcıda Pazartesi. */
+const weekStart = (locale: string): number => {
+  try {
+    const l = new Intl.Locale(locale) as unknown as {
+      getWeekInfo?: () => { firstDay: number }
+      weekInfo?: { firstDay: number }
+    }
+    return l.getWeekInfo?.().firstDay ?? l.weekInfo?.firstDay ?? 1
+  } catch {
+    return 1
+  }
+}
 
-/** Hazır aralık → ISO gün aralığı (uçlar dahil). Hafta başı yerel ayardan (tr/en-GB Pazartesi, en-US Pazar). */
+/** Hazır aralık → ISO gün aralığı (uçlar dahil). Hafta başı yerel ayardan (tr/en-GB Pazartesi, en-US Pazar). Yerel takvim, saf Date. */
 export function resolvePreset(preset: DatePreset, locale: string, now = new Date()): IsoRange {
-  const t = parseDate(isoDay(now))
+  const t = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   switch (preset) {
     case 'today':
-      return { from: iso(t), to: iso(t) }
-    case 'this_week':
-      return { from: iso(startOfWeek(t, locale)), to: iso(endOfWeek(t, locale)) }
+      return { from: isoDay(t), to: isoDay(t) }
+    case 'this_week': {
+      const diff = (t.getDay() - (weekStart(locale) % 7) + 7) % 7
+      const start = addDays(t, -diff)
+      return { from: isoDay(start), to: isoDay(addDays(start, 6)) }
+    }
     case 'next_7_days':
-      return { from: iso(t), to: iso(t.add({ days: 7 })) }
+      return { from: isoDay(t), to: isoDay(addDays(t, 7)) }
     case 'this_month':
-      return { from: iso(startOfMonth(t)), to: iso(endOfMonth(t)) }
+      return {
+        from: isoDay(new Date(t.getFullYear(), t.getMonth(), 1)),
+        to: isoDay(new Date(t.getFullYear(), t.getMonth() + 1, 0)),
+      }
     case 'last_30_days':
-      return { from: iso(t.subtract({ days: 30 })), to: iso(t) }
+      return { from: isoDay(addDays(t, -30)), to: isoDay(t) }
     case 'this_quarter': {
-      const qStart = t.set({ month: Math.floor((t.month - 1) / 3) * 3 + 1, day: 1 })
-      return { from: iso(qStart), to: iso(endOfMonth(qStart.add({ months: 2 }))) }
+      const qm = Math.floor(t.getMonth() / 3) * 3
+      return { from: isoDay(new Date(t.getFullYear(), qm, 1)), to: isoDay(new Date(t.getFullYear(), qm + 3, 0)) }
     }
     case 'overdue':
-      return { from: null, to: iso(t.subtract({ days: 1 })) }
+      return { from: null, to: isoDay(addDays(t, -1)) }
   }
 }
 
@@ -300,7 +317,7 @@ export function summarize(chip: Chip, def: ColumnDef, env: SummaryEnv): Summary 
       const from = String(v.from)
       const to = String(v.to)
       const sameMonth = from.slice(0, 7) === to.slice(0, 7)
-      const toText = sameMonth ? String(parseDate(to.slice(0, 10)).day) : fmt.date(to, env.today)
+      const toText = sameMonth ? String(Number(to.slice(8, 10))) : fmt.date(to, env.today)
       return { text: `${fmt.date(from, env.today)} – ${toText}` }
     }
     case 'list': {

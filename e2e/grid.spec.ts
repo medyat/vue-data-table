@@ -61,7 +61,7 @@ test.describe('T1 · liste ızgarası', () => {
     await expect(second).toBeFocused()
     // T1'de expand açık: kapalı satırda ilk → detayı açar, ikincisi ilk widget'a (birincil link) geçer (08 §2).
     await page.keyboard.press('ArrowRight')
-    await expect(second).toHaveAttribute('aria-expanded', 'true')
+    await expect(second.locator('.dt-expand')).toHaveAttribute('aria-expanded', 'true')
     await expect(second).toBeFocused()
     await page.keyboard.press('ArrowRight')
     await expect(second.locator('a.dt-link').first()).toBeFocused()

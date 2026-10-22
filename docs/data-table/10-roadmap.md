@@ -198,6 +198,6 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 - [ ] T13 tasarımındaki telefon ekranları birebir.
 - [ ] Hiçbir modda kart görünümü yok (ilke 4).
 - [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, satır menüsü, sheet'te düzenle ve kaydet senaryoları tamamlanır.
-- [ ] axe-core taramasında kritik/ciddi ihlal yok (Playwright).
-- [ ] `prefers-reduced-motion` ve `forced-colors` kontrolleri.
-- [ ] Paket boyutu (gzip): çekirdek + DataTable ≤ 60 kB; `@swors/data-table/sheet` ayrı yüklenir.
+- [x] axe-core taramasında kritik/ciddi ihlal yok (Playwright).
+- [x] `prefers-reduced-motion` ve `forced-colors` kontrolleri.
+- [x] Paket boyutu (gzip): çekirdek + DataTable ≤ 60 kB (59,4 kB: index 32,1 + ortak parça 27,3; takvim ayrı parça); `@swors/data-table/sheet` ayrı yüklenir.

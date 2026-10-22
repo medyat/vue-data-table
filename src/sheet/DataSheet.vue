@@ -60,10 +60,10 @@ import type {
   SheetStatus,
 } from '../types/sheet'
 import { matrixFromClipboard, parseTsv, toHtml, toTsv } from './clipboard'
-import DateCell from './editors/DateCell.vue'
 import NumberCell from './editors/NumberCell.vue'
 import OptionCell from './editors/OptionCell.vue'
 import TextCell from './editors/TextCell.vue'
+import DateCell from './editors/DateCell.vue'
 import { fillValues } from './fill'
 import ImportDialog, { type ImportPayload } from './ImportDialog.vue'
 import { inferDecimal, inputText, parseInput, type ParseEnv } from './parse'
@@ -795,9 +795,13 @@ const finishSave = () => {
   if (!t.created && !t.updated && !t.errors) return
   if (t.errors) {
     partly.value = { failed: t.errors, saved: t.created + t.updated }
+    assertive.value = i18n.t('sheet.partly.title', { count: fmt.int(t.errors) })
     setView('errors')
     goToError(1)
-  } else savedSummary.value = { count: t.created + t.updated, created: t.created, updated: t.updated }
+  } else {
+    savedSummary.value = { count: t.created + t.updated, created: t.created, updated: t.updated }
+    polite.value = i18n.t('sheet.saved', { count: fmt.int(t.created + t.updated) })
+  }
   saveTotals.value = { created: 0, updated: 0, errors: 0 }
 }
 let resultVersion = -1
@@ -1201,6 +1205,19 @@ const toastAction = () => {
   run?.()
 }
 const polite = ref('')
+const assertive = ref('')
+// Yükleme / kayıt ilerlemesi her %25'te duyurulur (08 §5).
+let announcedQuarter = -1
+watch(percent, (p) => {
+  if (p === null) {
+    announcedQuarter = -1
+    return
+  }
+  const q = Math.floor(p / 25)
+  if (q === announcedQuarter || p === 0) return
+  announcedQuarter = q
+  polite.value = i18n.t(loadingNow.value ? 'sr.loadingPercent' : 'sr.savingPercent', { percent: q * 25 })
+})
 
 const discardOpen = ref(false)
 const discard = () => {
@@ -1582,6 +1599,7 @@ defineExpose({
       </template>
     </div>
     <span class="dt-sr-only" aria-live="polite">{{ polite }}</span>
+    <span class="dt-sr-only" aria-live="assertive">{{ assertive }}</span>
     <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
       {{ tooltip.text.value }}
     </div>

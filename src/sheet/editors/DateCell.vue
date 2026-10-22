@@ -88,6 +88,7 @@ const onKeydown = (e: KeyboardEvent) => {
       class="dt-cell-input"
       type="text"
       :value="text"
+      :aria-label="column.header"
       autocomplete="off"
       @input="onInput"
       @keydown="onKeydown"

@@ -30,6 +30,7 @@ const onInput = () => {
       type="text"
       inputmode="decimal"
       :value="text"
+      :aria-label="column.header"
       autocomplete="off"
       @input="onInput"
     />

@@ -7,7 +7,7 @@
 import { PhArrowUp, PhLock } from '@phosphor-icons/vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { ContextMenuRoot, ContextMenuTrigger } from 'reka-ui'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId, watch, watchEffect } from 'vue'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import type { RenderEnv } from '../core/cells/renderCell'
 import { alignOf, isNumericType } from '../core/cells/specs'
@@ -68,6 +68,7 @@ const props = withDefaults(
 defineSlots<{ state?: () => unknown }>()
 
 const ctx = useDataTableContext()
+const uid = useId()
 const root = ref<HTMLElement | null>(null)
 const scrollEl = ref<HTMLElement | null>(null)
 const layout = props.layout
@@ -733,6 +734,7 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
                 :index="item.index"
                 :row-no="store.rowNoOf(keyOf(rows[item.index]))"
                 :gutter="!phone"
+                :uid="uid"
                 :columns="columns"
                 :env="env"
                 :key-column="keyColumn"

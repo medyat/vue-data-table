@@ -1,6 +1,6 @@
 // Tipin varsayılan metni (03): `formatted` olarak özel hücreye verilir, tooltip ve dışa aktarma da bunu kullanır.
 import type { ColumnDef, OptionDef } from '../../types/columns'
-import type { Format } from '../format'
+import { toDate, type Format } from '../format'
 import type { I18n } from '../i18n'
 import type { RemoteLabels } from './remoteLabels'
 
@@ -66,8 +66,11 @@ export function formatCell<Row extends object>(def: ColumnDef<Row>, row: Row, va
       )
     }
     case 'date':
+      // Geçersiz tarih metni (sheet'te yazılan "+", "abc") biçimlendirilmez, olduğu gibi gösterilir; hata balonu söyler.
+      if (Number.isNaN(toDate(value as string | Date).getTime())) return String(value)
       return fmt.date(value as string | Date, env.today)
     case 'datetime':
+      if (Number.isNaN(toDate(value as string | Date).getTime())) return String(value)
       return def.relative
         ? fmt.relative(value as string | Date, env.today)
         : fmt.dateTime(value as string | Date, env.today)

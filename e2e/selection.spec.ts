@@ -103,7 +103,7 @@ test.describe('T1 · seçim ve bulk bar', () => {
   }) => {
     const top1 = (await row(page, 1).boundingBox())!.y
     await row(page, 0).locator('.dt-expand').click()
-    await expect(row(page, 0)).toHaveAttribute('aria-expanded', 'true')
+    await expect(row(page, 0).locator('.dt-expand')).toHaveAttribute('aria-expanded', 'true')
     const sub = page.locator('.dt-subrow').first()
     await expect(sub).toBeVisible()
     await expect(sub.locator('table th').first()).toHaveText('Op')
@@ -134,7 +134,7 @@ test.describe('T1 · seçim ve bulk bar', () => {
     expect(page.url()).toContain('/t1')
     await page.locator('.pg-title select').first().selectOption('expand')
     await plainCell(page, 2).click()
-    await expect(row(page, 2)).toHaveAttribute('aria-expanded', 'true')
+    await expect(row(page, 2).locator('.dt-expand')).toHaveAttribute('aria-expanded', 'true')
   })
 
   test("selection-bar=toolbar: seçim varken toolbar'ın yerini alır", async ({ page }) => {

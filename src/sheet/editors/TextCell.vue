@@ -24,8 +24,18 @@ const onInput = () => {
     ref="el"
     class="dt-cell-input is-multiline"
     :value="text"
+    :aria-label="column.header"
     rows="3"
     @input="onInput"
   />
-  <input v-else ref="el" class="dt-cell-input" type="text" :value="text" autocomplete="off" @input="onInput" />
+  <input
+    v-else
+    ref="el"
+    class="dt-cell-input"
+    type="text"
+    :value="text"
+    :aria-label="column.header"
+    autocomplete="off"
+    @input="onInput"
+  />
 </template>

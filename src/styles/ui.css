@@ -470,3 +470,61 @@
   gap: 8px;
   margin-top: 10px;
 }
+
+/* Yüksek kontrast (forced-colors, 08 §6): çerçeveler sistem renkleriyle; işaret renkleri korunur. */
+@media (forced-colors: active) {
+  .dt-btn,
+  .dt-input input,
+  .dt-select select,
+  .dt-badge,
+  .dt-tag,
+  .dt-chip,
+  .dt-pop,
+  .dt-menu,
+  .dt-dialog {
+    border: 1px solid CanvasText;
+  }
+  .dt-btn-primary,
+  .dt-btn-danger {
+    forced-color-adjust: none;
+  }
+  .dt-checkbox,
+  .dt-switch,
+  .dt-mark,
+  .dt-sheet-dot,
+  .dt-fill-handle,
+  .dt-badge-dot,
+  .dt-avatar {
+    forced-color-adjust: none;
+  }
+  .dt-row.is-focus::after,
+  .dt-row.is-selected,
+  .dt-sheet-grid .dt-cell[data-col].is-active,
+  .dt-sheet-grid .dt-cell[data-col].is-editing,
+  .dt-head-label:focus-visible,
+  .dt-btn:focus-visible,
+  .dt-menu-item[data-highlighted],
+  .dt-pop-item:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+    box-shadow: none;
+  }
+  .dt-sheet-grid .dt-cell[data-col].is-selected,
+  .dt-sheet-grid .dt-cell[data-col].is-changed,
+  .dt-sheet-grid .dt-cell[data-col].is-match {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+  }
+  .dt-sheet-grid .dt-cell[data-col].is-error,
+  .dt-sheet-grid .dt-cell[data-col].is-warning {
+    outline: 2px dashed CanvasText;
+    outline-offset: -2px;
+  }
+  .dt-cell-tip,
+  .dt-tip,
+  .dt-toast,
+  .dt-bulk,
+  .dt-fill-label {
+    border: 1px solid CanvasText;
+  }
+}

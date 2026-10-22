@@ -14,12 +14,13 @@ import {
   PopoverRoot,
   PopoverTrigger,
 } from 'reka-ui'
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import type { ColumnDef } from '../../types/columns'
 import type { FilterOp } from '../../types/query'
 import type { RemoteLabels } from '../cells/remoteLabels'
 import { avatar } from '../cells/renderCell'
-import DateEditor from '../editors/DateEditor.vue'
+// Takvim (@internationalized/date) yalnızca tarih çipi açılınca yüklenir: çekirdek paket boyutu (10 · ≤ 60 kB).
+const DateEditor = defineAsyncComponent(() => import('../editors/DateEditor.vue'))
 import NumberEditor from '../editors/NumberEditor.vue'
 import OptionsEditor from '../editors/OptionsEditor.vue'
 import StarEditor from '../editors/StarEditor.vue'

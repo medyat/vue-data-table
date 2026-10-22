@@ -486,6 +486,7 @@ watch(
     if (t === undefined) return
     counting.value = false
     countedAt.value = isServer.value ? new Date() : null
+    polite.value = i18n.t('sr.total', { count: fmt.int(t), entity: entity.value })
   },
 )
 watch(

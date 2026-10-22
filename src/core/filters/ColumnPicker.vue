@@ -72,7 +72,7 @@ const pick = (id: unknown) => {
               :aria-label="i18n.t('picker.search')"
             />
           </label>
-          <ListboxContent class="dt-picker-list">
+          <ListboxContent class="dt-picker-list" :aria-label="i18n.t('display.columns')">
             <ListboxGroup v-if="filtered.length">
               <ListboxGroupLabel class="dt-pop-label">{{ i18n.t('picker.filtered') }}</ListboxGroupLabel>
               <ListboxItem v-for="c in filtered" :key="c.id" :value="c.id" class="dt-picker-item">

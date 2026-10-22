@@ -79,6 +79,8 @@ export default defineComponent({
     tipBelow: { type: Boolean, default: false },
     /** Telefonda gutter yok (07 §17). */
     gutter: { type: Boolean, default: true },
+    /** Hata balonu id'leri için örnek öneki (`aria-describedby`, 08 §5). */
+    uid: { type: String, default: 'dt' },
     style: { type: Object as PropType<Record<string, string>>, default: undefined },
   },
   emits: ['edit-value', 'use-suggestion'],
@@ -137,9 +139,10 @@ export default defineComponent({
         children.push(
           h(PhLock, { size: 12, class: 'dt-cell-lock', role: 'img', 'aria-label': t('sheet.readOnly.badge') }),
         )
+      const tipId = issue ? `${props.uid}-${props.rowNo}-${i}` : undefined
       if (issue)
         children.push(
-          h('span', { class: ['dt-cell-tip', `is-${issue.level}`], role: 'tooltip' }, [
+          h('span', { id: tipId, class: ['dt-cell-tip', `is-${issue.level}`], role: 'tooltip' }, [
             issue.message,
             issue.suggest
               ? h(
@@ -199,6 +202,8 @@ export default defineComponent({
           tabindex: isActive ? 0 : -1,
           'aria-readonly': editable ? undefined : 'true',
           'aria-selected': inSel ? 'true' : undefined,
+          'aria-describedby': tipId,
+          'aria-invalid': issue?.level === 'error' ? 'true' : undefined,
           'data-col': id,
           // Öncelik Error > Warning > Changed (07 §4): hata/uyarı balonu varken "Was …" ipucu yok; yeni satırda orijinal yok.
           'data-dt-tip':

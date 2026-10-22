@@ -12,7 +12,7 @@ import {
   ComboboxRoot,
   ComboboxViewport,
 } from 'reka-ui'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { optionLabel } from '../../core/cells/format'
 import { badge } from '../../core/cells/renderCell'
 import { useDataTableContext } from '../../core/plugin'
@@ -26,6 +26,18 @@ const { i18n } = useDataTableContext()
 const env = useParseEnv()
 const def = computed(() => props.column as Extract<ColumnDef, { type: 'select' }>)
 const open = ref(true)
+// reka listenin id'sini input'a geç yazıyor (aria-controls=""): açılınca DOM'daki gerçek id okunur (axe aria-valid-attr-value).
+const listId = ref<string | undefined>()
+watch(
+  open,
+  (o) => {
+    if (!o) return
+    void nextTick(() => {
+      listId.value = document.querySelector<HTMLElement>('.dt-cell-list[role="listbox"]')?.id || undefined
+    })
+  },
+  { immediate: true },
+)
 const text = ref(inputText(props.column, props.modelValue))
 const input = ref<{ $el: HTMLInputElement } | null>(null)
 const inputEl = () => input.value?.$el ?? null
@@ -65,6 +77,8 @@ const item = (o: OptionDef) => () => badge(o.tone, o.label)
         ref="input"
         class="dt-cell-input"
         autocomplete="off"
+        :aria-label="column.header"
+        :aria-controls="listId"
         :model-value="text"
         :display-value="() => text"
         @update:model-value="onText"
@@ -72,7 +86,13 @@ const item = (o: OptionDef) => () => badge(o.tone, o.label)
       />
     </ComboboxAnchor>
     <ComboboxPortal>
-      <ComboboxContent class="dt-pop dt-cell-list dt-sheet-layer" position="popper" align="end" :side-offset="2">
+      <ComboboxContent
+        class="dt-pop dt-cell-list dt-sheet-layer"
+        position="popper"
+        align="end"
+        :side-offset="2"
+        :aria-label="column.header"
+      >
         <ComboboxViewport>
           <ComboboxItem
             v-for="o in def.options"
