@@ -122,9 +122,20 @@ watchEffect(
 
 // Satır yüksekliği token'dan (02): yoğunluk değişince yeniden okunur; jsdom'da boş gelir → 40.
 const rowHeight = ref(40)
+// Sticky header akış içinde: sanal öğeler header kadar aşağıda başlar (TanStack `scrollMargin`), header görünür alanın üstünü
+// (`scrollPaddingStart`), yatay kaydırma çubuğu altını (`scrollPaddingEnd`) örter. Yoksa ↓ ile inen satır tam bir header
+// yüksekliği kadar kabın altında kalır (08 §2).
+const headH = ref(36)
+const barH = ref(0)
+const readBarH = () => {
+  const el = scrollEl.value
+  barH.value = el ? Math.max(0, el.offsetHeight - el.clientHeight) : 0
+}
 const readRowHeight = () => {
   const v = root.value ? parseFloat(getComputedStyle(root.value).getPropertyValue('--dt-row-h')) : NaN
   rowHeight.value = Number.isFinite(v) ? v : 40
+  headH.value = root.value?.querySelector<HTMLElement>('.dt-head')?.offsetHeight ?? headH.value
+  readBarH()
 }
 onMounted(readRowHeight)
 watch([density, () => props.phone], () => requestAnimationFrame(readRowHeight))
@@ -242,6 +253,9 @@ const virtualizer = useVirtualizer(
     count: count.value,
     getScrollElement: () => scrollEl.value,
     estimateSize: () => rowHeight.value + 1, // + 1 px alt kenarlık (02)
+    scrollMargin: headH.value,
+    scrollPaddingStart: headH.value,
+    scrollPaddingEnd: barH.value,
     overscan: 10,
     getItemKey: (i: number) => (skeleton.value ? `sk-${i}` : layout.rowId(props.rows[i]!)),
     // Odaklı satır her zaman DOM'da (08 §2): kaydırma odağı kaybettirmez.
@@ -283,6 +297,7 @@ let lastTop = 0
 const onScroll = () => {
   const el = scrollEl.value
   if (!el) return
+  readBarH()
   scrolledStart.value = el.scrollLeft > 0
   scrolledEnd.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
   if (el.scrollTop === lastTop) return
@@ -518,7 +533,7 @@ defineExpose({
           :ref="(el) => measureItem(el as Element | null, item.index)"
           class="dt-item"
           :data-index="item.index"
-          :style="{ transform: `translateY(${item.start}px)` }"
+          :style="{ transform: `translateY(${item.start - headH}px)` }"
         >
           <SkeletonRow v-if="skeleton" :index="item.index" :columns="layout.columns.value" />
           <template v-else>
