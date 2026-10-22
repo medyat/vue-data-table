@@ -3,6 +3,9 @@
 // `filters` JSON FilterCondition[]: sahte sunucu paketin `matches` eşlemesiyle uygular (hazır tarih aralıkları sunucuda çözülür, 04).
 // GET /api/orders/count?q=                                              → { total }
 // GET /api/products?page=1&size=2000&delay=ms                            → { items, total } (T11 · DataSheet, 10.000 ürün)
+// POST /api/products/bulk-upsert { key, rows }                           → { results } (07 §16: ≤ 500 satır, satır başına sonuç,
+//      snake_case; cost > 100000 → field_errors.cost; sku "ERR-…" → row_error; bir satırın hatası diğerlerini düşürmez)
+// POST /api/products/lookup-keys { keys }                                 → { [key]: product | null }
 import type { Plugin } from 'vite'
 import { matches } from '../../src/core/filters/model'
 import type { FilterCondition } from '../../src/types/query'
@@ -105,6 +108,12 @@ export function makeOrders(count = 1284): Order[] {
 }
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
+const readBody = (req: import('node:http').IncomingMessage) =>
+  new Promise<string>((resolve) => {
+    let data = ''
+    req.on('data', (c: Buffer) => (data += c))
+    req.on('end', () => resolve(data))
+  })
 
 export interface Product {
   id: number
@@ -166,7 +175,7 @@ export function makeProducts(count = 10_000): Product[] {
 
 export function mockApi(): Plugin {
   const orders = makeOrders()
-  const products = makeProducts()
+  let products = makeProducts()
   return {
     name: 'dt-mock-api',
     configureServer(server) {
@@ -182,10 +191,59 @@ export function mockApi(): Plugin {
         if (q.get('fail') === '1') return json(500, { message: 'Simulated failure' })
 
         if (url.pathname === '/products') {
+          // Kayıt bellekteki ürünleri değiştirir (yeniden yükleyince görünsün); testler ?fresh=1 ile sıfırdan başlar.
+          if (q.has('fresh')) products = makeProducts()
           const page = Math.max(1, Number(q.get('page') ?? 1))
           const size = Math.min(2000, Math.max(1, Number(q.get('size') ?? 2000)))
           const start = (page - 1) * size
           return json(200, { items: products.slice(start, start + size), total: products.length })
+        }
+        if (url.pathname === '/products/lookup-keys' || url.pathname === '/products/bulk-upsert') {
+          const body = JSON.parse((await readBody(req)) || '{}') as {
+            keys?: string[]
+            rows?: Array<{ client_id: string; key: string; op: 'create' | 'update'; values: Record<string, unknown> }>
+          }
+          if (url.pathname === '/products/lookup-keys') {
+            const out: Record<string, Product | null> = {}
+            for (const k of body.keys ?? []) out[k] = products.find((p) => p.sku === k) ?? null
+            return json(200, out)
+          }
+          const rows = body.rows ?? []
+          if (rows.length > 500) return json(413, { message: 'Too many rows' })
+          const results = rows.map((r) => {
+            if (r.key.startsWith('ERR'))
+              return { client_id: r.client_id, status: 'error', row_error: 'Locked by an open quote' }
+            const cost = r.values.cost
+            if (typeof cost === 'number' && cost > 100_000)
+              return {
+                client_id: r.client_id,
+                status: 'error',
+                field_errors: { cost: 'Cost exceeds the server limit (100,000)' },
+              }
+            const existing = products.find((p) => p.sku === r.key)
+            if (existing) {
+              Object.assign(existing, r.values)
+              return { client_id: r.client_id, status: 'updated', row: { ...existing } }
+            }
+            const created: Product = {
+              id: products.length + 1,
+              sku: r.key,
+              name: '',
+              category: 'hydraulics',
+              unit: 'pcs',
+              listPrice: 0,
+              cost: 0,
+              vat: 20,
+              minStock: 0,
+              leadTime: 0,
+              active: true,
+              validFrom: null,
+              ...r.values,
+            }
+            products.push(created)
+            return { client_id: r.client_id, status: 'created', row: { ...created } }
+          })
+          return json(200, { results })
         }
 
         const search = (q.get('q') ?? '').toLocaleLowerCase('tr')

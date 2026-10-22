@@ -85,7 +85,7 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 
 | # | Soru | Dokümanda varsayılan | Aşama |
 |---|---|---|---|
-| Q2 | DataSheet'te listede olmayan ama sunucuda var olan bir anahtar eklenince (Update satırı), boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet: doldurulur, yalnızca kullanıcının değiştirdiği alanlar gönderilir (07 §9). Alternatif: boş hücreler `null` gönderilir ve mevcut değeri siler. | Faz 6c |
+| Q2 | DataSheet'te listede olmayan ama sunucuda var olan bir anahtar eklenince (Update satırı), boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet: doldurulur, yalnızca kullanıcının değiştirdiği alanlar gönderilir (07 §9). Alternatif: boş hücreler `null` gönderilir ve mevcut değeri siler. **Faz 6c bu varsayılanla uygulandı (22 Ekim 2026); ürün sahibi teyidi bekliyor.** | Faz 6c |
 | Q3 | Excel içe aktarmada boş hücre mevcut değeri silsin mi? | Hayır: atlanır (07 §13). | Faz 6d |
 
 Q1 (kullanıcı varsayılan görünümü) kapandı: evet, tercihlerde `defaultViewId` (D4).

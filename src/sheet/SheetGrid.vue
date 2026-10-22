@@ -1,12 +1,13 @@
 <script setup lang="ts">
-// Sheet ızgarası (07 §2–8, 08 §2 sheet, handoff 06 §5): tek kayan alan, sticky header, gutter (56 px) + sola sabit
-// sütunlar, sanal satırlar (aktif satır DOM'da kalır); hücre odaklı klavye (roving tabindex = aktif hücre), fare ile
-// hücre / aralık seçimi (TanStack handler'ları, gutter = satır, kenarda otomatik kaydırma), fill handle sürükleme,
-// pano olayları, düzenleme başlatma ve onaylama kuralları. Veri, seçim ve düzenleme durumu `sheet` nesnesinden
-// (DataSheet kurar); bu dosya yalnızca DOM, odak ve kaydırmayı yönetir.
-import { PhLock } from '@phosphor-icons/vue'
+// Sheet ızgarası (07 §2–10, 08 §2 sheet, handoff 06 §5): tek kayan alan, sticky header (yerel sıralama oku), gutter
+// (56 px) + sola sabit sütunlar, sanal satırlar (aktif satır DOM'da kalır); hücre odaklı klavye (roving tabindex = aktif
+// hücre), fare ile hücre / aralık seçimi (TanStack handler'ları, gutter = satır, kenarda otomatik kaydırma), fill handle
+// sürükleme, pano olayları, hücre menüsü (sağ tık / ⇧F10), düzenleme başlatma ve onaylama kuralları. Veri, seçim ve
+// düzenleme durumu `sheet` nesnesinden (DataSheet kurar); bu dosya yalnızca DOM, odak ve kaydırmayı yönetir.
+import { PhArrowUp, PhLock } from '@phosphor-icons/vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
+import { ContextMenuRoot, ContextMenuTrigger } from 'reka-ui'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import type { RenderEnv } from '../core/cells/renderCell'
 import { alignOf, isNumericType } from '../core/cells/specs'
@@ -16,7 +17,8 @@ import SkeletonRow from '../core/grid/SkeletonRow'
 import { INTERACTIVE_SELECTOR, isInteractive, isTextInput } from '../core/interaction/isInteractive'
 import { useDataTableContext } from '../core/plugin'
 import type { ColumnDef } from '../types/columns'
-import type { Density } from '../types/core'
+import type { Density, Plural } from '../types/core'
+import SheetMenu from './SheetMenu.vue'
 import SheetRow, { type CellEditing, type RowFill, type RowSelection } from './SheetRow'
 import type { SheetApi } from './useSheetEditing'
 import type { Direction } from './useSheetTable'
@@ -45,8 +47,13 @@ const props = withDefaults(
     keyColumn: string
     /** Find in grid eşleşmeleri: satır anahtarı → sütunlar. */
     found?: Map<string, Set<string>> | null
+    /** Kaydederken (07 §14): aria-readonly; kaydırma, Find ve seçim serbest. */
+    readOnly?: boolean
+    /** Yerel sıralama (07 §10): sütun → yön ve öncelik. */
+    sort?: ReadonlyMap<string, { dir: 'asc' | 'desc'; index: number | null }>
+    entity: Plural
   }>(),
-  { density: 'compact', loading: false, skeleton: false, verticalLines: true, found: null },
+  { density: 'compact', loading: false, skeleton: false, verticalLines: true, found: null, readOnly: false },
 )
 defineSlots<{ state?: () => unknown }>()
 
@@ -183,12 +190,18 @@ const revealX = (el: HTMLElement) => {
   if (r.left < left) sc.scrollLeft -= left - r.left
   else if (r.right > s.right) sc.scrollLeft += r.right - s.right
 }
-/** Aktif hücreyi DOM'a getirip odaklar (sanal listede sonraki karede). */
-const focusActive = () => {
+/** Aktif hücreyi DOM'a getirip odaklar: önce üst bileşenin `rows` prop'u gelsin (görünüm değişimi, yeni/geri gelen satır
+ *  dizini kaydırır), sonra sanal listede sonraki karede DOM'a girsin. */
+const focusActive = () => void nextTick(() => focusNow(0))
+const focusNow = (round: number) => {
   const a = active.value
-  if (!a) return
+  // Hücre editörü açıksa odak ondadır (Add row → anahtar hücresi düzenlemede); çalınmaz.
+  if (!a || sheet.edit.editing.value?.inCell) return
   const i = indexByKey.value.get(a.rowId)
-  if (i === undefined) return
+  if (i === undefined) {
+    if (round < 3) requestAnimationFrame(() => focusNow(round + 1))
+    return
+  }
   virtualizer.value.scrollToIndex(i, { align: 'auto' })
   const tryFocus = (attempt: number) => {
     const el = cellEl(i, a.columnId)
@@ -337,6 +350,12 @@ const onKeydown = (e: KeyboardEvent) => {
       e.preventDefault()
       sheet.goToError(e.shiftKey ? -1 : 1)
       return
+    case 'ContextMenu':
+    case 'F10':
+      if (e.key === 'F10' && !e.shiftKey) return
+      e.preventDefault()
+      openMenuAt(cell)
+      return
   }
   if (mod) {
     // ⌘C / ⌘X / ⌘V tarayıcının copy/cut/paste olaylarıyla gelir (aşağıda); burada yalnızca kısayol tuşları.
@@ -356,6 +375,9 @@ const onKeydown = (e: KeyboardEvent) => {
     } else if ((k === 'z' && e.shiftKey) || (k === 'y' && !mac)) {
       e.preventDefault()
       sheet.redo()
+    } else if (e.key === '-' || e.key === 'Subtract') {
+      e.preventDefault()
+      sheet.removeSelectedRows()
     }
     return
   }
@@ -550,6 +572,36 @@ const fillFor = (i: number): RowFill | null => {
   return { from: f.cols[0], to: f.cols[1], last: down ? i === f.target : i === f.fromRow - 1 }
 }
 
+/** Sağ tık (07 §9): hedef hücre seçimin dışındaysa aktif olur; hücre dışı (header, boş alan) için menü açılmaz. */
+const onContextmenuCapture = (e: MouseEvent) => {
+  const h = hit(e)
+  if (!h || props.skeleton) {
+    e.stopPropagation()
+    return
+  }
+  const b = table.bounds.value
+  const ci = columns.value.findIndex((c) => c.id === h.columnId)
+  const inside =
+    !!b && h.index >= b.minRowIndex && h.index <= b.maxRowIndex && ci >= b.minColumnIndex && ci <= b.maxColumnIndex
+  if (!inside) {
+    sheet.edit.commit()
+    table.focus(keyOf(h.row), h.columnId)
+    h.cell.focus({ preventScroll: true })
+  }
+}
+/** ⇧F10 / Menü tuşu: menü hücrenin köşesinde (reka tetikleyicisi contextmenu olayından konum alır). */
+const openMenuAt = (cell: HTMLElement) => {
+  const r = cell.getBoundingClientRect()
+  cell.dispatchEvent(
+    new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.left + 8, clientY: r.bottom - 4 }),
+  )
+}
+const menuHref = computed(() => {
+  const row = props.rows[activeIndex.value]
+  return row ? sheet.openHref(row) : undefined
+})
+const sortOf = (id: string) => props.sort?.get(id)
+
 const unitOf = (def: ColumnDef<AnyRow>) => (typeof def.unit === 'string' ? def.unit : undefined)
 const resize = (col: LayoutColumn<AnyRow>, e: MouseEvent | TouchEvent) => {
   const cell = (e.currentTarget as HTMLElement).parentElement!
@@ -562,121 +614,142 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
 </script>
 
 <template>
-  <div
-    ref="root"
-    class="dt-grid dt-sheet-grid"
-    :class="{
-      'is-scrolled-start': scrolledStart,
-      'is-skeleton': skeleton,
-      'has-vlines': verticalLines,
-      'is-filling': dragging === 'fill',
-    }"
-    role="grid"
-    :aria-label="label"
-    :aria-rowcount="skeleton ? -1 : rows.length"
-    :aria-colcount="columns.length + 1"
-    :aria-busy="loading ? 'true' : undefined"
-    :data-density="density"
-    @keydown="onKeydown"
-    @mousedown="onMousedown"
-    @mousemove="onMousemove"
-    @mouseover="onMouseover"
-    @dblclick="onDblclick"
-    @copy="clipboard($event, 'copy')"
-    @cut="clipboard($event, 'cut')"
-    @paste="clipboard($event, 'paste')"
-  >
-    <div ref="scrollEl" class="dt-scroll" @scroll.passive="onScroll">
-      <div class="dt-head" role="row" aria-rowindex="1">
-        <div class="dt-head-cell dt-gutter is-pinned-start" style="left: 0px" role="columnheader">
-          {{ ctx.i18n.t('sheet.err.row') }}
+  <ContextMenuRoot>
+    <ContextMenuTrigger as-child>
+      <div
+        ref="root"
+        class="dt-grid dt-sheet-grid"
+        :class="{
+          'is-scrolled-start': scrolledStart,
+          'is-skeleton': skeleton,
+          'has-vlines': verticalLines,
+          'is-filling': dragging === 'fill',
+        }"
+        role="grid"
+        :aria-label="label"
+        :aria-rowcount="skeleton ? -1 : rows.length"
+        :aria-colcount="columns.length + 1"
+        :aria-busy="loading || readOnly ? 'true' : undefined"
+        :aria-readonly="readOnly ? 'true' : undefined"
+        :data-density="density"
+        @keydown="onKeydown"
+        @mousedown="onMousedown"
+        @mousemove="onMousemove"
+        @mouseover="onMouseover"
+        @dblclick="onDblclick"
+        @contextmenu.capture="onContextmenuCapture"
+        @copy="clipboard($event, 'copy')"
+        @cut="clipboard($event, 'cut')"
+        @paste="clipboard($event, 'paste')"
+      >
+        <div ref="scrollEl" class="dt-scroll" @scroll.passive="onScroll">
+          <div class="dt-head" role="row" aria-rowindex="1">
+            <div class="dt-head-cell dt-gutter is-pinned-start" style="left: 0px" role="columnheader">
+              {{ ctx.i18n.t('sheet.err.row') }}
+            </div>
+            <div
+              v-for="col in columns"
+              :key="col.id"
+              class="dt-head-cell"
+              :class="[
+                `is-${alignOf(col.def)}`,
+                {
+                  'is-numeric': isNumericType(col.def.type),
+                  'is-key': col.id === keyColumn,
+                  'is-pinned-start': col.pinned === 'start',
+                  'is-pin-edge': col.pinEdge,
+                  'is-resizing': layout.resizing.value?.id === col.id,
+                },
+              ]"
+              :style="col.pinned === 'start' ? { left: `var(${col.offsetVar})` } : undefined"
+              role="columnheader"
+              :aria-sort="
+                sortOf(col.id)?.dir === 'asc' ? 'ascending' : sortOf(col.id)?.dir === 'desc' ? 'descending' : undefined
+              "
+              :data-col="col.id"
+            >
+              <PhLock v-if="col.id === keyColumn" :size="12" class="dt-head-lock" aria-hidden="true" />
+              <button
+                type="button"
+                class="dt-head-label"
+                tabindex="-1"
+                :data-dt-tip="
+                  col.id === keyColumn ? ctx.i18n.t('sheet.keyTooltip', { key: col.def.header }) : undefined
+                "
+                @click="sheet.sort(col.id, $event.shiftKey)"
+              >
+                <span class="dt-head-text">{{ col.def.header }}</span>
+                <span v-if="col.def.required" class="dt-head-required" :aria-label="requiredLabel">*</span>
+                <span v-if="unitOf(col.def)" class="dt-head-unit">{{ unitOf(col.def) }}</span>
+                <span v-if="sortOf(col.id)" class="dt-head-sort" aria-hidden="true">
+                  <PhArrowUp :size="12" :class="{ 'is-desc': sortOf(col.id)!.dir === 'desc' }" />
+                  <span v-if="sortOf(col.id)!.index" class="dt-head-sort-index">{{ sortOf(col.id)!.index }}</span>
+                </span>
+              </button>
+              <span class="dt-head-sep" aria-hidden="true" />
+              <span
+                class="dt-resize"
+                aria-hidden="true"
+                @mousedown="resize(col, $event)"
+                @touchstart.passive="resize(col, $event)"
+              >
+                <span v-if="layout.resizing.value?.id === col.id" class="dt-resize-badge">
+                  {{ Math.round(layout.resizing.value!.size) }} px
+                </span>
+              </span>
+            </div>
+            <div class="dt-head-cell dt-cell-fill" role="presentation" aria-hidden="true" />
+          </div>
+          <div class="dt-body" role="presentation" :style="{ height: `${totalSize}px` }">
+            <div
+              v-for="item in virtualRows"
+              :key="String(item.key)"
+              class="dt-item"
+              :data-index="item.index"
+              :style="{ transform: `translateY(${item.start}px)` }"
+            >
+              <SkeletonRow v-if="skeleton" :index="item.index" :columns="columns" gutter />
+              <SheetRow
+                v-else
+                :row="rows[item.index]!"
+                :index="item.index"
+                :row-no="store.rowNoOf(keyOf(rows[item.index]))"
+                :columns="columns"
+                :env="env"
+                :key-column="keyColumn"
+                :read="store.read"
+                :original="store.original"
+                :can-edit="sheet.canEdit"
+                :editor-for="sheet.editorFor"
+                :draft="store.rowDraft(keyOf(rows[item.index]))"
+                :issues="store.rowIssues(keyOf(rows[item.index]))"
+                :is-new="store.isNew(keyOf(rows[item.index]))"
+                :key-state="store.keyState(keyOf(rows[item.index]))"
+                :row-error="store.rowError(keyOf(rows[item.index]))"
+                :active="activeIndex === item.index ? active!.columnId : null"
+                :selection="selectionFor(item.index)"
+                :handle-at="handleFor(item.index)"
+                :fill="fillFor(item.index)"
+                :found="foundFor(item.index)"
+                :editing="editingFor(item.index)"
+                :tip-below="item.index === 0"
+                @edit-value="(v) => sheet.edit.setValue(v)"
+                @use-suggestion="(def, v) => sheet.useSuggestion(rows[item.index], def, v)"
+              />
+            </div>
+          </div>
         </div>
         <div
-          v-for="col in columns"
-          :key="col.id"
-          class="dt-head-cell"
-          :class="[
-            `is-${alignOf(col.def)}`,
-            {
-              'is-numeric': isNumericType(col.def.type),
-              'is-key': col.id === keyColumn,
-              'is-pinned-start': col.pinned === 'start',
-              'is-pin-edge': col.pinEdge,
-              'is-resizing': layout.resizing.value?.id === col.id,
-            },
-          ]"
-          :style="col.pinned === 'start' ? { left: `var(${col.offsetVar})` } : undefined"
-          role="columnheader"
-          :data-col="col.id"
+          v-if="fillLabel"
+          class="dt-fill-label"
+          role="status"
+          :style="{ left: `${fillLabel.left}px`, top: `${fillLabel.top}px` }"
         >
-          <PhLock v-if="col.id === keyColumn" :size="12" class="dt-head-lock" aria-hidden="true" />
-          <span
-            class="dt-head-text"
-            :data-dt-tip="col.id === keyColumn ? ctx.i18n.t('sheet.keyTooltip', { key: col.def.header }) : undefined"
-          >
-            {{ col.def.header }}
-          </span>
-          <span v-if="col.def.required" class="dt-head-required" :aria-label="requiredLabel">*</span>
-          <span v-if="unitOf(col.def)" class="dt-head-unit">{{ unitOf(col.def) }}</span>
-          <span class="dt-head-sep" aria-hidden="true" />
-          <span
-            class="dt-resize"
-            aria-hidden="true"
-            @mousedown="resize(col, $event)"
-            @touchstart.passive="resize(col, $event)"
-          >
-            <span v-if="layout.resizing.value?.id === col.id" class="dt-resize-badge">
-              {{ Math.round(layout.resizing.value!.size) }} px
-            </span>
-          </span>
+          {{ fillLabel.text }}
         </div>
-        <div class="dt-head-cell dt-cell-fill" role="presentation" aria-hidden="true" />
+        <div v-if="$slots.state && !skeleton && rows.length === 0" class="dt-body-state"><slot name="state" /></div>
+        <SheetMenu :sheet="sheet" :entity="entity" :href="menuHref" :read-only="readOnly || loading" />
       </div>
-      <div class="dt-body" role="presentation" :style="{ height: `${totalSize}px` }">
-        <div
-          v-for="item in virtualRows"
-          :key="String(item.key)"
-          class="dt-item"
-          :data-index="item.index"
-          :style="{ transform: `translateY(${item.start}px)` }"
-        >
-          <SkeletonRow v-if="skeleton" :index="item.index" :columns="columns" gutter />
-          <SheetRow
-            v-else
-            :row="rows[item.index]!"
-            :index="item.index"
-            :row-no="item.index + 1"
-            :columns="columns"
-            :env="env"
-            :key-column="keyColumn"
-            :read="store.read"
-            :original="store.original"
-            :can-edit="sheet.canEdit"
-            :editor-for="sheet.editorFor"
-            :draft="store.rowDraft(keyOf(rows[item.index]))"
-            :issues="store.rowIssues(keyOf(rows[item.index]))"
-            :is-new="store.isNew(keyOf(rows[item.index]))"
-            :active="activeIndex === item.index ? active!.columnId : null"
-            :selection="selectionFor(item.index)"
-            :handle-at="handleFor(item.index)"
-            :fill="fillFor(item.index)"
-            :found="foundFor(item.index)"
-            :editing="editingFor(item.index)"
-            :tip-below="item.index === 0"
-            @edit-value="(v) => sheet.edit.setValue(v)"
-            @use-suggestion="(def, v) => sheet.useSuggestion(rows[item.index], def, v)"
-          />
-        </div>
-      </div>
-    </div>
-    <div
-      v-if="fillLabel"
-      class="dt-fill-label"
-      role="status"
-      :style="{ left: `${fillLabel.left}px`, top: `${fillLabel.top}px` }"
-    >
-      {{ fillLabel.text }}
-    </div>
-    <div v-if="$slots.state && !skeleton && rows.length === 0" class="dt-body-state"><slot name="state" /></div>
-  </div>
+    </ContextMenuTrigger>
+  </ContextMenuRoot>
 </template>

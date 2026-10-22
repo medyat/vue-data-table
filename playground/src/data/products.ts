@@ -18,7 +18,7 @@ const money = new Intl.NumberFormat('en', { minimumFractionDigits: 2, maximumFra
 const num = (v: unknown): v is number => typeof v === 'number'
 
 export const productColumns: Array<ColumnDef<Product>> = [
-  { id: 'sku', header: 'SKU', type: 'id' },
+  { id: 'sku', header: 'SKU', type: 'id', href: (r) => `/products/${r.id}` },
   { id: 'name', header: 'Product name', type: 'string', primary: true, editable: true, required: true },
   {
     id: 'category',

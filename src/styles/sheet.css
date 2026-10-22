@@ -687,3 +687,176 @@
   font-weight: 500;
   color: var(--dt-text);
 }
+
+/* Hücre menüsü (06 §8): 236 px, kısayollar mono 11. */
+.dt-sheet-menu {
+  width: 236px;
+}
+.dt-sheet-menu .dt-menu-item > a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* All / Changed / Errors (02 §3 sayaçlı segmented): etiket --dt-text, sayı --dt-text-3; Errors > 0 kırmızı. */
+.dt-sheet-views .dt-seg-item {
+  gap: 5px;
+  color: var(--dt-text);
+}
+.dt-sheet-views .dt-seg-count {
+  font-weight: 400;
+  color: var(--dt-text-3);
+}
+.dt-sheet-views .dt-seg-item.is-errors {
+  color: var(--dt-r-fg);
+}
+.dt-sheet-views .dt-seg-item.is-errors .dt-seg-count {
+  color: var(--dt-r-fg);
+}
+
+/* Yeni satır etiketleri (06 §5): New accent, Update nötr; kontrol sürerken spinner. */
+.dt-tag-new.is-update {
+  background: var(--dt-surface-3);
+  color: var(--dt-text-2);
+}
+.dt-tag-spin {
+  flex: none;
+  color: var(--dt-text-3);
+}
+
+/* Kaydederken (06 §9.1): Save mürekkep + spinner, aria-disabled; formül ipucunda kilit. */
+.dt-sheet-save[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.9;
+}
+.dt-formula-hint > svg {
+  margin-right: 6px;
+}
+
+/* Kısmen kaydedildi şeridi (06 §9.2, 02 §7): 40 px, kırmızı, üst çizgi --dt-r-line; sağda 1 of 3 gezinme ve Copy errors. */
+.dt-sheet-partly {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 40px;
+  padding: 0 8px 0 12px;
+  border-top: 1px solid var(--dt-r-line);
+  border-bottom: 1px solid var(--dt-line);
+  background: var(--dt-r-bg);
+  color: var(--dt-r-fg);
+  font-size: 12.5px;
+}
+.dt-sheet-partly > svg {
+  color: var(--dt-r-dot);
+}
+.dt-sheet-partly strong {
+  font-weight: 600;
+}
+.dt-sheet-partly .dt-partly-spacer {
+  flex: 1;
+}
+.dt-partly-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.dt-partly-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dt-radius-item);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.dt-partly-btn:hover {
+  background: var(--dt-r-line);
+}
+.dt-partly-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--dt-r-line);
+}
+.dt-partly-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--dt-radius-item);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dt-partly-copy:hover {
+  background: var(--dt-r-line);
+}
+
+/* Kayıt sonucu (06 §6): ✓ + "96 rows saved" 500 · "24 created · 72 updated". */
+.dt-status-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dt-status-saved > svg {
+  color: var(--dt-g-dot);
+}
+.dt-status-saved strong {
+  font-weight: 500;
+  color: var(--dt-text);
+}
+
+/* Save with errors dialog'u (06 §10): 480 px; hatalı satır kutusu 36 px satırlar. */
+.dt-dialog-errors {
+  width: 480px;
+}
+.dt-error-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 200px;
+  overflow: auto;
+  border: 1px solid var(--dt-line);
+  border-radius: var(--dt-radius-inner);
+  background: var(--dt-surface-2);
+}
+.dt-error-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+.dt-error-row + .dt-error-row {
+  border-top: 1px solid var(--dt-line);
+}
+.dt-error-row > svg {
+  flex: none;
+  color: var(--dt-r-dot);
+}
+.dt-error-no {
+  font-family: var(--dt-font-mono);
+  font-size: 11.5px;
+  color: var(--dt-text-3);
+}
+.dt-error-msg {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dt-text-2);
+}
+
+/* Sheet header sıralama düğmesi (grid.css .dt-head-label): sheet'te ⋯ menüsü yok, metin + ok. */
+.dt-sheet-grid .dt-head-label {
+  gap: 4px;
+}

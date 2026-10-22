@@ -11,7 +11,7 @@ import {
 } from 'reka-ui'
 import { useDataTableContext } from '../plugin'
 
-defineProps<{ title: string; body?: string; confirmLabel: string; danger?: boolean }>()
+defineProps<{ title: string; body?: string; confirmLabel: string; cancelLabel?: string; danger?: boolean }>()
 const emit = defineEmits<{ confirm: [] }>()
 const open = defineModel<boolean>('open', { default: false })
 const { i18n } = useDataTableContext()
@@ -30,7 +30,7 @@ const confirm = () => {
         <AlertDialogTitle class="dt-dialog-title">{{ title }}</AlertDialogTitle>
         <AlertDialogDescription v-if="body" class="dt-dialog-body">{{ body }}</AlertDialogDescription>
         <div class="dt-dialog-actions">
-          <AlertDialogCancel class="dt-btn">{{ i18n.t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogCancel class="dt-btn">{{ cancelLabel ?? i18n.t('common.cancel') }}</AlertDialogCancel>
           <button type="button" class="dt-btn" :class="danger ? 'dt-btn-danger' : 'dt-btn-primary'" @click="confirm">
             {{ confirmLabel }}
           </button>

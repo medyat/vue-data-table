@@ -2,7 +2,7 @@
 // satır no + işaret), hücre durumları (editable / read-only / active / in selection / editing / changed / error / warning /
 // required / new / fill target / match), editör hücrenin yerinde. Satırın taslak ve hata Map'leri prop'tur: yalnızca
 // değişen satır yeniden çizilir.
-import { PhLock, PhPlus, PhWarningCircle } from '@phosphor-icons/vue'
+import { PhCircleNotch, PhLock, PhPlus, PhWarningCircle } from '@phosphor-icons/vue'
 import { defineComponent, h, type Component, type PropType, type VNodeChild } from 'vue'
 import { formatCell, isEmptyValue } from '../core/cells/format'
 import { cellFillStyle, renderCellContent, type RenderEnv } from '../core/cells/renderCell'
@@ -11,7 +11,7 @@ import type { LayoutColumn } from '../core/columns/useColumnLayout'
 import { withFill } from '../core/grid/Row'
 import type { ColumnDef } from '../types/columns'
 import { inputText } from './parse'
-import type { Issue } from './useSheetStore'
+import type { Issue, KeyState } from './useSheetStore'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- satır tipi DataSheet'te; accessor parametreleri karşıt değişken
 type AnyRow = any
@@ -36,6 +36,15 @@ export interface CellEditing {
   inCell: boolean
 }
 
+/** Sheet'te hücre içinde link yok (07 §9: "Open product" hücre menüsünde); `id`/`ajax` tipinin `href`'i çizimde düşer. */
+const plainDefs = new WeakMap<ColumnDef<AnyRow>, ColumnDef<AnyRow>>()
+const plain = (def: ColumnDef<AnyRow>): ColumnDef<AnyRow> => {
+  if (!def.href) return def
+  let p = plainDefs.get(def)
+  if (!p) plainDefs.set(def, (p = { ...def, href: undefined }))
+  return p
+}
+
 export default defineComponent({
   name: 'DtSheetRow',
   props: {
@@ -52,8 +61,11 @@ export default defineComponent({
     editorFor: { type: Function as PropType<(def: ColumnDef<AnyRow>) => Component | null>, required: true },
     draft: { type: Map as PropType<Map<string, unknown>>, default: undefined },
     issues: { type: Map as PropType<Map<string, Issue>>, default: undefined },
-    /** Yeni satır (sona taşan yapıştırma, 07 §7): gutter'da `+`, anahtar hücresinde "New". */
+    /** Yeni satır (07 §9): gutter'da `+`, anahtar hücresinde New / Update / kontrol spinner'ı. */
     isNew: { type: Boolean, default: false },
+    keyState: { type: String as PropType<KeyState | undefined>, default: undefined },
+    /** Sunucu satır hatası (07 §14): anahtar hücresinde ve gutter ipucunda. */
+    rowError: { type: String as PropType<string | undefined>, default: undefined },
     /** Aktif hücrenin sütun id'si (roving tabindex 0). */
     active: { type: String as PropType<string | null>, default: null },
     selection: { type: Object as PropType<RowSelection | null>, default: null },
@@ -98,10 +110,27 @@ export default defineComponent({
       } else if (ed) content = h('span', { class: 'dt-cell-content' }, inputText(def, ed.value))
       else if (issue?.level === 'error' && isEmptyValue(value) && issue.message === t('sheet.required'))
         content = h('span', { class: 'dt-cell-content dt-cell-required' }, issue.message)
-      else content = h('span', { class: 'dt-cell-content' }, [renderCellContent(def, props.row, value, props.env)])
+      else
+        content = h('span', { class: 'dt-cell-content' }, [renderCellContent(plain(def), props.row, value, props.env)])
 
       const children: VNodeChild[] = [content]
-      if (isKey && props.isNew && !ed) children.push(h('span', { class: 'dt-tag-new' }, t('sheet.tag.new')))
+      if (isKey && props.isNew && !ed)
+        children.push(
+          props.keyState === 'checking'
+            ? h(PhCircleNotch, {
+                size: 12,
+                class: 'dt-tag-spin dt-spin',
+                role: 'img',
+                'aria-label': t('common.loading'),
+              })
+            : h(
+                'span',
+                { class: ['dt-tag-new', { 'is-update': props.keyState === 'update' }] },
+                t(props.keyState === 'update' ? 'sheet.tag.update' : 'sheet.tag.new'),
+              ),
+        )
+      if (isKey && props.rowError && !ed)
+        children.push(h('span', { class: 'dt-cell-tip is-error', role: 'tooltip' }, props.rowError))
       if (!editable && !isKey)
         children.push(
           h(PhLock, { size: 12, class: 'dt-cell-lock', role: 'img', 'aria-label': t('sheet.readOnly.badge') }),
@@ -148,7 +177,7 @@ export default defineComponent({
               'is-match': props.found?.has(id) ?? false,
               'is-editing': !!ed,
               'is-changed': changed,
-              'is-error': issue?.level === 'error',
+              'is-error': issue?.level === 'error' || (isKey && !!props.rowError),
               'is-warning': issue?.level === 'warning',
               'is-tip-below': props.tipBelow,
               'is-pinned-start': col.pinned === 'start',
@@ -180,12 +209,17 @@ export default defineComponent({
     }
 
     const gutter = () => {
-      let hasError = false
+      let hasError = !!props.rowError
       for (const i of props.issues?.values() ?? []) if (i.level === 'error') hasError = true
       const changed = !!props.draft?.size
       return h(
         'div',
-        { class: ['dt-cell', 'dt-gutter', 'is-pinned-start'], style: { left: '0px' }, role: 'rowheader' },
+        {
+          class: ['dt-cell', 'dt-gutter', 'is-pinned-start'],
+          style: { left: '0px' },
+          role: 'rowheader',
+          'data-dt-tip': props.rowError,
+        },
         [
           hasError
             ? h(PhWarningCircle, {

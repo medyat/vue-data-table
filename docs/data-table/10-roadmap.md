@@ -164,16 +164,16 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 **Ön koşul:** Q2 cevaplandı.
 **Kapsam:** Add row / insert / remove from list + undo toast'ı, `lookupKeys` callback'i (New/Update), Update satırı doldurma kuralı, duplicate kontrolü, All/Changed/Errors, F8, sıralama (gutter sabit), `@save` + `saving` + `applyResult()`, hata dialog'u, Partly saved banner'ı, Copy errors, ayrılma koruması (`isDirty`), Discard.
 
-- [ ] `@save` yükünde yalnızca yeni + değişmiş satırlar; update satırlarında yalnızca değişen alanlar (D11); hatalı satırlar yok.
-- [ ] Hiçbir yol silme isteği üretmez; Remove from list nötr renkte (D12).
-- [ ] Filtreyle gizlenen satırların değişiklikleri gönderilir (D13).
-- [ ] Aynı anahtar iki satırda → ikisi de hata, gönderilmez.
-- [ ] `applyResult`: kaydedilen satırların işaretleri kalkar, `row` verilmişse değerler onunla güncellenir; hatalı satırlar değişiklikleri korur, hatalar hücrelerde; undo yığını temizlenir; parça parça çağrılabilir.
-- [ ] `applyResult` sonrası uygulama eski/gecikmiş `rows` gönderirse kaydedilen değerler geri gelmez.
-- [ ] `saving` sürerken grid salt okunur, ilerleme şeridi; bittiğinde Partly saved banner'ı ve Errors görünümü.
-- [ ] Hatalı satır varken Save → hata dialog'u (07 §14).
-- [ ] `beforeunload` ve `isDirty()` ile yönlendirici koruması.
-- [ ] Playground'daki sahte Laravel API'si 07 §16 tarifiyle birebir (chunk, retry uygulama tarafında).
+- [x] `@save` yükünde yalnızca yeni + değişmiş satırlar; update satırlarında yalnızca değişen alanlar (D11); hatalı satırlar yok.
+- [x] Hiçbir yol silme isteği üretmez; Remove from list nötr renkte (D12).
+- [x] Filtreyle gizlenen satırların değişiklikleri gönderilir (D13).
+- [x] Aynı anahtar iki satırda → ikisi de hata, gönderilmez.
+- [x] `applyResult`: kaydedilen satırların işaretleri kalkar, `row` verilmişse değerler onunla güncellenir; hatalı satırlar değişiklikleri korur, hatalar hücrelerde; undo yığını temizlenir; parça parça çağrılabilir.
+- [x] `applyResult` sonrası uygulama eski/gecikmiş `rows` gönderirse kaydedilen değerler geri gelmez.
+- [x] `saving` sürerken grid salt okunur, ilerleme şeridi; bittiğinde Partly saved banner'ı ve Errors görünümü.
+- [x] Hatalı satır varken Save → hata dialog'u (07 §14).
+- [x] `beforeunload` ve `isDirty()` ile yönlendirici koruması.
+- [x] Playground'daki sahte Laravel API'si 07 §16 tarifiyle birebir (chunk, retry uygulama tarafında).
 
 ### 6d — İçe/dışa aktarma ve telefon
 

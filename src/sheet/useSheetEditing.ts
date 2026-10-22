@@ -78,4 +78,13 @@ export interface SheetApi<Row extends object> {
   redo: () => void
   /** Balondaki "Use Pumps". */
   useSuggestion: (row: Row, def: ColumnDef<Row>, value: unknown) => void
+  /** Hücre menüsü (07 §9): panoya yaz / panodan oku (`navigator.clipboard`), satır ekle, listeden çıkar (⌘−). */
+  copyToClipboard: (cut: boolean) => void
+  pasteFromClipboard: () => void
+  insertRow: (where: 'above' | 'below') => void
+  removeSelectedRows: () => void
+  /** Header tıklaması: yerel sıralama (07 §10). */
+  sort: (columnId: string, additive: boolean) => void
+  /** Sunucuda var olan satırın linki ("Open product"); yeni satırda undefined. */
+  openHref: (row: Row) => string | undefined
 }

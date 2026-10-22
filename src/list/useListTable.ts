@@ -17,9 +17,9 @@ import {
   type ColumnDef as TanstackColumnDef,
 } from '@tanstack/vue-table'
 import { computed, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
+import { comparator } from '../core/cells/compare'
 import { TYPE_SPECS } from '../core/cells/specs'
 import { readPath } from '../core/columns/readPath'
-import { getFormat } from '../core/format'
 import { matches } from '../core/filters/model'
 import type { ColumnDef } from '../types/columns'
 import type { FilterCondition, SortRule } from '../types/query'
@@ -63,27 +63,6 @@ export interface ListTableOptions<Row extends object> {
 }
 
 const isEmpty = (v: unknown) => v === null || v === undefined || v === ''
-
-/** Tipe göre karşılaştırma; boş değer "en büyük" (artanda sonda, azalanda başta — PostgreSQL varsayılanı). */
-function comparator(def: ColumnDef, locale: string): (a: unknown, b: unknown) => number {
-  const empty = (a: unknown, b: unknown): number | null => {
-    const ea = isEmpty(a)
-    const eb = isEmpty(b)
-    if (ea && eb) return 0
-    if (ea) return 1
-    if (eb) return -1
-    return null
-  }
-  const spec = TYPE_SPECS[def.type]
-  if (spec.numeric || def.type === 'boolean' || def.type === 'star') {
-    return (a, b) => empty(a, b) ?? Number(a) - Number(b)
-  }
-  if (def.type === 'date' || def.type === 'datetime') {
-    return (a, b) => empty(a, b) ?? new Date(a as string).getTime() - new Date(b as string).getTime()
-  }
-  const collator = getFormat(locale).collator()
-  return (a, b) => empty(a, b) ?? collator.compare(String(a), String(b))
-}
 
 export const isSearchable = (def: ColumnDef): boolean => def.searchable ?? TYPE_SPECS[def.type].searchable
 

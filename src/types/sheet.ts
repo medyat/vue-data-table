@@ -46,13 +46,18 @@ export interface SheetStatus {
   warningRows: number
 }
 
-/** useTemplateRef<DataSheetHandle>('sheet'). `applyResult` 6c'de. */
+/** useTemplateRef<DataSheetHandle>('sheet'). */
 export interface DataSheetHandle {
   status: Readonly<SheetStatus>
   /** Yönlendirici koruması için. */
   isDirty: () => boolean
   /** `@save` ile aynı yük; uygulamanın kendi kaydetme düğmesi için. */
   getChanges: () => SheetChanges
+  /**
+   * Kayıt sonuçlarını işler (parça parça çağrılabilir): created/updated → işaretler kalkar, `row` verildiyse değerler onunla
+   * güncellenir; error → değişiklikler kalır, hatalar hücrelere yazılır. Undo/redo yığını temizlenir.
+   */
+  applyResult: (results: Array<SheetRowResult<unknown>>) => void
   /** Discard: tüm satırlar yüklendiği hale döner; yığın temizlenir. */
   reset: () => void
   undo: () => void

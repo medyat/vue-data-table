@@ -1,11 +1,25 @@
 <script setup lang="ts" generic="Row extends object">
-// DataSheet (07, brief §8, handoff 06) — Faz 6a + 6b: ızgara, editörler, doğrulama, taslak deposu; toolbar'da Find,
-// Undo/Redo, Display + Save kontrolleri; formül çubuğu; status bar sayaçları + seçim özeti; açılış ilerlemesi + skeleton;
-// `maxRows` şeridi; pano (kopyala / kes / yapıştır), fill handle + ⌘D, komut yığını, yapıştırma toast'ı. Satır partisi,
-// sıralama, filtreler ve kayıt teslimi (6c), içe/dışa aktarma ve telefon düzeni (6d) sonraki fazlarda. Veri çekmez,
-// kaydetmez (D18): yalnızca `@save` yayar; `rows` dizisine dokunmaz.
-import { PhArrowUUpLeft, PhArrowUUpRight, PhCheck, PhWarning } from '@phosphor-icons/vue'
+// DataSheet (07, brief §8, handoff 06) — Faz 6a–6c: ızgara, editörler, doğrulama, taslak deposu; toolbar'da Find,
+// All / Changed / Errors, Undo/Redo, Add row, Display + Save kontrolleri; formül çubuğu; status bar; açılış ilerlemesi;
+// pano, fill handle, komut yığını; satır partisi (ekle / çıkar, lookupKeys New/Update, anahtar tekilliği); yerel
+// sıralama; kayıt akışı (hata dialog'u, `@save`, `saving`, `applyResult`, Partly saved şeridi, Copy errors); ayrılma
+// koruması. İçe/dışa aktarma ve telefon düzeni (6d) sonraki fazda. Veri çekmez, kaydetmez (D18): yalnızca `@save` yayar.
+import {
+  PhArrowUUpLeft,
+  PhArrowUUpRight,
+  PhCaretDown,
+  PhCaretUp,
+  PhCheck,
+  PhCircleNotch,
+  PhCopy,
+  PhLock,
+  PhPlus,
+  PhWarning,
+  PhWarningCircle,
+} from '@phosphor-icons/vue'
+import { ToggleGroupItem, ToggleGroupRoot } from 'reka-ui'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef, watch, type Component } from 'vue'
+import { comparator } from '../core/cells/compare'
 import { formatCell, isEmptyValue, optionLabel, type FormatEnv } from '../core/cells/format'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import { TYPE_SPECS, typeLabelKey } from '../core/cells/specs'
@@ -21,14 +35,16 @@ import SearchBox from '../core/toolbar/SearchBox.vue'
 import ConfirmDialog from '../core/ui/ConfirmDialog.vue'
 import type { ColumnDef, ColumnType } from '../types/columns'
 import type { Density, Plural, TableId } from '../types/core'
-import type { Progress, SheetChanges, SheetStatus } from '../types/sheet'
-import { matrixFromClipboard, toHtml, toTsv } from './clipboard'
+import type { SortRule } from '../types/query'
+import type { Progress, SheetChanges, SheetFilterMode, SheetRowResult, SheetStatus } from '../types/sheet'
+import { matrixFromClipboard, parseTsv, toHtml, toTsv } from './clipboard'
 import DateCell from './editors/DateCell.vue'
 import NumberCell from './editors/NumberCell.vue'
 import OptionCell from './editors/OptionCell.vue'
 import TextCell from './editors/TextCell.vue'
 import { fillValues } from './fill'
 import { inferDecimal, inputText, parseInput, type ParseEnv } from './parse'
+import SaveErrorsDialog, { type ErrorRowItem } from './SaveErrorsDialog.vue'
 import SheetGrid from './SheetGrid.vue'
 import { useSheetEditing, type SheetApi } from './useSheetEditing'
 import { useSheetStore, type Change, type Step } from './useSheetStore'
@@ -47,15 +63,21 @@ const props = withDefaults(
     keyColumn: string
     /** Uygulama satırları yüklerken; sayaç verilirse "Loading… 6,200 of 10,000". Düzenleme false olunca açılır. */
     loading?: Progress
-    /** Aşılırsa ilk `maxRows` satır kullanılır ve şerit uyarır (07 §15); yapıştırma bu sınırı aşamaz. */
+    /** `@save` sonrası uygulama kaydederken: grid salt okunur, ilerleme şeridi (07 §14). */
+    saving?: Progress
+    /** Yeni satırlarda yazılan anahtarların kontrolü (New / Update, 07 §9). Verilmezse her bilinmeyen anahtar New. */
+    lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
+    /** Add row ile oluşan satırın başlangıç değerleri. */
+    newRowDefaults?: () => Partial<Row>
+    /** Aşılırsa ilk `maxRows` satır kullanılır ve şerit uyarır (07 §15); yapıştırma ve ekleme bu sınırı aşamaz. */
     maxRows?: number
     /** Bu genişliğin altında veya yalnızca dokunmatikte salt okunur (D14); karar açılışta. */
     readOnlyBelow?: number
   }>(),
-  { rowKey: 'id', loading: false, maxRows: 10_000, readOnlyBelow: 768 },
+  { rowKey: 'id', loading: false, saving: false, maxRows: 10_000, readOnlyBelow: 768 },
 )
 const emit = defineEmits<{
-  /** Save: doğrulama geçen değişmiş + yeni satırlar. Uygulama kaydeder (6c: `saving`, `applyResult`). */
+  /** Save: doğrulama geçen değişmiş + yeni satırlar. Uygulama kaydeder, `saving` verir, `applyResult` çağırır. */
   save: [changes: SheetChanges]
 }>()
 defineSlots<{ empty?: () => unknown }>()
@@ -76,7 +98,11 @@ const density = computed<Density>(() => props.density ?? pref.prefs.density)
 const overLimit = computed(() => props.rows.length > props.maxRows)
 const loadedRows = computed(() => (overLimit.value ? props.rows.slice(0, props.maxRows) : props.rows))
 const loadingNow = computed(() => props.loading !== false)
-const progress = computed(() => (typeof props.loading === 'object' ? props.loading : null))
+const savingNow = computed(() => props.saving !== false)
+const progress = computed(() => {
+  const p = loadingNow.value ? props.loading : props.saving
+  return typeof p === 'object' ? p : null
+})
 const percent = computed(() =>
   progress.value && progress.value.total > 0 ? Math.round((100 * progress.value.done) / progress.value.total) : null,
 )
@@ -88,6 +114,8 @@ const sheetColumns = computed<Array<ColumnDef<Row>>>(() =>
   ),
 )
 const defById = computed(() => new Map(sheetColumns.value.map((d) => [d.id as string, d])))
+const keyDef = computed(() => defById.value.get(props.keyColumn))
+const primaryDef = computed(() => sheetColumns.value.find((d) => d.primary))
 const store = useSheetStore<Row>({
   rows: loadedRows,
   columns: sheetColumns,
@@ -96,8 +124,58 @@ const store = useSheetStore<Row>({
   i18n,
   locale: ctx.locale,
 })
-/** Yüklenen + yeni (yapıştırmayla eklenen) satırlar; gutter numarası bu dizideki sıra. */
-const rowsAll = store.allRows
+
+// Gösterim sırası (07 §10–11): parti sırası ya da header tıklamasında alınan sıralama anlık görüntüsü (düzenlenen satır
+// imlecin altından kaçmaz); eklenen satır yerine konur; All / Changed / Errors görünümü ve çıkarılanlar süzülür.
+const sortRules = ref<SortRule[]>([])
+const order = shallowRef<string[] | null>(null)
+const view = ref<SheetFilterMode>('all')
+const viewKeys = shallowRef(new Set<string>())
+const matchesView = (key: string) =>
+  view.value === 'changed'
+    ? !!store.rowDraft(key)?.size || store.isNew(key)
+    : view.value === 'errors'
+      ? store.hasError(key)
+      : true
+const refreshView = (union: boolean) => {
+  const next = union ? new Set(viewKeys.value) : new Set<string>()
+  for (const r of store.batch.value) {
+    const k = store.keyOf(r)
+    if (matchesView(k)) next.add(k)
+  }
+  viewKeys.value = next
+}
+/** Görünüm değişimi eşzamanlı uygulanır: hemen ardından gelen `goToError` doğru satır listesini görür. */
+const setView = (v: SheetFilterMode) => {
+  view.value = v
+  refreshView(false)
+}
+// Görünümde kalma kuralı: son hatayı düzelttiğin satır görünümden çıkana kadar yerinde kalır; yeni uyanlar eklenir.
+watch(store.version, () => {
+  if (view.value !== 'all') refreshView(true)
+})
+const orderedBatch = computed<Row[]>(() => {
+  const batch = store.batch.value
+  const o = order.value
+  if (!o) return batch
+  const seen = new Set(o)
+  const rows: Row[] = []
+  for (const k of o) {
+    const r = store.rowByKey(k)
+    if (r) rows.push(r)
+  }
+  for (const r of batch) if (!seen.has(store.keyOf(r))) rows.push(r)
+  return rows
+})
+/** Gösterilen satırlar: sıra + görünüm + çıkarılanlar. */
+const rowsAll = computed<Row[]>(() => {
+  const all = view.value === 'all'
+  const keys = viewKeys.value
+  return orderedBatch.value.filter((r) => {
+    const k = store.keyOf(r)
+    return !store.isRemoved(k) && (all || keys.has(k))
+  })
+})
 const layout = useColumnLayout<Row>({
   columns: sheetColumns,
   rows: rowsAll,
@@ -121,6 +199,7 @@ const readOnlyDevice =
   typeof matchMedia === 'function' &&
   (matchMedia(`(max-width: ${props.readOnlyBelow - 1}px)`).matches ||
     matchMedia('(hover: none) and (pointer: coarse)').matches)
+const readOnlyNow = computed(() => loadingNow.value || savingNow.value || readOnlyDevice)
 
 // Editörler filtre değer girişleriyle aynı aileden (07 §5); `boolean` editör açmaz (Space). multiselect/tags/ajax/user/
 // object/array için yalnızca özel editör (`ColumnDef.editor`); yapıştırma yine de çalışır.
@@ -143,17 +222,17 @@ const EDITORS: Partial<Record<ColumnType, Component>> = {
   date: DateCell,
   datetime: DateCell,
 }
+/** Yerleşik editörü olmayan ama yapıştırma/temizleme ile değişebilen tipler. */
+const PASTE_ONLY = new Set<ColumnType>(['multiselect', 'tags'])
 const editorFor = (def: ColumnDef<Row>): Component | null => def.editor ?? EDITORS[def.type] ?? null
-/** Sütunlar varsayılan salt okunur; anahtar sütun yüklenmiş satırlarda her zaman (yeni satırda açık); yüklenirken ve telefonda hiçbiri. */
+/** Sütunlar varsayılan salt okunur; anahtar sütun yüklenmiş satırlarda her zaman (yeni satırda açık); yüklenirken, kaydederken ve telefonda hiçbiri. */
 const canEdit = (row: Row, def: ColumnDef<Row>): boolean => {
-  if (loadingNow.value || readOnlyDevice) return false
+  if (readOnlyNow.value) return false
   const isNew = store.isNew(store.keyOf(row))
   if (def.id === props.keyColumn) return isNew
   if (def.type !== 'boolean' && !editorFor(def) && !PASTE_ONLY.has(def.type)) return false
   return typeof def.editable === 'function' ? def.editable(row, { isNew }) : def.editable === true
 }
-/** Yerleşik editörü olmayan ama yapıştırma/temizleme ile değişebilen tipler. */
-const PASTE_ONLY = new Set<ColumnType>(['multiselect', 'tags'])
 
 const parseEnv = (locale = ctx.locale): ParseEnv => ({
   locale,
@@ -182,6 +261,12 @@ const selectCells = (r1: number, c1: number, r2: number, c2: number) => {
   })
   grid.value?.focusActive()
 }
+const focusCell = (r: number, columnId: string) => {
+  const row = rowsAll.value[Math.max(0, Math.min(rowsAll.value.length - 1, r))]
+  if (!row) return
+  table.focus(store.keyOf(row), columnId)
+  grid.value?.focusActive()
+}
 /** Seçimdeki (ya da aktif) hücreler. */
 const selectedCells = (): Array<{ r: number; c: number }> => {
   const b = table.bounds.value
@@ -203,12 +288,12 @@ const clearSelected = () => {
   }
   store.apply(changes)
 }
-const save = () => {
-  edit.commit()
-  if (!counts.value.changedCells) return
-  emit('save', store.getChanges())
-}
-/** F8 / ⇧F8 ve status bar "go to": aktif satırdan sonraki/önceki hatalı satırın ilk hatalı hücresi (döngüsel). */
+
+// Hatalar (07 §11, §14): gösterim sırasında; görünüm gizliyorsa toast "Next error is hidden by filters · Show it".
+const errorKeysInOrder = computed(() => {
+  void store.version.value
+  return orderedBatch.value.map((r) => store.keyOf(r)).filter((k) => !store.isRemoved(k) && store.hasError(k))
+})
 const goToError = (dir: 1 | -1) => {
   const rows = rowsAll.value
   const n = rows.length
@@ -217,13 +302,27 @@ const goToError = (dir: 1 | -1) => {
   for (let s = 1; s <= n; s++) {
     const i = (((from + dir * s) % n) + n) % n
     const key = store.keyOf(rows[i]!)
+    if (!store.hasError(key)) continue
     const issues = store.rowIssues(key)
-    const col = issues && visibleCols.value.find((c) => issues.get(c.id)?.level === 'error')
+    const col =
+      visibleCols.value.find((c) => issues?.get(c.id)?.level === 'error') ??
+      (store.rowError(key) ? visibleCols.value.find((c) => c.id === props.keyColumn) : undefined)
     if (!col) continue
     table.focus(key, col.id)
     grid.value?.focusActive()
     return
   }
+  if (errorKeysInOrder.value.length && view.value !== 'all')
+    showToast({
+      text: i18n.t('sheet.nextErrorHidden'),
+      action: {
+        label: i18n.t('sheet.showIt'),
+        run: () => {
+          setView('all')
+          goToError(dir)
+        },
+      },
+    })
 }
 
 // Pano (07 §7): görüntülenen biçimde TSV + HTML; para kodu ve "—" yok, tarihler ISO, listeler `; ` ile (geri yapıştırılabilir).
@@ -277,13 +376,31 @@ const copy = (data: DataTransfer | null): boolean => {
 }
 const cut = (data: DataTransfer | null): boolean => {
   if (!copy(data)) return false
-  clearSelected()
+  if (!readOnlyNow.value) clearSelected()
   return true
+}
+/** Hücre menüsü › Copy / Cut: `navigator.clipboard` (TSV + HTML; yalnızca metin destekleniyorsa TSV). */
+const copyToClipboard = (cutAfter: boolean) => {
+  const m = copyMatrix()
+  const clip = typeof navigator !== 'undefined' ? navigator.clipboard : undefined
+  if (!m || !clip) return
+  const tsv = toTsv(m)
+  const write =
+    typeof ClipboardItem === 'function' && clip.write
+      ? clip.write([
+          new ClipboardItem({
+            'text/plain': new Blob([tsv], { type: 'text/plain' }),
+            'text/html': new Blob([toHtml(m)], { type: 'text/html' }),
+          }),
+        ])
+      : clip.writeText(tsv)
+  void write.catch(() => clip.writeText(tsv)).catch(() => {})
+  if (cutAfter && !readOnlyNow.value) clearSelected()
 }
 const pasteMatrix = (matrix: string[][]): boolean => {
   const a = table.active.value
   const width = Math.max(0, ...matrix.map((l) => l.length))
-  if (!a || !matrix.length || !width) return false
+  if (!a || !matrix.length || !width || readOnlyNow.value) return false
   const cols = visibleCols.value
   const startRow = indexByKey.value.get(a.rowId)
   const startCol = cols.findIndex((c) => c.id === a.columnId)
@@ -307,10 +424,10 @@ const pasteMatrix = (matrix: string[][]): boolean => {
   }
   const lastRow = Math.max(...targets.map((t) => t.r))
   const overflow = lastRow - rowsAll.value.length + 1
-  if (overflow > 0 && rowsAll.value.length + overflow > props.maxRows) {
+  if (overflow > 0 && store.allRows.value.length + overflow > props.maxRows) {
     showToast({
       text: i18n.t('sheet.limitPaste', {
-        count: fmt.int(rowsAll.value.length + overflow),
+        count: fmt.int(store.allRows.value.length + overflow),
         max: fmt.int(props.maxRows),
       }),
     })
@@ -318,6 +435,7 @@ const pasteMatrix = (matrix: string[][]): boolean => {
   }
   // Son satırın altına taşanlar yeni satır olur; anahtar boşsa "Required" (07 §7).
   const addedRows = overflow > 0 ? store.addRows(overflow) : []
+  if (addedRows.length && order.value) order.value = [...order.value, ...addedRows.map((x) => x.key)]
   const rows = rowsAll.value
   // Sayılar panonun yerel ayarıyla: sütun bazında çıkarım, belirsizse uygulama locale'i.
   const localeByCol = new Map<number, string>()
@@ -369,6 +487,13 @@ const pasteMatrix = (matrix: string[][]): boolean => {
   return true
 }
 const paste = (data: DataTransfer | null): boolean => pasteMatrix(matrixFromClipboard(data))
+/** Hücre menüsü › Paste: `readText` yedeği (07 §7). */
+const pasteFromClipboard = () => {
+  void navigator.clipboard
+    ?.readText()
+    .then((text) => pasteMatrix(parseTsv(text)))
+    .catch(() => {})
+}
 
 // Doldurma (07 §8): kaynak satır aralığı, hedef satıra kadar; seri ya da kopya, read-only atlanır, tek adım.
 const fillPlan = (fromRow: number, toRow: number, cols: [number, number], target: number) => {
@@ -407,7 +532,14 @@ const fillDown = () => {
 
 // Geri al / yinele (07 §12): seçim ve aktif hücre o adımın yerine taşınır.
 const afterStep = (step: Step | null) => {
-  if (!step?.patches.length) return
+  if (!step) return
+  // Listeden çıkarma geri alındı: geri gelen satıra odak (toast'taki Undo odağı ızgaradan almıştı).
+  if (step.removed?.length && !step.patches.length) {
+    const i = indexByKey.value.get(step.removed[0]!)
+    if (i !== undefined) focusCell(i, table.active.value?.columnId ?? visibleCols.value[0]!.id)
+    return
+  }
+  if (!step.patches.length) return
   const idx = visibleCols.value.map((c) => c.id)
   let r1 = Infinity
   let r2 = -1
@@ -425,14 +557,265 @@ const afterStep = (step: Step | null) => {
   if (r2 >= 0) selectCells(r1, c1, r2, c2)
 }
 const undo = () => {
+  if (readOnlyNow.value) return
   edit.cancel()
   afterStep(store.undo())
 }
 const redo = () => {
+  if (readOnlyNow.value) return
   edit.cancel()
   afterStep(store.redo())
 }
 const useSuggestion = (row: Row, def: ColumnDef<Row>, value: unknown) => store.set(row, def, value)
+
+// Satır partisi (07 §9, D12): Add row / Insert row above-below (newRowDefaults, odak anahtar hücresinde, düzenleme açık);
+// Remove from list (⌘−): nötr, sunucuda silmez, toast + Undo.
+const addRow = (at?: number) => {
+  if (readOnlyNow.value) return
+  if (store.allRows.value.length + 1 > props.maxRows) {
+    showToast({
+      text: i18n.t('sheet.limitPaste', { count: fmt.int(store.allRows.value.length + 1), max: fmt.int(props.maxRows) }),
+    })
+    return
+  }
+  edit.commit()
+  const [added] = store.addRows(1)
+  if (!added) return
+  const defaults = props.newRowDefaults?.() ?? {}
+  const changes: Array<Change<Row>> = []
+  for (const [id, value] of Object.entries(defaults)) {
+    const def = defById.value.get(id)
+    if (def && !isEmptyValue(value)) changes.push({ row: added.row, def, value })
+  }
+  store.apply(changes, [added])
+  if (at !== undefined) {
+    const keys = order.value ?? store.batch.value.map((r) => store.keyOf(r)).filter((k) => k !== added.key)
+    const pos = Math.max(0, Math.min(keys.length, at))
+    order.value = [...keys.slice(0, pos), added.key, ...keys.slice(pos)]
+  } else if (order.value) order.value = [...order.value, added.key]
+  if (view.value !== 'all') viewKeys.value = new Set([...viewKeys.value, added.key])
+  table.focus(added.key, props.keyColumn)
+  grid.value?.focusActive()
+  if (keyDef.value) edit.start(added.row, keyDef.value, { inCell: true })
+}
+const insertRow = (where: 'above' | 'below') => {
+  const a = table.active.value
+  const i = a ? orderedBatch.value.findIndex((r) => store.keyOf(r) === a.rowId) : -1
+  addRow(i < 0 ? undefined : where === 'above' ? i : i + 1)
+}
+const removeSelectedRows = () => {
+  if (readOnlyNow.value) return
+  const b = table.bounds.value
+  if (!b) return
+  edit.cancel()
+  const rows = rowsAll.value.slice(b.minRowIndex, b.maxRowIndex + 1)
+  const keys = rows.map((r) => store.keyOf(r))
+  if (!keys.length) return
+  store.removeRows(keys)
+  showToast({
+    text:
+      keys.length === 1
+        ? i18n.t('sheet.removed', { count: 1, row: store.rowNoOf(keys[0]!), entity: entity.value })
+        : i18n.t('sheet.removed', { count: keys.length, entity: entity.value }),
+    undo: true,
+  })
+  focusCell(b.minRowIndex, table.active.value?.columnId ?? visibleCols.value[0]!.id)
+}
+
+// Yerel sıralama (07 §10): asc → desc → kapalı, ⇧ ile ikincil (en fazla 3); anlık görüntü, gutter numaraları değişmez.
+const sort = (columnId: string, additive: boolean) => {
+  const def = defById.value.get(columnId)
+  if (!def || !(def.sortable ?? TYPE_SPECS[def.type].sortable)) return
+  const current = sortRules.value
+  const existing = current.find((s) => s.column === columnId)
+  const next: SortRule | null = !existing
+    ? { column: columnId, dir: 'asc' }
+    : existing.dir === 'asc'
+      ? { column: columnId, dir: 'desc' }
+      : null
+  const rest = current.filter((s) => s.column !== columnId)
+  sortRules.value = additive
+    ? next
+      ? existing
+        ? current.map((s) => (s.column === columnId ? next : s))
+        : [...rest, next].slice(-3)
+      : rest
+    : next
+      ? [next]
+      : []
+  if (!sortRules.value.length) {
+    order.value = null
+    return
+  }
+  const cmps = sortRules.value.map((s) => ({
+    def: defById.value.get(s.column)!,
+    cmp: comparator(defById.value.get(s.column)!, ctx.locale),
+    sign: s.dir === 'desc' ? -1 : 1,
+  }))
+  order.value = [...store.batch.value]
+    .sort((a, b) => {
+      for (const { def: d, cmp, sign } of cmps) {
+        const r = cmp(store.read(a, d), store.read(b, d)) * sign
+        if (r) return r
+      }
+      return store.rowNoOf(store.keyOf(a)) - store.rowNoOf(store.keyOf(b))
+    })
+    .map((r) => store.keyOf(r))
+}
+const sortMap = computed(() => {
+  const m = new Map<string, { dir: 'asc' | 'desc'; index: number | null }>()
+  sortRules.value.forEach((s, i) => m.set(s.column, { dir: s.dir, index: sortRules.value.length > 1 ? i + 1 : null }))
+  return m
+})
+
+// Anahtar kontrolü (07 §9): yeni satırın anahtarı onaylanınca 300 ms sonra `lookupKeys`; yok → New, var → Update + sunucu
+// kaydı base (Q2). Verilmemişse her bilinmeyen anahtar New.
+const looked = new Map<string, string>()
+const pending = new Map<string, string>()
+let lookupTimer: ReturnType<typeof setTimeout> | undefined
+let lookupCtl: AbortController | null = null
+const runLookup = async () => {
+  const batchKeys = new Map(pending)
+  pending.clear()
+  if (!batchKeys.size) return
+  if (!props.lookupKeys) {
+    for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'new')
+    return
+  }
+  for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'checking')
+  lookupCtl?.abort()
+  lookupCtl = new AbortController()
+  try {
+    const values = [...new Set(batchKeys.values())].slice(0, 500)
+    const result = await props.lookupKeys(values, { signal: lookupCtl.signal })
+    for (const [rowKey, value] of batchKeys) {
+      if (looked.get(rowKey) !== value) continue
+      const found = result[value]
+      if (found) {
+        store.setKeyState(rowKey, 'update')
+        store.setBase(rowKey, found)
+      } else store.setKeyState(rowKey, 'new')
+    }
+  } catch {
+    for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'new')
+  }
+}
+watch(store.version, () => {
+  const def = keyDef.value
+  if (!def) return
+  for (const r of store.batch.value) {
+    const rowKey = store.keyOf(r)
+    if (!store.isNew(rowKey)) continue
+    const v = store.readUntracked(r, def)
+    const text = isEmptyValue(v) ? '' : String(v)
+    if (looked.get(rowKey) === text) continue
+    looked.set(rowKey, text)
+    if (text) pending.set(rowKey, text)
+    else store.setKeyState(rowKey, 'new')
+  }
+  if (pending.size) {
+    clearTimeout(lookupTimer)
+    lookupTimer = setTimeout(() => void runLookup(), 300)
+  }
+})
+
+// Kayıt akışı (07 §14): hatalı satır varsa dialog; `@save` yükü; uygulama `saving` verir; `applyResult` sonuçları işler;
+// bitişte status bar sonucu ya da Partly saved şeridi (görünüm Errors, aktif hücre ilk hatada).
+const errorDialogOpen = ref(false)
+const errorItems = computed<ErrorRowItem[]>(() =>
+  errorKeysInOrder.value
+    .filter((k) => !!store.rowDraft(k)?.size || store.isNew(k))
+    .map((k) => {
+      const row = store.rowByKey(k)!
+      const issues = store.rowIssues(k)
+      const first = issues ? [...issues.values()].find((i) => i.level === 'error') : undefined
+      return {
+        rowNo: store.rowNoOf(k),
+        key: keyDef.value ? inputText(keyDef.value, store.read(row, keyDef.value)) : k,
+        message: first?.message ?? store.rowError(k) ?? '',
+      }
+    }),
+)
+const saveTotals = shallowRef({ created: 0, updated: 0, errors: 0 })
+const savedSummary = shallowRef<{ count: number; created: number; updated: number } | null>(null)
+const partly = shallowRef<{ failed: number; saved: number } | null>(null)
+const emitSave = () => {
+  saveTotals.value = { created: 0, updated: 0, errors: 0 }
+  savedSummary.value = null
+  partly.value = null
+  store.settleUntouched()
+  emit('save', store.getChanges())
+}
+const save = () => {
+  if (readOnlyNow.value) return
+  edit.commit()
+  if (!counts.value.changedCells && !counts.value.newRows) return
+  if (errorItems.value.length) {
+    errorDialogOpen.value = true
+    return
+  }
+  emitSave()
+}
+const fixFirst = () => {
+  setView('errors')
+  goToError(1)
+}
+const finishSave = () => {
+  const t = saveTotals.value
+  if (!t.created && !t.updated && !t.errors) return
+  if (t.errors) {
+    partly.value = { failed: t.errors, saved: t.created + t.updated }
+    setView('errors')
+    goToError(1)
+  } else savedSummary.value = { count: t.created + t.updated, created: t.created, updated: t.updated }
+  saveTotals.value = { created: 0, updated: 0, errors: 0 }
+}
+let resultVersion = -1
+const applyResult = (results: Array<SheetRowResult<Row>>) => {
+  const r = store.applyResult(results)
+  resultVersion = store.version.value
+  const t = saveTotals.value
+  saveTotals.value = { created: t.created + r.created, updated: t.updated + r.updated, errors: t.errors + r.errors }
+  if (!savingNow.value) finishSave()
+}
+watch(savingNow, (now) => {
+  if (!now) finishSave()
+})
+// Sonraki düzenlemede sonuç metni gider (applyResult'ın kendi sürüm artışı sayılmaz); hata kalmayınca şerit kapanır.
+watch(store.version, (v) => {
+  if (v !== resultVersion) savedSummary.value = null
+  if (partly.value && !counts.value.errorRows) partly.value = null
+})
+const partlyIndex = computed(() => {
+  const a = table.active.value
+  const i = a ? errorKeysInOrder.value.indexOf(a.rowId) : -1
+  return i < 0 ? 0 : i + 1
+})
+/** Copy errors (07 §14): TSV, başlık Row · anahtar sütunu · Column · Message. */
+const copyErrors = () => {
+  const lines: string[][] = [
+    [
+      i18n.t('sheet.err.row'),
+      keyDef.value?.header ?? props.keyColumn,
+      i18n.t('sheet.err.column'),
+      i18n.t('sheet.err.message'),
+    ],
+  ]
+  for (const k of errorKeysInOrder.value) {
+    const row = store.rowByKey(k)!
+    const keyText = keyDef.value ? inputText(keyDef.value, store.read(row, keyDef.value)) : k
+    const rowErr = store.rowError(k)
+    if (rowErr) lines.push([String(store.rowNoOf(k)), keyText, '', rowErr])
+    for (const [col, issue] of store.rowIssues(k) ?? [])
+      if (issue.level === 'error')
+        lines.push([String(store.rowNoOf(k)), keyText, defById.value.get(col)?.header ?? col, issue.message])
+  }
+  void navigator.clipboard?.writeText(toTsv(lines)).catch(() => {})
+}
+const openHref = (row: Row): string | undefined => {
+  if (store.isNew(store.keyOf(row))) return undefined
+  return keyDef.value?.href?.(row) ?? primaryDef.value?.href?.(row)
+}
 
 const sheet: SheetApi<Row> = {
   store,
@@ -453,6 +836,12 @@ const sheet: SheetApi<Row> = {
   undo,
   redo,
   useSuggestion,
+  copyToClipboard,
+  pasteFromClipboard,
+  insertRow,
+  removeSelectedRows,
+  sort,
+  openHref,
 }
 
 // Izgara dışına tık onaylar (07 §5): formül çubuğu ve portallı editör katmanları (`dt-sheet-layer`) dışarı sayılmaz.
@@ -462,10 +851,23 @@ const onDocPointerdown = (e: PointerEvent) => {
   if (t?.closest('.dt-cell.is-editing, .dt-formula, .dt-sheet-layer')) return
   edit.commit()
 }
-onMounted(() => document.addEventListener('pointerdown', onDocPointerdown, true))
+// Ayrılma koruması (07 §14): değişiklik varken tarayıcı uyarısı; yönlendirici dialog'u uygulamanın (`isDirty()`).
+const isDirty = () => counts.value.changedCells > 0 || counts.value.newRows > 0
+const onBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (!isDirty()) return
+  e.preventDefault()
+  e.returnValue = ''
+}
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocPointerdown, true)
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onDocPointerdown, true)
+  window.removeEventListener('beforeunload', onBeforeUnload)
   clearTimeout(toastTimer)
+  clearTimeout(lookupTimer)
+  lookupCtl?.abort()
 })
 
 // ⌘S / ⌘F odak sheet içindeyken (07 §2); ızgara kendi işlediyse (defaultPrevented) tekrar etmez.
@@ -543,6 +945,13 @@ const findCount = computed(() =>
     : '',
 )
 
+// All / Changed / Errors sayaçları (07 §11).
+const viewCounts = computed(() => ({
+  all: store.allRows.value.length,
+  changed: counts.value.changedOrNewRows,
+  errors: counts.value.errorRows,
+}))
+
 // Formül çubuğu (07 §2): ad kutusu, fx, değer (buraya yazmak hücreyi düzenler), ipucu.
 const activeRow = computed(() => {
   const a = table.active.value
@@ -560,7 +969,6 @@ const rangeDims = computed(() => {
   return rows * cols > 1 ? { rows, cols } : null
 })
 const rangeText = computed(() => (rangeDims.value ? i18n.t('sheet.cells', rangeDims.value) : null))
-const keyDef = computed(() => defById.value.get(props.keyColumn))
 const nameKey = computed(() =>
   activeRow.value && keyDef.value ? inputText(keyDef.value, store.read(activeRow.value, keyDef.value)) : '',
 )
@@ -636,7 +1044,15 @@ const summary = computed(() => {
 })
 
 const status = computed<SheetStatus>(() => ({
-  phase: loadingNow.value ? 'loading' : 'ready',
+  phase: loadingNow.value
+    ? 'loading'
+    : savingNow.value
+      ? 'saving'
+      : partly.value
+        ? 'partly-saved'
+        : savedSummary.value
+          ? 'saved'
+          : 'ready',
   ...counts.value,
 }))
 const changesText = computed(() =>
@@ -647,12 +1063,14 @@ const changesText = computed(() =>
 const saveTip = `${i18n.t('sheet.save')} · ${SAVE_KBD}`
 const undoTip = `${i18n.t('common.undo')} (${UNDO_KBD})`
 const redoTip = `${i18n.t('common.redo')} (${REDO_KBD})`
+const canSave = computed(() => !readOnlyNow.value && (counts.value.changedCells > 0 || counts.value.newRows > 0))
 
-// Toast (06 §8): yapıştırma sonucu ve sınır uyarısı; Review ilk sorunlu hücreye, Undo son adımı geri alır.
+// Toast (06 §8): yapıştırma sonucu, sınır uyarısı, listeden çıkarma, gizli hata; Review / Show it / Undo.
 interface Toast {
   text: string
   issues?: string
   review?: () => void
+  action?: { label: string; run: () => void }
   undo?: boolean
 }
 const toast = shallowRef<Toast | null>(null)
@@ -666,12 +1084,23 @@ const toastUndo = () => {
   toast.value = null
   undo()
 }
+const toastAction = () => {
+  const run = toast.value?.action?.run
+  toast.value = null
+  run?.()
+}
 const polite = ref('')
 
 const discardOpen = ref(false)
 const discard = () => {
   edit.cancel()
   store.reset()
+  order.value = null
+  sortRules.value = []
+  partly.value = null
+  savedSummary.value = null
+  looked.clear()
+  pending.clear()
   grid.value?.focusActive()
 }
 
@@ -699,8 +1128,9 @@ const tooltip = useDelegatedTooltip(rootEl)
 
 defineExpose({
   status,
-  isDirty: () => counts.value.changedCells > 0 || counts.value.newRows > 0,
+  isDirty,
   getChanges: store.getChanges,
+  applyResult,
   reset: discard,
   undo,
   redo,
@@ -711,9 +1141,17 @@ defineExpose({
 <template>
   <div ref="rootEl" class="dt dt-sheet" :data-density="density" @keydown="onRootKeydown">
     <div class="dt-toolbar dt-sheet-toolbar" role="toolbar">
-      <div v-if="loadingNow" class="dt-progress-strip">
-        <strong>{{ i18n.t('sheet.loading', { entity }) }}</strong>
-        <span v-if="progress" class="dt-progress-count">
+      <div v-if="loadingNow || savingNow" class="dt-progress-strip">
+        <strong>
+          {{
+            loadingNow
+              ? i18n.t('sheet.loading', { entity })
+              : progress
+                ? i18n.t('sheet.saving', { sent: fmt.int(progress.done), total: fmt.int(progress.total) })
+                : i18n.t('sheet.savingIndeterminate')
+          }}
+        </strong>
+        <span v-if="loadingNow && progress" class="dt-progress-count">
           {{ i18n.t('sheet.loadingCount', { loaded: fmt.int(progress.done), total: fmt.int(progress.total) }) }}
         </span>
         <div
@@ -739,6 +1177,26 @@ defineExpose({
           <span v-if="findCount" class="dt-find-count" role="status">{{ findCount }}</span>
         </div>
         <span class="dt-toolbar-sep" aria-hidden="true" />
+        <ToggleGroupRoot
+          class="dt-seg dt-sheet-views"
+          type="single"
+          :model-value="view"
+          :aria-label="i18n.t('sheet.showRows')"
+          @update:model-value="(v) => v && setView(v as SheetFilterMode)"
+        >
+          <ToggleGroupItem class="dt-seg-item" value="all">
+            {{ i18n.t('sheet.all') }}
+            <span class="dt-seg-count">{{ fmt.int(viewCounts.all) }}</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem class="dt-seg-item" value="changed">
+            {{ i18n.t('sheet.changed') }}
+            <span class="dt-seg-count">{{ fmt.int(viewCounts.changed) }}</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem class="dt-seg-item" :class="{ 'is-errors': viewCounts.errors > 0 }" value="errors">
+            {{ i18n.t('sheet.errors') }}
+            <span class="dt-seg-count">{{ fmt.int(viewCounts.errors) }}</span>
+          </ToggleGroupItem>
+        </ToggleGroupRoot>
         <button
           type="button"
           class="dt-btn dt-sheet-undo"
@@ -760,10 +1218,19 @@ defineExpose({
           <PhArrowUUpRight :size="16" aria-hidden="true" />
         </button>
         <span class="dt-toolbar-sep" aria-hidden="true" />
+        <button
+          type="button"
+          class="dt-btn dt-btn-ghost has-icon dt-sheet-add"
+          :disabled="readOnlyDevice"
+          @click="addRow()"
+        >
+          <PhPlus :size="16" aria-hidden="true" />
+          {{ i18n.t('sheet.addRow') }}
+        </button>
         <DisplayPopover v-bind="displayProps" v-on="displayOn" />
       </template>
       <span class="dt-toolbar-spacer" />
-      <span class="dt-sheet-changes" :class="{ 'is-empty': !counts.changedCells }">
+      <span v-if="!savingNow" class="dt-sheet-changes" :class="{ 'is-empty': !counts.changedCells }">
         <span v-if="counts.changedCells" class="dt-sheet-dot" aria-hidden="true" />
         {{ changesText }}
         <template v-if="counts.newRows">· {{ i18n.t('sheet.newShort', { count: counts.newRows }) }}</template>
@@ -771,7 +1238,7 @@ defineExpose({
       <button
         type="button"
         class="dt-btn dt-btn-ghost"
-        :disabled="!counts.changedCells && !counts.newRows"
+        :disabled="savingNow || (!counts.changedCells && !counts.newRows)"
         @click="discardOpen = true"
       >
         {{ i18n.t('sheet.discard') }}
@@ -779,15 +1246,39 @@ defineExpose({
       <button
         type="button"
         class="dt-btn dt-btn-primary has-icon dt-sheet-save"
-        :disabled="!counts.changedCells"
-        :data-dt-tip="saveTip"
-        @click="save"
+        :disabled="!savingNow && !canSave"
+        :aria-disabled="savingNow ? 'true' : undefined"
+        :data-dt-tip="savingNow ? undefined : saveTip"
+        @click="!savingNow && save()"
       >
-        <PhCheck :size="16" aria-hidden="true" />
-        {{ i18n.t('sheet.save') }}
+        <PhCircleNotch v-if="savingNow" :size="16" class="dt-spin" aria-hidden="true" />
+        <PhCheck v-else :size="16" aria-hidden="true" />
+        {{ savingNow ? i18n.t('sheet.savingButton') : i18n.t('sheet.save') }}
       </button>
     </div>
 
+    <div v-if="partly" class="dt-sheet-partly" role="alert">
+      <PhWarningCircle :size="16" aria-hidden="true" />
+      <span>
+        <strong>{{ i18n.t('sheet.partly.title', { count: fmt.int(partly.failed) }) }}</strong>
+        {{ i18n.t('sheet.partly.body', { count: fmt.int(partly.saved) }) }}
+      </span>
+      <span class="dt-partly-spacer" />
+      <span class="dt-partly-nav">
+        <button type="button" class="dt-partly-btn" :aria-label="i18n.t('sheet.prevError')" @click="goToError(-1)">
+          <PhCaretUp :size="14" aria-hidden="true" />
+        </button>
+        <span>{{ i18n.t('sheet.findCount', { index: partlyIndex, total: errorKeysInOrder.length }) }}</span>
+        <button type="button" class="dt-partly-btn" :aria-label="i18n.t('sheet.nextError')" @click="goToError(1)">
+          <PhCaretDown :size="14" aria-hidden="true" />
+        </button>
+      </span>
+      <span class="dt-partly-sep" aria-hidden="true" />
+      <button type="button" class="dt-partly-copy" @click="copyErrors">
+        <PhCopy :size="14" aria-hidden="true" />
+        {{ i18n.t('sheet.copyErrors') }}
+      </button>
+    </div>
     <div v-if="overLimit" class="dt-strip dt-sheet-strip" role="status">
       <PhWarning :size="16" aria-hidden="true" />
       <span>{{ i18n.t('sheet.firstN', { max: fmt.int(maxRows), entity }) }}</span>
@@ -812,7 +1303,11 @@ defineExpose({
         @input="onFormulaInput"
         @keydown="onFormulaKeydown"
       />
-      <span v-if="hint" class="dt-formula-hint">{{ hint }}</span>
+      <span v-if="savingNow" class="dt-formula-hint">
+        <PhLock :size="12" aria-hidden="true" />
+        {{ i18n.t('sheet.savingReadOnly') }}
+      </span>
+      <span v-else-if="hint" class="dt-formula-hint">{{ hint }}</span>
     </div>
 
     <SheetGrid
@@ -822,11 +1317,14 @@ defineExpose({
       :rows="rowsAll"
       :density="density"
       :label="entity.other"
+      :entity="entity"
       :loading="loadingNow"
       :skeleton="loadingNow"
+      :read-only="savingNow"
       :vertical-lines="pref.prefs.verticalLines"
       :key-column="keyColumn"
       :found="matches?.map ?? null"
+      :sort="sortMap"
     >
       <template v-if="!loadingNow && rowsAll.length === 0" #state>
         <slot name="empty">
@@ -837,10 +1335,25 @@ defineExpose({
 
     <div class="dt-status" role="status" :aria-label="i18n.t('sheet.statusAria')">
       <span class="dt-status-rows">
-        {{ loadingNow ? i18n.t('common.loading') : i18n.t('sheet.rows', { count: fmt.int(rowsAll.length) }) }}
+        {{
+          loadingNow ? i18n.t('common.loading') : i18n.t('sheet.rows', { count: fmt.int(store.allRows.value.length) })
+        }}
       </span>
       <template v-if="!loadingNow">
-        <span v-if="counts.changedCells" class="dt-status-changes">
+        <span v-if="savedSummary" class="dt-status-saved">
+          <PhCheck :size="14" aria-hidden="true" />
+          <strong>{{ i18n.t('sheet.saved', { count: fmt.int(savedSummary.count) }) }}</strong>
+          <span>
+            ·
+            {{
+              i18n.t('sheet.savedDetail', {
+                created: fmt.int(savedSummary.created),
+                updated: fmt.int(savedSummary.updated),
+              })
+            }}
+          </span>
+        </span>
+        <span v-else-if="counts.changedCells" class="dt-status-changes">
           <span class="dt-mark is-changed" aria-hidden="true" />
           {{ changesText }}
         </span>
@@ -878,6 +1391,9 @@ defineExpose({
           {{ i18n.t('sheet.review') }}
         </button>
       </template>
+      <button v-if="toast.action" type="button" class="dt-toast-link" @click="toastAction">
+        {{ toast.action.label }}
+      </button>
       <template v-if="toast.undo">
         <span class="dt-toast-sep" aria-hidden="true" />
         <button type="button" class="dt-toast-undo" @click="toastUndo">
@@ -895,8 +1411,17 @@ defineExpose({
       :title="i18n.t('sheet.discard.title', { cells: fmt.int(counts.changedCells), rows: fmt.int(counts.changedRows) })"
       :body="i18n.t('sheet.discard.body')"
       :confirm-label="i18n.t('sheet.leave.discard')"
+      :cancel-label="i18n.t('sheet.discard.keep')"
       danger
       @confirm="discard"
+    />
+    <SaveErrorsDialog
+      v-if="errorDialogOpen"
+      v-model:open="errorDialogOpen"
+      :errors="errorItems"
+      :ok-rows="store.getChanges().rows.length"
+      @fix="fixFirst"
+      @save="emitSave"
     />
   </div>
 </template>

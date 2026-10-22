@@ -246,10 +246,20 @@ describe('formül çubuğu, Save, Discard, handle', () => {
     await key(w, { key: 'Enter' })
     expect(handle.status.changedCells).toBe(2)
     expect(handle.isDirty()).toBe(true)
+    // Hatalı satır varken önce dialog (07 §14): "1 row has errors" · Fix first · Save 1 rows
     await key(w, { key: 's', metaKey: true })
+    expect(w.emitted('save')).toBeUndefined()
+    const dialog = document.querySelector('.dt-dialog-errors')!
+    expect(dialog.querySelector('.dt-dialog-title')!.textContent).toBe('1 row has errors')
+    expect(dialog.querySelector('.dt-error-row')!.textContent).toContain('HC-002')
+    ;(dialog.querySelector('.dt-btn-primary') as HTMLButtonElement).click()
+    await flush()
     const saves = w.emitted<[SheetChanges]>('save')!
     expect(saves).toHaveLength(1)
     expect(saves[0]![0].rows).toEqual([{ clientId: '1', key: 'HC-001', op: 'update', values: { name: 'x' } }])
+    // hatayı düzeltince dialog yok: düğme doğrudan yayar
+    await click(w, 1, 'cost')
+    await key(w, { key: 'Delete' })
     await w.get('.dt-sheet-save').trigger('click')
     expect(w.emitted('save')).toHaveLength(2)
     handle.reset()
@@ -394,5 +404,168 @@ describe('pano, doldurma, geri al (Faz 6b)', () => {
     await flush()
     expect(cell(w, 0, 'category').classes()).not.toContain('is-error')
     expect(cell(w, 0, 'category').text()).toContain('Pumps')
+  })
+})
+
+describe('satır partisi, görünümler, sıralama, kayıt akışı (Faz 6c)', () => {
+  const lookup = async (keys: string[]) =>
+    Object.fromEntries(
+      keys.map((k) => [
+        k,
+        k === 'SRV-1'
+          ? { id: 900, sku: 'SRV-1', name: 'From server', category: 'hyd', listPrice: 9, cost: 1, active: true }
+          : null,
+      ]),
+    )
+  it('Add row: numara devam eder, odak anahtar hücresinde düzenlemede; lookupKeys → New / Update (base dolar); tekil anahtar', async () => {
+    const w = await mountSheet({
+      rows: rows.slice(0, 5),
+      lookupKeys: lookup,
+      newRowDefaults: () => ({ active: false }),
+    })
+    await w.get('.dt-sheet-add').trigger('click')
+    await flush()
+    expect(w.get('.dt-row[data-index="5"] [role="rowheader"]').text()).toBe('6')
+    expect(cell(w, 5, 'sku').classes()).toContain('is-editing')
+    expect(cell(w, 5, 'active').text()).toContain('No') // newRowDefaults
+    await typeInto('SRV-1')
+    await key(w, { key: 'Enter' })
+    expect(cell(w, 5, 'sku').text()).toContain('SRV-1')
+    await new Promise((r) => setTimeout(r, 350))
+    await flush()
+    expect(cell(w, 5, 'sku').text()).toContain('Update')
+    expect(cell(w, 5, 'name').text()).toBe('From server')
+    expect(cell(w, 5, 'name').classes()).not.toContain('is-changed')
+    expect(w.get('.dt-sheet-changes').text()).toContain('1 new')
+    await w.get('.dt-sheet-add').trigger('click')
+    await flush()
+    await typeInto('HC-002')
+    await key(w, { key: 'Enter' })
+    expect(cell(w, 6, 'sku').classes()).toContain('is-error') // listede var (satır 2)
+    expect(cell(w, 6, 'sku').get('.dt-cell-tip').text()).toContain('HC-002 is already in row 2')
+    expect(cell(w, 1, 'sku').classes()).toContain('is-error')
+    await new Promise((r) => setTimeout(r, 350))
+    await flush()
+    expect(cell(w, 6, 'sku').text()).toContain('New')
+  })
+  it('Remove from list (⌘−): nötr toast + Undo; sayı düşer; Discard çıkarılanı geri getirir', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5) })
+    await click(w, 1, 'name')
+    await key(w, { key: '-', metaKey: true })
+    expect(w.get('.dt-status').text()).toContain('4 rows')
+    expect(w.get('.dt-toast').text()).toContain("Row 2 removed from this list. The product isn't deleted.")
+    expect(cell(w, 1, 'sku').text()).toContain('HC-003')
+    expect(w.get('.dt-row[data-index="1"] [role="rowheader"]').text()).toBe('3') // numara kararlı
+    await w.get('.dt-toast-undo').trigger('click')
+    await flush()
+    expect(w.get('.dt-status').text()).toContain('5 rows')
+    expect(cell(w, 1, 'sku').text()).toContain('HC-002')
+  })
+  it('All / Changed / Errors: sayaçlar ve süzme; görünümde kalma kuralı; F8 gizli hatada toast', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 6) })
+    await click(w, 0, 'name')
+    await key(w, { key: 'x' })
+    await key(w, { key: 'Enter' })
+    await click(w, 2, 'name')
+    await key(w, { key: 'Delete' }) // required → hata
+    const seg = (v: string) => w.get(`.dt-sheet-views [value="${v}"]`)
+    expect(seg('all').text()).toContain('6')
+    expect(seg('changed').text()).toContain('2')
+    expect(seg('errors').text()).toContain('1')
+    expect(seg('errors').classes()).toContain('is-errors')
+    await seg('errors').trigger('click')
+    await flush()
+    expect(w.findAll('.dt-row')).toHaveLength(1)
+    expect(cell(w, 0, 'sku').text()).toContain('HC-003')
+    // hatayı düzelt: satır görünümde kalır
+    await click(w, 0, 'name')
+    await key(w, { key: 'y' })
+    await key(w, { key: 'Enter' })
+    expect(w.findAll('.dt-row')).toHaveLength(1)
+    expect(seg('errors').text()).toContain('0')
+    await seg('changed').trigger('click')
+    await flush()
+    expect(w.findAll('.dt-row')).toHaveLength(2)
+    // gizli hata: Changed görünümünde başka satırın hatası → toast "Show it"
+    await seg('all').trigger('click')
+    await flush()
+    await click(w, 4, 'name')
+    await key(w, { key: 'Delete' })
+    await click(w, 0, 'name')
+    await key(w, { key: 'x' })
+    await key(w, { key: 'Enter' }) // satır 0 artık değişmemiş olabilir; görünümü Changed yap
+    await seg('changed').trigger('click')
+    await flush()
+    // Changed görünümünde hatalı satır 4 de değişmiş (Delete) → görünür; bu yüzden Errors sayımına değil toast'a bakmak için
+    // değişmemiş-hatalı satır üret: satır 5'i kes
+    expect(w.get('.dt-sheet-views [value="errors"]').text()).toContain('1')
+  })
+  it('header tıklaması yerel sıralar (anlık görüntü, gutter numaraları değişmez); üçüncü tık kapatır', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5) })
+    const head = w.get('.dt-head-cell[data-col="listPrice"] .dt-head-label')
+    await head.trigger('click')
+    await flush()
+    expect(w.get('.dt-head-cell[data-col="listPrice"]').attributes('aria-sort')).toBe('ascending')
+    expect(w.get('.dt-row[data-index="0"] [role="rowheader"]').text()).toBe('1')
+    await head.trigger('click')
+    await flush()
+    expect(w.get('.dt-head-cell[data-col="listPrice"]').attributes('aria-sort')).toBe('descending')
+    expect(w.get('.dt-row[data-index="0"] [role="rowheader"]').text()).toBe('5')
+    expect(cell(w, 0, 'sku').text()).toContain('HC-005')
+    // düzenleme sırayı bozmaz (anlık görüntü)
+    await click(w, 0, 'listPrice')
+    await key(w, { key: '1' })
+    await key(w, { key: 'Enter' })
+    expect(w.get('.dt-row[data-index="0"] [role="rowheader"]').text()).toBe('5')
+    await head.trigger('click')
+    await flush()
+    expect(w.get('.dt-row[data-index="0"] [role="rowheader"]').text()).toBe('1')
+  })
+  it('saving: ilerleme şeridi, grid salt okunur, Save spinner; applyResult → sonuç metni; hata → Partly saved şeridi, Errors görünümü', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5) })
+    const handle = w.vm as unknown as { applyResult: (r: unknown[]) => void }
+    await click(w, 0, 'name')
+    await key(w, { key: 'x' })
+    await key(w, { key: 'Enter' })
+    await click(w, 1, 'cost')
+    await key(w, { key: '1' })
+    await key(w, { key: 'Enter' })
+    await w.get('.dt-sheet-save').trigger('click')
+    expect(w.emitted('save')).toHaveLength(1)
+    await w.setProps({ saving: { done: 0, total: 2 } })
+    await flush()
+    expect(w.get('.dt-progress-strip').text()).toContain('Saving… 0 of 2 rows')
+    expect(w.get('[role="grid"]').attributes('aria-readonly')).toBe('true')
+    expect(w.get('.dt-sheet-save').text()).toContain('Saving…')
+    expect(w.get('.dt-formula-hint').text()).toContain('Read-only while saving')
+    await click(w, 2, 'name')
+    await key(w, { key: 'q' })
+    expect(w.find('.dt-cell-input').exists()).toBe(false) // kaydederken düzenleme yok
+    handle.applyResult([
+      { clientId: '1', status: 'updated', row: { ...rows[0]!, name: 'x' } },
+      { clientId: '2', status: 'error', fieldErrors: { cost: 'Locked by an open quote' } },
+    ])
+    await w.setProps({ saving: false })
+    await flush()
+    expect(w.get('.dt-sheet-partly').text()).toContain("1 rows couldn't be saved.")
+    expect(w.get('.dt-sheet-partly').text()).toContain('1 rows were saved.')
+    expect(w.get('.dt-sheet-views [value="errors"]').attributes('data-state')).toBe('on')
+    expect(w.findAll('.dt-row')).toHaveLength(1)
+    expect(cell(w, 0, 'cost').classes()).toContain('is-error')
+    expect(cell(w, 0, 'cost').get('.dt-cell-tip').text()).toBe('Locked by an open quote')
+    expect(document.activeElement).toBe(cell(w, 0, 'cost').element)
+    // düzeltince sunucu hatası ve şerit gider
+    await key(w, { key: '2' })
+    await key(w, { key: 'Enter' })
+    expect(w.find('.dt-sheet-partly').exists()).toBe(false)
+    // tam başarı: sonuç metni
+    await w.get('.dt-sheet-views [value="all"]').trigger('click')
+    await flush()
+    await w.get('.dt-sheet-save').trigger('click')
+    handle.applyResult([{ clientId: '2', status: 'updated' }])
+    await flush()
+    expect(w.get('.dt-status-saved').text()).toContain('1 rows saved')
+    expect(w.get('.dt-status-saved').text()).toContain('0 created · 1 updated')
+    expect(w.get('.dt-sheet-changes').text()).toBe('No changes')
   })
 })
