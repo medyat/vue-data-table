@@ -12,6 +12,7 @@ const settings = (page: Page) =>
 const cell = (page: Page, i: number, col: string) =>
   page.locator(`.dt-row[data-index="${i}"] .dt-cell[data-col="${col}"]`)
 const csv = fileURLToPath(new URL('./fixtures/products.csv', import.meta.url))
+const xlsx = fileURLToPath(new URL('./fixtures/products.xlsx', import.meta.url))
 /** Olaydan DOM güncellemesine süre (MutationObserver): boyama bütçesi 16 ms (01 · Performans). */
 const domLatency = (page: Page, selector: string, key: string) =>
   page.evaluate(
@@ -469,6 +470,14 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     const dlg = page.locator('.dt-import')
     await expect(dlg).toBeVisible()
     await expect(dlg.locator('.dt-btn-primary')).toBeDisabled()
+    // .xlsx (playground exceljs ile ayrıştırır): aynı dosya, sayı hücreleri sayı; formül ve zengin metin düz değere iner.
+    await dlg.locator('input[type=file]').setInputFiles(xlsx)
+    await expect(dlg.locator('.dt-import-file')).toContainText('Fiyat listesi')
+    await expect(dlg.locator('.dt-import-headerrow select')).toHaveValue('2')
+    const map = dlg.locator('.dt-import-table tbody tr')
+    await expect(map).toHaveCount(7)
+    await expect(map.nth(1).locator('.dt-import-preview')).toContainText('zengin metin')
+    await expect(map.nth(4).locator('.dt-import-preview')).toContainText(/1[.,]?120/)
     await dlg.locator('input[type=file]').setInputFiles(csv)
     await expect(dlg.locator('.dt-import-file')).toContainText('products')
     await expect(dlg.locator('.dt-import-headerrow select')).toHaveValue('2')

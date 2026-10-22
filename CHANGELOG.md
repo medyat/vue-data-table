@@ -18,7 +18,7 @@
 - Pano (TSV + HTML, yerel ayar çıkarımı), fill handle ve ⌘D, 100 adımlık geri al/yinele, Find in grid, seçim özeti.
 - Satır partisi (Add row / Insert / Remove from list), `lookupKeys` ile New / Update, anahtar tekilliği, yerel sıralama, All / Changed / Errors.
 - Kayıt akışı: hata dialog'u, `@save`, `saving` ilerlemesi, `applyResult`, Partly saved şeridi, Copy errors, ayrılma koruması.
-- Excel/CSV içe aktarma (`parseFile`; başlık satırı tespiti, otomatik eşleme, önizleme, yeni anahtarlar), Export olayı, telefonda salt okunur.
+- Excel/CSV içe aktarma (`parseFile`; başlık satırı tespiti, otomatik eşleme, önizleme, yeni anahtarlar; `parseFile` hata fırlatırsa sebep dialog'da görünür), Export olayı, telefonda salt okunur.
 
 ### Erişilebilirlik
 

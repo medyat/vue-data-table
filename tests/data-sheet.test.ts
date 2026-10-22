@@ -595,6 +595,25 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     await flush()
     w.vm.$forceUpdate()
   }
+  it('Import: parseFile hata fırlatırsa alan kırmızı + mesaj (role=alert) ve uygulamanın sebebi', async () => {
+    const w = await mountSheet({
+      rows: rows.slice(0, 5),
+      columns,
+      parseFile: async () => {
+        throw new Error('Only .csv here')
+      },
+    })
+    await w.get('.dt-sheet-import').trigger('click')
+    await flush()
+    await pickFile(w)
+    const dlg = document.querySelector('.dt-import')!
+    expect(dlg.querySelector('.dt-import-drop')!.classList.contains('is-failed')).toBe(true)
+    const err = dlg.querySelector('.dt-import-error')
+    expect(err?.getAttribute('role')).toBe('alert')
+    expect(err?.textContent).toContain("Couldn't read the file")
+    expect(err?.textContent).toContain('Only .csv here')
+    w.unmount()
+  })
   it('Import: başlık satırı tespiti, otomatik eşleme (alias), eşleşmeyen boş, önizleme, özet, uygulama tek adım; boş hücre silmez', async () => {
     const cols = columns.map((c) => (c.id === 'sku' ? { ...c, importAliases: ['Stok Kodu'] } : c))
     const w = await mountSheet({ rows: rows.slice(0, 5), columns: cols, parseFile })

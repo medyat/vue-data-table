@@ -66,8 +66,9 @@ const mountPhone = async (extra: Record<string, unknown> = {}) => {
     },
     attachTo: document.body,
   })
-  // Telefon alt sayfaları tembel yüklenir (defineAsyncComponent): ikinci tur onları da bağlar.
+  // Telefon alt sayfaları tembel yüklenir (defineAsyncComponent): dinamik import'lar bitene kadar bekle.
   await flush()
+  await vi.dynamicImportSettled()
   await flush()
   return w
 }

@@ -75,6 +75,8 @@ const file = shallowRef<File | null>(null)
 const workbook = shallowRef<ParsedWorkbook | null>(null)
 const loading = ref(false)
 const failed = ref(false)
+/** `parseFile`'ın fırlattığı sebep (uygulamanın metni); `import.failed` başlığının altında gösterilir. */
+const failReason = ref('')
 const sheetIndex = ref(0)
 const headerRow = ref(0)
 const mapping = ref<Record<number, string>>({})
@@ -113,9 +115,10 @@ const load = async (f: File) => {
     sheetIndex.value = 0
     headerRow.value = detectHeaderRow(wb.sheets[0]?.rows ?? [])
     rebuild()
-  } catch {
+  } catch (e) {
     workbook.value = null
     failed.value = true
+    failReason.value = e instanceof Error ? e.message : ''
   } finally {
     loading.value = false
   }
@@ -419,6 +422,10 @@ const sheetInfo = computed(() => {
               </p>
             </div>
           </template>
+          <p v-if="failed && !workbook" class="dt-import-error" role="alert">
+            {{ i18n.t('import.failed') }}
+            <template v-if="failReason">· {{ failReason }}</template>
+          </p>
         </div>
         <div class="dt-import-foot">
           <DialogClose class="dt-btn">{{ i18n.t('common.cancel') }}</DialogClose>

@@ -338,6 +338,7 @@ export const en: Record<string, string> = {
   "sheet.readOnly.total": "{count} {entity.other}",
   "import.title": "Import from Excel",
   "import.body": "Rows are matched by {key}: a known {key} updates its {entity.one}, a new {key} becomes a new row. Everything lands in the grid for review first.",
+  "import.failed": "Couldn't read the file",
   "import.drop": "Drop an .xlsx, .xls or .csv file, or choose one",
   "import.sheetInfo": "Sheet “{sheet}” · {count} rows",
   "import.headerRow": "Header row",

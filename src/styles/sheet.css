@@ -921,6 +921,11 @@
 .dt-import-drop.is-failed {
   border-color: var(--dt-r-dot);
 }
+.dt-import-error {
+  margin: 8px 0 0;
+  color: var(--dt-r-fg);
+  font-size: 12.5px;
+}
 .dt-import-drop-icon {
   display: inline-flex;
   align-items: center;

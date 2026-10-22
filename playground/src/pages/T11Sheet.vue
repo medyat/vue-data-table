@@ -11,6 +11,7 @@ import {
   type SheetChanges,
   type SheetRowResult,
 } from '@swors/data-table/sheet'
+import { Workbook, type CellValue } from 'exceljs'
 import { onMounted, shallowRef, useTemplateRef } from 'vue'
 import { productColumns, type Product } from '../data/products'
 
@@ -92,9 +93,32 @@ async function lookupKeys(keys: string[], { signal }: { signal: AbortSignal }) {
 }
 const newRowDefaults = (): Partial<Product> => ({ unit: 'pcs', vat: 20, active: true })
 
-/** Dosyayı uygulama ayrıştırır (07 §13). Burada yalnızca CSV (`;` veya `,` ayrılmış, tırnaklı); .xlsx için uygulama exceljs kullanır. */
+/** Dosyayı uygulama ayrıştırır (07 §13): .xlsx exceljs ile, .csv küçük bir ayrıştırıcıyla (`;` veya `,`, tırnaklı).
+ * Eski ikili .xls biçimini exceljs okumaz; paket sebebi dialog'da gösterir. */
 async function parseFile(file: File): Promise<ParsedWorkbook> {
-  if (!/\.csv$/i.test(file.name)) throw new Error('Only .csv in the playground (use exceljs for .xlsx in the app)')
+  if (/\.csv$/i.test(file.name)) return parseCsv(file)
+  if (!/\.xlsx$/i.test(file.name))
+    throw new Error('Only .xlsx and .csv files (the old binary .xls format is not supported)')
+  const wb = new Workbook()
+  await wb.xlsx.load(await file.arrayBuffer())
+  return {
+    sheets: wb.worksheets.map((ws) => ({
+      name: ws.name,
+      rows: Array.from({ length: ws.rowCount }, (_, i) => (ws.getRow(i + 1).values as CellValue[]).slice(1).map(plain)),
+    })),
+  }
+}
+/** exceljs hücre değeri → düz değer: formül → sonucu, zengin metin → birleşik metin, köprü → metni, hata → boş. */
+const plain = (v: CellValue): unknown => {
+  if (v && typeof v === 'object' && !(v instanceof Date)) {
+    if ('richText' in v) return v.richText.map((r) => r.text).join('')
+    if ('result' in v) return plain(v.result as CellValue)
+    if ('text' in v) return typeof v.text === 'string' ? v.text : plain(v.text as CellValue)
+    if ('error' in v) return null
+  }
+  return v
+}
+async function parseCsv(file: File): Promise<ParsedWorkbook> {
   const text = await file.text()
   const first = text.split('\n')[0] ?? ''
   const sep = first.split(';').length > first.split(',').length ? ';' : ','

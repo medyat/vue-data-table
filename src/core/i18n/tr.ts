@@ -338,6 +338,7 @@ export const tr: Record<string, string> = {
   "sheet.readOnly.total": "{count} {entity.one}",
   "import.title": "Excel'den içe aktar",
   "import.body": "Satırlar {key} ile eşleşir: bilinen {key} kaydını günceller, yeni {key} yeni satır olur. Her şey önce incelemeniz için tabloya gelir.",
+  "import.failed": "Dosya okunamadı",
   "import.drop": ".xlsx, .xls veya .csv dosyasını bırakın ya da seçin",
   "import.sheetInfo": "“{sheet}” sayfası · {count} satır",
   "import.headerRow": "Başlık satırı",
