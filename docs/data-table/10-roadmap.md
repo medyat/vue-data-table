@@ -200,4 +200,4 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 - [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, satır menüsü, sheet'te düzenle ve kaydet senaryoları tamamlanır.
 - [x] axe-core taramasında kritik/ciddi ihlal yok (Playwright).
 - [x] `prefers-reduced-motion` ve `forced-colors` kontrolleri.
-- [ ] Paket boyutu (gzip): çekirdek + DataTable ≤ 60 kB — ölçüm 63,2 kB (index 30,1 + plugin 9,5 + query 18,1 + TextEditor 4,3 + Layer 1,2; takvim ve telefon alt sayfaları ayrı parça: 5,6 + 2,1 + 3,4 + 2,4). Faz 7c telefon düzeni +3,8 kB; aşım 3,2 kB — karar bekliyor. `@swors/data-table/sheet` ayrı yüklenir (33,7 kB).
+- [x] Paket boyutu (gzip): çekirdek + DataTable 63,2 kB (index 30,1 + plugin 9,5 + query 18,1 + TextEditor 4,3 + Layer 1,2; takvim ve telefon alt sayfaları ayrı parça). 60 kB hedefi Faz 7c telefon düzeniyle 3,2 kB aşıldı; 2026-10-22 kararı: kabul, hedef 65 kB. `@swors/data-table/sheet` ayrı yüklenir (33,7 kB).
