@@ -4,7 +4,13 @@ import type { ParseEnv } from '../parse'
 
 export function useParseEnv(): () => ParseEnv {
   const { i18n, locale } = useDataTableContext()
-  return () => ({ locale, today: new Date(), todayWord: i18n.t('date.today') })
+  return () => ({
+    locale,
+    today: new Date(),
+    todayWord: i18n.t('date.today'),
+    yesWord: i18n.t('common.yes'),
+    noWord: i18n.t('common.no'),
+  })
 }
 
 /** Odak editöre, imleç sonda (F2 / yazarak açılış, 07 §5). */

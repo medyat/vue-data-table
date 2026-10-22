@@ -5,13 +5,41 @@ import { optionLabel } from '../core/cells/format'
 import { TYPE_SPECS } from '../core/cells/specs'
 import { isoDay } from '../core/filters/model'
 import { parseNumber } from '../core/format/parse'
-import type { ColumnDef } from '../types/columns'
+import type { ColumnDef, OptionDef } from '../types/columns'
 
 export interface ParseEnv {
   locale: string
   today: Date
   /** i18n `date.today` ("Today" / "Bugün"); "today" her dilde kabul edilir. */
   todayWord: string
+  /** i18n `common.yes` / `common.no` (boolean yapıştırma); true/false/1/0/yes/no her dilde. */
+  yesWord: string
+  noWord: string
+}
+
+/** Seçenek etiketle (büyük/küçük harf, İ/ı ve boşluk duyarsız) ya da değerle; eşleşmeyen ham metin (hata). */
+const matchOption = (options: OptionDef[], text: string, locale: string): unknown => {
+  const o = options.find((opt) => fold(opt.label, locale) === fold(text, locale) || String(opt.value) === text.trim())
+  return o ? o.value : text.trim()
+}
+/** `;` veya `,` ayrılmış liste (07 §5). */
+const splitList = (s: string): string[] =>
+  s
+    .split(/[;,]/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+/** Yapıştırılan bir sütunun ondalık ayırıcısı (07 §7): `1.234,56` / `12,5` → virgül; `1,234.56` / `12.5` → nokta; belirsizse null. */
+export function inferDecimal(texts: string[]): ',' | '.' | null {
+  for (const raw of texts) {
+    const s = raw.replace(/[\s%\u00a0A-Za-z₺€$£]/g, '')
+    const comma = s.lastIndexOf(',')
+    const dot = s.lastIndexOf('.')
+    if (comma >= 0 && dot >= 0) return comma > dot ? ',' : '.'
+    if (comma >= 0 && /,\d{1,2}$/.test(s) && !/^\d{1,3}(,\d{3})+$/.test(s)) return ','
+    if (dot >= 0 && /\.\d{1,2}$/.test(s) && !/^\d{1,3}(\.\d{3})+$/.test(s)) return '.'
+  }
+  return null
 }
 
 const fold = (s: string, locale: string): string => s.trim().toLocaleLowerCase(locale).replace(/ı|i̇/g, 'i')
@@ -56,11 +84,17 @@ export function parseInput(def: ColumnDef, text: string, env: ParseEnv): unknown
     case 'date':
     case 'datetime':
       return parseDateInput(s, env) ?? s
-    case 'select': {
-      const o = def.options.find(
-        (opt) => fold(opt.label, env.locale) === fold(s, env.locale) || String(opt.value) === s,
-      )
-      return o ? o.value : s
+    case 'select':
+      return matchOption(def.options, s, env.locale)
+    case 'multiselect':
+      return splitList(s).map((part) => matchOption(def.options, part, env.locale))
+    case 'tags':
+      return splitList(s)
+    case 'boolean': {
+      const v = fold(s, env.locale)
+      if (['true', '1', 'yes', fold(env.yesWord, env.locale)].includes(v)) return true
+      if (['false', '0', 'no', fold(env.noWord, env.locale)].includes(v)) return false
+      return s
     }
     case 'uppercase':
       return s.toLocaleUpperCase(env.locale)

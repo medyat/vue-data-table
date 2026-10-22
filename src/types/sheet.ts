@@ -46,15 +46,17 @@ export interface SheetStatus {
   warningRows: number
 }
 
-/** useTemplateRef<DataSheetHandle>('sheet'). Faz 6a: durum, kirli mi, yük, Discard, F8. */
+/** useTemplateRef<DataSheetHandle>('sheet'). `applyResult` 6c'de. */
 export interface DataSheetHandle {
   status: Readonly<SheetStatus>
   /** Yönlendirici koruması için. */
   isDirty: () => boolean
   /** `@save` ile aynı yük; uygulamanın kendi kaydetme düğmesi için. */
   getChanges: () => SheetChanges
-  /** Discard: tüm satırlar yüklendiği hale döner. */
+  /** Discard: tüm satırlar yüklendiği hale döner; yığın temizlenir. */
   reset: () => void
+  undo: () => void
+  redo: () => void
   /** F8 ile aynı. */
   goToNextError: () => void
 }

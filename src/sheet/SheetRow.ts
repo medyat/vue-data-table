@@ -1,7 +1,8 @@
 // Sheet satırı + hücreler (07 §3–4, handoff 06 §5): render fonksiyonu (sanal listede yüzlerce örnek). Gutter (56 px,
 // satır no + işaret), hücre durumları (editable / read-only / active / in selection / editing / changed / error / warning /
-// required), editör hücrenin yerinde. Satırın taslak ve hata Map'leri prop'tur: yalnızca değişen satır yeniden çizilir.
-import { PhLock, PhWarningCircle } from '@phosphor-icons/vue'
+// required / new / fill target / match), editör hücrenin yerinde. Satırın taslak ve hata Map'leri prop'tur: yalnızca
+// değişen satır yeniden çizilir.
+import { PhLock, PhPlus, PhWarningCircle } from '@phosphor-icons/vue'
 import { defineComponent, h, type Component, type PropType, type VNodeChild } from 'vue'
 import { formatCell, isEmptyValue } from '../core/cells/format'
 import { cellFillStyle, renderCellContent, type RenderEnv } from '../core/cells/renderCell'
@@ -21,6 +22,12 @@ export interface RowSelection {
   to: number
   top: boolean
   bottom: boolean
+}
+/** Doldurma hedefi: sütun dizini aralığı; `last` son hedef satır (alt kenar). */
+export interface RowFill {
+  from: number
+  to: number
+  last: boolean
 }
 export interface CellEditing {
   columnId: string
@@ -45,15 +52,22 @@ export default defineComponent({
     editorFor: { type: Function as PropType<(def: ColumnDef<AnyRow>) => Component | null>, required: true },
     draft: { type: Map as PropType<Map<string, unknown>>, default: undefined },
     issues: { type: Map as PropType<Map<string, Issue>>, default: undefined },
+    /** Yeni satır (sona taşan yapıştırma, 07 §7): gutter'da `+`, anahtar hücresinde "New". */
+    isNew: { type: Boolean, default: false },
     /** Aktif hücrenin sütun id'si (roving tabindex 0). */
     active: { type: String as PropType<string | null>, default: null },
     selection: { type: Object as PropType<RowSelection | null>, default: null },
+    /** Fill handle'ın çizildiği hücre (tek hücrede aktif, aralıkta sağ alt köşe). */
+    handleAt: { type: String as PropType<string | null>, default: null },
+    fill: { type: Object as PropType<RowFill | null>, default: null },
+    /** Find in grid eşleşen sütunlar. */
+    found: { type: Set as PropType<Set<string>>, default: undefined },
     editing: { type: Object as PropType<CellEditing | null>, default: null },
     /** Hata balonu ilk satırda hücrenin altında (üstte header'ın altında kalırdı). */
     tipBelow: { type: Boolean, default: false },
     style: { type: Object as PropType<Record<string, string>>, default: undefined },
   },
-  emits: ['edit-value'],
+  emits: ['edit-value', 'use-suggestion'],
   setup(props, { emit }) {
     const t = (key: string, params?: Record<string, string | number>) => props.env.i18n.t(key, params)
 
@@ -67,7 +81,10 @@ export default defineComponent({
       const isActive = props.active === id
       const sel = props.selection
       const inSel = !!sel && i >= sel.from && i <= sel.to
+      const fill = props.fill
+      const inFill = !!fill && i >= fill.from && i <= fill.to
       const ed = props.editing?.columnId === id ? props.editing : null
+      const isKey = id === props.keyColumn
 
       let content: VNodeChild
       if (ed?.inCell) {
@@ -79,18 +96,35 @@ export default defineComponent({
           'onUpdate:modelValue': (v: unknown) => emit('edit-value', v),
         })
       } else if (ed) content = h('span', { class: 'dt-cell-content' }, inputText(def, ed.value))
-      else if (issue?.level === 'error' && def.required && isEmptyValue(value))
-        content = h('span', { class: 'dt-cell-content dt-cell-required' }, t('sheet.required'))
+      else if (issue?.level === 'error' && isEmptyValue(value) && issue.message === t('sheet.required'))
+        content = h('span', { class: 'dt-cell-content dt-cell-required' }, issue.message)
       else content = h('span', { class: 'dt-cell-content' }, [renderCellContent(def, props.row, value, props.env)])
 
       const children: VNodeChild[] = [content]
-      if (!editable && id !== props.keyColumn)
+      if (isKey && props.isNew && !ed) children.push(h('span', { class: 'dt-tag-new' }, t('sheet.tag.new')))
+      if (!editable && !isKey)
         children.push(
           h(PhLock, { size: 12, class: 'dt-cell-lock', role: 'img', 'aria-label': t('sheet.readOnly.badge') }),
         )
       if (issue)
-        children.push(h('span', { class: ['dt-cell-tip', `is-${issue.level}`], role: 'tooltip' }, issue.message))
-      if (isActive && !ed) children.push(h('span', { class: 'dt-fill-handle', 'aria-hidden': 'true' }))
+        children.push(
+          h('span', { class: ['dt-cell-tip', `is-${issue.level}`], role: 'tooltip' }, [
+            issue.message,
+            issue.suggest
+              ? h(
+                  'button',
+                  {
+                    type: 'button',
+                    class: 'dt-cell-tip-btn',
+                    tabindex: -1,
+                    onClick: () => emit('use-suggestion', def, issue.suggest!.value),
+                  },
+                  t('sheet.useOption', { option: issue.suggest.label }),
+                )
+              : null,
+          ]),
+        )
+      if (props.handleAt === id && !ed) children.push(h('span', { class: 'dt-fill-handle', 'aria-hidden': 'true' }))
 
       return h(
         'div',
@@ -100,7 +134,8 @@ export default defineComponent({
             `is-${alignOf(def)}`,
             {
               'is-numeric': isNumericType(def.type),
-              'is-key': id === props.keyColumn,
+              'is-key': isKey,
+              'is-new': isKey && props.isNew,
               'is-readonly': !editable,
               'is-active': isActive,
               'is-selected': inSel,
@@ -108,6 +143,9 @@ export default defineComponent({
               'is-edge-r': inSel && i === sel!.to,
               'is-edge-t': inSel && sel!.top,
               'is-edge-b': inSel && sel!.bottom,
+              'is-fill': inFill,
+              'is-fill-end': inFill && fill!.last,
+              'is-match': props.found?.has(id) ?? false,
               'is-editing': !!ed,
               'is-changed': changed,
               'is-error': issue?.level === 'error',
@@ -131,9 +169,9 @@ export default defineComponent({
           'aria-readonly': editable ? undefined : 'true',
           'aria-selected': inSel ? 'true' : undefined,
           'data-col': id,
-          // Öncelik Error > Warning > Changed (07 §4): hata/uyarı balonu varken "Was …" ipucu yok.
+          // Öncelik Error > Warning > Changed (07 §4): hata/uyarı balonu varken "Was …" ipucu yok; yeni satırda orijinal yok.
           'data-dt-tip':
-            changed && !issue && !ed
+            changed && !issue && !ed && !props.isNew
               ? t('sheet.was', { value: formatCell(def, props.row, props.original(props.row, def), props.env) })
               : undefined,
         },
@@ -156,9 +194,11 @@ export default defineComponent({
                 role: 'img',
                 'aria-label': t('sheet.hasErrors'),
               })
-            : changed
-              ? h('span', { class: 'dt-mark is-changed', role: 'img', 'aria-label': t('sheet.changed') })
-              : null,
+            : props.isNew
+              ? h(PhPlus, { size: 13, class: 'dt-mark is-new', role: 'img', 'aria-label': t('sheet.tag.new') })
+              : changed
+                ? h('span', { class: 'dt-mark is-changed', role: 'img', 'aria-label': t('sheet.changed') })
+                : null,
           h('span', { class: 'dt-gutter-no' }, String(props.rowNo)),
         ],
       )

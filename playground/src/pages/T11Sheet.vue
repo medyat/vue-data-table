@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // T11 · DataSheet (Faz 6a): 10.000 ürün sahte API'den 2.000'lik parçalarla yüklenir (ilerleme şeridi); düzenleme yükleme
-// bitince açılır. @save yalnızca konsola yazar (kayıt teslimi 6c). URL: ?delay=ms (parça başına gecikme), ?limit=1 (maxRows).
+// bitince açılır. @save yalnızca konsola yazar (kayıt teslimi 6c). URL: ?delay=ms (parça başına gecikme), ?limit=1 (maxRows
+// şeridi), ?rows=N (yalnızca ilk N ürün; yapıştırmayla yeni satır denemek için).
 import { DataSheet, type DataSheetHandle, type Progress, type SheetChanges } from '@swors/data-table/sheet'
 import { onMounted, shallowRef, useTemplateRef } from 'vue'
 import { productColumns, type Product } from '../data/products'
@@ -8,6 +9,7 @@ import { productColumns, type Product } from '../data/products'
 const params = new URLSearchParams(location.search)
 const delay = Number(params.get('delay') ?? 150)
 const maxRows = params.get('limit') === '1' ? 5000 : 10_000
+const onlyRows = Number(params.get('rows') ?? 0)
 const rows = shallowRef<Product[]>([])
 const loading = shallowRef<Progress>(true)
 const sheet = useTemplateRef<DataSheetHandle>('sheet')
@@ -19,6 +21,10 @@ onMounted(async () => {
     const res = await fetch(`/api/products?page=${page}&size=${size}&delay=${delay}`)
     const data = (await res.json()) as { items: Product[]; total: number }
     rows.value = rows.value.concat(data.items)
+    if (onlyRows && rows.value.length >= onlyRows) {
+      rows.value = rows.value.slice(0, onlyRows)
+      break
+    }
     loading.value = { done: rows.value.length, total: data.total }
     if (rows.value.length >= data.total || data.items.length === 0) break
   }

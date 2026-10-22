@@ -144,7 +144,7 @@ TanStack `cellSelection`: `cell.getTabIndex()` (roving tabindex; aktif hücre DO
 
 ### Kopyala / Kes
 
-- `⌘C` (ızgaradaki `copy` olayı): aralık panoya `text/plain` (TSV) ve `text/html` (`<table>`) olarak yazılır. Değerler **görüntülenen biçimde** (Excel'e yapıştırınca doğru görünsün): sayılar uygulama yerel ayarında, seçenekler etiketleriyle. Değerler aralık sınırlarından (`getCellSelectionBounds()`) depo okuyucusuyla alınır — taslak değerler; TanStack `getSelectedCellRangesData()` kullanılmaz (önbellekli `getValue`).
+- `⌘C` (ızgaradaki `copy` olayı): aralık panoya `text/plain` (TSV) ve `text/html` (`<table>`) olarak yazılır. Değerler **görüntülenen biçimde** (Excel'e yapıştırınca doğru görünsün): sayılar uygulama yerel ayarında, seçenekler etiketleriyle; geri yapıştırılabilsin diye para kodu ve boş değer işareti (“—”) yazılmaz, tarihler ISO (`2026-10-24`), listeler `; ` ile. Değerler aralık sınırlarından (`getCellSelectionBounds()`) depo okuyucusuyla alınır — taslak değerler; TanStack `getSelectedCellRangesData()` kullanılmaz (önbellekli `getValue`).
 - `⌘X`: kopyalar ve hücreleri **hemen** temizler (tek undo adımı). Read-only hücreler kopyalanır ama temizlenmez.
 
 ### Yapıştır
@@ -156,7 +156,7 @@ TanStack `cellSelection`: `cell.getTabIndex()` (roving tabindex; aktif hücre DO
 - **Read-only hücreler atlanır**, asla üzerine yazılmaz.
 - **Seçenekler etiketle eşleşir:** büyük/küçük harf ve baş/son boşluk duyarsız, `tr` yerel ayarına uygun (`İ/i`, `I/ı`). Eşleşmeyen → hücre hatası (§5).
 - **Sayılar panonun yerel ayarıyla okunur.** Pano yerel ayarı bilinmediği için sütun bazında çıkarım: değerlerden biri `1.234,56` / `12,5` kalıbına uyuyorsa virgül ondalık; `1,234.56` / `12.5` ise nokta ondalık. Belirsizse (`1.250`) uygulamanın `locale`'i. `%20`, `20%`, `20` → 20%.
-- Sonuç toast'ı (koyu, altta): “**Pasted 5 rows × 3 columns** · 2 values aren't options · **Review** · Undo ⌘Z”. Review ilk sorunlu hücreye gider.
+- Sonuç toast'ı (koyu, altta): “**Pasted 5 rows × 3 columns** · 2 values aren't options · **Review** · Undo ⌘Z”. Seçenek dışı hatalar (“2 cells have errors”, `sheet.pasteErrors`) ayrıca sayılır. Review ilk sorunlu hücreye gider.
 - Yapıştırma `maxRows`'u aşacaksa uygulanmaz: `sheet.limitPaste`: “This paste would make 10,240 rows. The limit is 10,000.”
 - Tüm yapıştırma **tek undo adımı**.
 

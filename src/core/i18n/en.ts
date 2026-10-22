@@ -290,6 +290,8 @@ export const en: Record<string, string> = {
   "sheet.pasted": "Pasted {rows} rows × {cols} columns",
   "sheet.pasteIssues.one": "{count} value isn't an option",
   "sheet.pasteIssues.other": "{count} values aren't options",
+  "sheet.pasteErrors.one": "{count} cell has an error",
+  "sheet.pasteErrors.other": "{count} cells have errors",
   "sheet.review": "Review",
   "sheet.fillPreview": "Fill {count} cells with {value}",
   "sheet.limitPaste": "This paste would make {count} rows. The limit is {max}.",

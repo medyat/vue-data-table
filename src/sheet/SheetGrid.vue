@@ -1,22 +1,23 @@
 <script setup lang="ts">
-// Sheet ızgarası (07 §2–6, 08 §2 sheet, handoff 06 §5): tek kayan alan, sticky header, gutter (56 px) + sola sabit
+// Sheet ızgarası (07 §2–8, 08 §2 sheet, handoff 06 §5): tek kayan alan, sticky header, gutter (56 px) + sola sabit
 // sütunlar, sanal satırlar (aktif satır DOM'da kalır); hücre odaklı klavye (roving tabindex = aktif hücre), fare ile
-// hücre / aralık seçimi (TanStack handler'ları, gutter = satır), düzenleme başlatma ve onaylama kuralları. Veri, seçim
-// ve düzenleme durumu `sheet` nesnesinden (DataSheet kurar); bu dosya yalnızca DOM, odak ve kaydırmayı yönetir.
+// hücre / aralık seçimi (TanStack handler'ları, gutter = satır, kenarda otomatik kaydırma), fill handle sürükleme,
+// pano olayları, düzenleme başlatma ve onaylama kuralları. Veri, seçim ve düzenleme durumu `sheet` nesnesinden
+// (DataSheet kurar); bu dosya yalnızca DOM, odak ve kaydırmayı yönetir.
 import { PhLock } from '@phosphor-icons/vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import type { RenderEnv } from '../core/cells/renderCell'
 import { alignOf, isNumericType } from '../core/cells/specs'
 import type { ColumnLayoutApi, LayoutColumn } from '../core/columns/useColumnLayout'
 import { getFormat } from '../core/format'
 import SkeletonRow from '../core/grid/SkeletonRow'
-import { INTERACTIVE_SELECTOR, isInteractive } from '../core/interaction/isInteractive'
+import { INTERACTIVE_SELECTOR, isInteractive, isTextInput } from '../core/interaction/isInteractive'
 import { useDataTableContext } from '../core/plugin'
 import type { ColumnDef } from '../types/columns'
 import type { Density } from '../types/core'
-import SheetRow, { type CellEditing, type RowSelection } from './SheetRow'
+import SheetRow, { type CellEditing, type RowFill, type RowSelection } from './SheetRow'
 import type { SheetApi } from './useSheetEditing'
 import type { Direction } from './useSheetTable'
 
@@ -24,6 +25,9 @@ import type { Direction } from './useSheetTable'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = any
 const GUTTER_W = 56
+/** Sürüklerken bu kadar yakınken kenar kaydırır (px / kare). */
+const EDGE = 24
+const SCROLL_STEP = 12
 
 const props = withDefaults(
   defineProps<{
@@ -39,8 +43,10 @@ const props = withDefaults(
     skeleton?: boolean
     verticalLines?: boolean
     keyColumn: string
+    /** Find in grid eşleşmeleri: satır anahtarı → sütunlar. */
+    found?: Map<string, Set<string>> | null
   }>(),
-  { density: 'compact', loading: false, skeleton: false, verticalLines: true },
+  { density: 'compact', loading: false, skeleton: false, verticalLines: true, found: null },
 )
 defineSlots<{ state?: () => unknown }>()
 
@@ -106,12 +112,23 @@ const selectionFor = (i: number): RowSelection | null => {
   if (!b || !multi.value || i < b.minRowIndex || i > b.maxRowIndex) return null
   return { from: b.minColumnIndex, to: b.maxColumnIndex, top: i === b.minRowIndex, bottom: i === b.maxRowIndex }
 }
+/** Fill handle: tek hücrede aktif hücre, aralıkta sağ alt köşe. */
+const handleFor = (i: number): string | null => {
+  const b = table.bounds.value
+  if (!b || fillDrag.value) return null
+  if (!multi.value) return i === activeIndex.value ? (active.value?.columnId ?? null) : null
+  return i === b.maxRowIndex ? (columns.value[b.maxColumnIndex]?.id ?? null) : null
+}
 const editingFor = (i: number): CellEditing | null => {
   const e = sheet.edit.editing.value
   const row = props.rows[i]
   return e && row && keyOf(e.row) === keyOf(row)
     ? { columnId: e.def.id as string, value: e.value, inCell: e.inCell }
     : null
+}
+const foundFor = (i: number) => {
+  const row = props.rows[i]
+  return row ? props.found?.get(keyOf(row)) : undefined
 }
 
 const count = computed(() => (props.skeleton ? 24 : props.rows.length))
@@ -216,6 +233,7 @@ const jump = (dir: Direction) => {
 }
 const pageSize = () => Math.max(1, Math.floor((scrollEl.value?.clientHeight ?? 0) / (rowHeight.value + 1)) - 1)
 const DIR: Record<string, Direction> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
+const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const onKeydown = (e: KeyboardEvent) => {
   const target = e.target as HTMLElement
@@ -321,6 +339,7 @@ const onKeydown = (e: KeyboardEvent) => {
       return
   }
   if (mod) {
+    // ⌘C / ⌘X / ⌘V tarayıcının copy/cut/paste olaylarıyla gelir (aşağıda); burada yalnızca kısayol tuşları.
     const k = e.key.toLowerCase()
     if (k === 'a' && !e.shiftKey) {
       e.preventDefault()
@@ -328,6 +347,15 @@ const onKeydown = (e: KeyboardEvent) => {
     } else if (k === 's') {
       e.preventDefault()
       sheet.save()
+    } else if (k === 'd' && !e.shiftKey) {
+      e.preventDefault()
+      sheet.fillDown()
+    } else if (k === 'z' && !e.shiftKey) {
+      e.preventDefault()
+      sheet.undo()
+    } else if ((k === 'z' && e.shiftKey) || (k === 'y' && !mac)) {
+      e.preventDefault()
+      sheet.redo()
     }
     return
   }
@@ -338,6 +366,13 @@ const onKeydown = (e: KeyboardEvent) => {
   }
 }
 
+/** Pano (07 §7): odak hücredeyken (editör ya da widget input'u değilken). */
+const clipboard = (e: ClipboardEvent, action: 'copy' | 'cut' | 'paste') => {
+  if (sheet.edit.editing.value?.inCell || isTextInput(e.target as Element)) return
+  if (!(e.target as HTMLElement).closest('.dt-cell[data-col]')) return
+  if (sheet[action](e.clipboardData)) e.preventDefault()
+}
+
 interface Hit {
   index: number
   row: AnyRow
@@ -345,19 +380,125 @@ interface Hit {
   cell: HTMLElement
   target: HTMLElement
 }
-const hit = (e: Event): Hit | null => {
-  const target = e.target as HTMLElement
-  const cell = target.closest<HTMLElement>('.dt-cell[data-col]')
-  const rowEl = target.closest<HTMLElement>('.dt-row[data-index]')
+const hitAt = (target: HTMLElement | null): Hit | null => {
+  const cell = target?.closest<HTMLElement>('.dt-cell[data-col]')
+  const rowEl = target?.closest<HTMLElement>('.dt-row[data-index]')
   if (!cell || !rowEl || props.skeleton) return null
   const index = Number(rowEl.dataset.index)
   const row = props.rows[index]
-  return row ? { index, row, columnId: cell.dataset.col!, cell, target } : null
+  return row ? { index, row, columnId: cell.dataset.col!, cell, target: target! } : null
 }
+const hit = (e: Event): Hit | null => hitAt(e.target as HTMLElement)
+
+// Sürükleme (seçim ya da doldurma): kenara yaklaşınca otomatik kayar, kayan içerikte imlecin altındaki hücre izlenir.
+const dragging = shallowRef<'select' | 'fill' | null>(null)
+const fillDrag = shallowRef<{ fromRow: number; toRow: number; cols: [number, number]; target: number } | null>(null)
+const fillLabel = shallowRef<{ left: number; top: number; text: string } | null>(null)
+let pointer = { x: 0, y: 0 }
+let scrollRaf = 0
+const extendTo = (h: Hit | null) => {
+  if (!h) return
+  if (dragging.value === 'fill') {
+    const f = fillDrag.value!
+    const target = h.index > f.toRow ? h.index : h.index < f.fromRow ? h.index : f.toRow
+    if (target !== f.target) {
+      fillDrag.value = { ...f, target }
+      updateFillLabel()
+    }
+  } else table.extendHandler(keyOf(h.row), h.columnId)?.(new MouseEvent('mouseover'))
+}
+const autoScroll = () => {
+  scrollRaf = 0
+  const sc = scrollEl.value
+  if (!dragging.value || !sc) return
+  const r = sc.getBoundingClientRect()
+  let dy = 0
+  if (pointer.y < r.top + EDGE) dy = -SCROLL_STEP
+  else if (pointer.y > r.bottom - EDGE) dy = SCROLL_STEP
+  let dx = 0
+  if (dragging.value === 'select') {
+    if (pointer.x < r.left + pinnedWidth() + EDGE) dx = -SCROLL_STEP
+    else if (pointer.x > r.right - EDGE) dx = SCROLL_STEP
+  }
+  if (dy || dx) {
+    sc.scrollTop += dy
+    sc.scrollLeft += dx
+    extendTo(hitAt(document.elementFromPoint(pointer.x, pointer.y) as HTMLElement | null))
+    scrollRaf = requestAnimationFrame(autoScroll)
+  }
+}
+const onMousemove = (e: MouseEvent) => {
+  if (!dragging.value) return
+  pointer = { x: e.clientX, y: e.clientY }
+  if (dragging.value === 'fill') extendTo(hit(e))
+  if (!scrollRaf) scrollRaf = requestAnimationFrame(autoScroll)
+}
+const updateFillLabel = () => {
+  const f = fillDrag.value
+  if (!f || f.target === f.toRow) {
+    fillLabel.value = null
+    return
+  }
+  const last = f.target > f.toRow ? f.target : f.target
+  const el = cellEl(last, columns.value[f.cols[1]]!.id)
+  const rootRect = root.value?.getBoundingClientRect()
+  if (!el || !rootRect) {
+    fillLabel.value = null
+    return
+  }
+  const r = el.getBoundingClientRect()
+  fillLabel.value = {
+    left: r.right - rootRect.left + 10,
+    top: r.bottom - rootRect.top - 13,
+    text: sheet.fillLabel(f.fromRow, f.toRow, f.cols, f.target),
+  }
+}
+const onDocMouseup = () => {
+  if (dragging.value === 'fill' && fillDrag.value) {
+    const f = fillDrag.value
+    if (f.target !== f.toRow) sheet.fill(f.fromRow, f.toRow, f.cols, f.target)
+    fillDrag.value = null
+    fillLabel.value = null
+    focusActive()
+  }
+  dragging.value = null
+  cancelAnimationFrame(scrollRaf)
+  scrollRaf = 0
+}
+onMounted(() => document.addEventListener('mouseup', onDocMouseup))
+onBeforeUnmount(() => {
+  document.removeEventListener('mouseup', onDocMouseup)
+  cancelAnimationFrame(scrollRaf)
+})
+
 let rowAnchor = -1
 const onMousedown = (e: MouseEvent) => {
   if (e.button !== 0) return
   const target = e.target as HTMLElement
+  // Fill handle (07 §8): 4 px dışarı taştığı için alt satırın hücresi hedef olabilir; dikdörtgenle tespit.
+  const handle = root.value?.querySelector<HTMLElement>('.dt-fill-handle')
+  const hr = handle?.getBoundingClientRect()
+  if (
+    hr &&
+    e.clientX >= hr.left - 2 &&
+    e.clientX <= hr.right + 2 &&
+    e.clientY >= hr.top - 2 &&
+    e.clientY <= hr.bottom + 2
+  ) {
+    const b = table.bounds.value
+    if (!b) return
+    e.preventDefault()
+    sheet.edit.commit()
+    fillDrag.value = {
+      fromRow: b.minRowIndex,
+      toRow: b.maxRowIndex,
+      cols: [b.minColumnIndex, b.maxColumnIndex],
+      target: b.maxRowIndex,
+    }
+    dragging.value = 'fill'
+    pointer = { x: e.clientX, y: e.clientY }
+    return
+  }
   const rowEl = target.closest<HTMLElement>('.dt-row[data-index]')
   if (target.closest('.dt-gutter') && rowEl && !props.skeleton) {
     // Gutter: satırın tamamı, ⇧ ile satır aralığı (07 §6).
@@ -385,9 +526,12 @@ const onMousedown = (e: MouseEvent) => {
   sheet.edit.commit()
   if (!isInteractive(h.target, h.cell)) e.preventDefault()
   table.startHandler(keyOf(h.row), h.columnId)?.(e)
+  dragging.value = 'select'
+  pointer = { x: e.clientX, y: e.clientY }
   h.cell.focus({ preventScroll: true })
 }
 const onMouseover = (e: MouseEvent) => {
+  if (dragging.value === 'fill') return
   const h = hit(e)
   if (h) table.extendHandler(keyOf(h.row), h.columnId)?.(e)
 }
@@ -396,6 +540,14 @@ const onDblclick = (e: MouseEvent) => {
   if (!h || isInteractive(h.target, h.cell)) return
   const def = defById.value.get(h.columnId)
   if (def) sheet.edit.start(h.row, def, { inCell: true })
+}
+const fillFor = (i: number): RowFill | null => {
+  const f = fillDrag.value
+  if (!f || f.target === f.toRow) return null
+  const down = f.target > f.toRow
+  const inRange = down ? i > f.toRow && i <= f.target : i < f.fromRow && i >= f.target
+  if (!inRange) return null
+  return { from: f.cols[0], to: f.cols[1], last: down ? i === f.target : i === f.fromRow - 1 }
 }
 
 const unitOf = (def: ColumnDef<AnyRow>) => (typeof def.unit === 'string' ? def.unit : undefined)
@@ -413,7 +565,12 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
   <div
     ref="root"
     class="dt-grid dt-sheet-grid"
-    :class="{ 'is-scrolled-start': scrolledStart, 'is-skeleton': skeleton, 'has-vlines': verticalLines }"
+    :class="{
+      'is-scrolled-start': scrolledStart,
+      'is-skeleton': skeleton,
+      'has-vlines': verticalLines,
+      'is-filling': dragging === 'fill',
+    }"
     role="grid"
     :aria-label="label"
     :aria-rowcount="skeleton ? -1 : rows.length"
@@ -422,8 +579,12 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
     :data-density="density"
     @keydown="onKeydown"
     @mousedown="onMousedown"
+    @mousemove="onMousemove"
     @mouseover="onMouseover"
     @dblclick="onDblclick"
+    @copy="clipboard($event, 'copy')"
+    @cut="clipboard($event, 'cut')"
+    @paste="clipboard($event, 'paste')"
   >
     <div ref="scrollEl" class="dt-scroll" @scroll.passive="onScroll">
       <div class="dt-head" role="row" aria-rowindex="1">
@@ -494,14 +655,27 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
             :editor-for="sheet.editorFor"
             :draft="store.rowDraft(keyOf(rows[item.index]))"
             :issues="store.rowIssues(keyOf(rows[item.index]))"
+            :is-new="store.isNew(keyOf(rows[item.index]))"
             :active="activeIndex === item.index ? active!.columnId : null"
             :selection="selectionFor(item.index)"
+            :handle-at="handleFor(item.index)"
+            :fill="fillFor(item.index)"
+            :found="foundFor(item.index)"
             :editing="editingFor(item.index)"
             :tip-below="item.index === 0"
             @edit-value="(v) => sheet.edit.setValue(v)"
+            @use-suggestion="(def, v) => sheet.useSuggestion(rows[item.index], def, v)"
           />
         </div>
       </div>
+    </div>
+    <div
+      v-if="fillLabel"
+      class="dt-fill-label"
+      role="status"
+      :style="{ left: `${fillLabel.left}px`, top: `${fillLabel.top}px` }"
+    >
+      {{ fillLabel.text }}
     </div>
     <div v-if="$slots.state && !skeleton && rows.length === 0" class="dt-body-state"><slot name="state" /></div>
   </div>

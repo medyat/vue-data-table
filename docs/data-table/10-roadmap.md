@@ -151,13 +151,13 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 
 **Kapsam:** aralık seçimi, status bar Σ, kopyala/kes/yapıştır (olay tabanlı + `readText` yedeği; `getCellSelectionBounds()` + depo okuyucu; TSV + HTML, yerel ayar çıkarımı, seçenek eşleme, read-only atlama, görünür satırlara yazma, sona taşmada yeni satır), fill handle + seri, ⌘D, komut yığını (undo/redo), Find in grid.
 
-- [ ] Kopyalama güncel (taslak) değerleri alır; `getSelectedCellRangesData()` kullanılmaz.
-- [ ] Excel'den kopyalanan 1.000 × 10 aralık < 300 ms'de yapıştırılır (doğrulama dahil).
-- [ ] Read-only hücreler asla değişmez; gizli (filtreli) satırlara yazılmaz.
-- [ ] "Pump" → hata + "Use Pumps"; toast "Pasted 5 rows × 3 columns · 2 values aren't options · Review · Undo".
-- [ ] Seri (1, 2, 3) devam eder, diğerleri kopyalanır; "Fill 4 cells with 10%".
-- [ ] Her işlem tek undo adımı; 100 adım sınırı; undo seçimi o hücreye taşır.
-- [ ] Excel'e geri yapıştırılan aralık doğru biçimde görünür.
+- [x] Kopyalama güncel (taslak) değerleri alır; `getSelectedCellRangesData()` kullanılmaz.
+- [x] Excel'den kopyalanan 1.000 × 10 aralık < 300 ms'de yapıştırılır (doğrulama dahil).
+- [x] Read-only hücreler asla değişmez; gizli (filtreli) satırlara yazılmaz.
+- [x] "Pump" → hata + "Use Pumps"; toast "Pasted 5 rows × 3 columns · 2 values aren't options · Review · Undo".
+- [x] Seri (1, 2, 3) devam eder, diğerleri kopyalanır; "Fill 4 cells with 10%".
+- [x] Her işlem tek undo adımı; 100 adım sınırı; undo seçimi o hücreye taşır.
+- [x] Excel'e geri yapıştırılan aralık doğru biçimde görünür.
 
 ### 6c — Satır partisi, anahtar, kayıt teslimi
 

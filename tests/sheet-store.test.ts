@@ -59,7 +59,7 @@ const columns: Array<ColumnDef<Product>> = [
 ]
 const i18n = createI18n({ locale: 'en' })
 const def = (id: string) => columns.find((c) => c.id === id)!
-const make = () => useSheetStore<Product>({ rows, columns, rowKey: 'id', keyColumn: 'sku', i18n })
+const make = () => useSheetStore<Product>({ rows, columns, rowKey: 'id', keyColumn: 'sku', i18n, locale: 'en' })
 
 describe('useSheetStore', () => {
   it('tek okuyucu: taslak → satır; rows değişmez', () => {
@@ -111,12 +111,12 @@ describe('useSheetStore', () => {
     })
     s.reset()
     expect(s.getChanges().rows).toEqual([])
-    expect(s.counts.value).toEqual({ changedCells: 0, changedRows: 0, errorRows: 0, warningRows: 0 })
+    expect(s.counts.value).toEqual({ changedCells: 0, changedRows: 0, errorRows: 0, warningRows: 0, newRows: 0 })
   })
 })
 
 describe('parseInput', () => {
-  const env = { locale: 'en', today: new Date(2026, 9, 21), todayWord: 'Today' }
+  const env = { locale: 'en', today: new Date(2026, 9, 21), todayWord: 'Today', yesWord: 'Yes', noWord: 'No' }
   const tr = { ...env, locale: 'tr', todayWord: 'Bugün' }
   it('sayılar yerel ayara göre; yüzde; boş → null; çözülemeyen ham metin', () => {
     const price = def('listPrice')
@@ -156,5 +156,128 @@ describe('parseInput', () => {
     expect(inputText(def('listPrice'), 2240)).toBe('2240')
     expect(inputText(def('category'), 'hyd')).toBe('Hydraulics')
     expect(inputText(def('note'), null)).toBe('')
+  })
+})
+
+describe('komut yığını, toplu yazma, yeni satırlar (Faz 6b)', () => {
+  it('apply tek adım; undo/redo before/after ile; 100 adım sınırı; boş değişiklik adım değil', () => {
+    const s = make()
+    const patches = s.apply([
+      { row: rows[0]!, def: def('name'), value: 'A' },
+      { row: rows[0]!, def: def('note'), value: 'n' },
+      { row: rows[1]!, def: def('name'), value: 'Pump' }, // aynı değer → yama yok
+    ])
+    expect(patches).toEqual([
+      { key: '1', col: 'name', before: 'Cylinder', after: 'A' },
+      { key: '1', col: 'note', before: null, after: 'n' },
+    ])
+    expect(s.canUndo.value).toBe(true)
+    expect(s.canRedo.value).toBe(false)
+    const step = s.undo()
+    expect(step?.patches).toHaveLength(2)
+    expect(s.read(rows[0]!, def('name'))).toBe('Cylinder')
+    expect(s.counts.value.changedCells).toBe(0)
+    expect(s.canRedo.value).toBe(true)
+    s.redo()
+    expect(s.read(rows[0]!, def('note'))).toBe('n')
+    expect(s.apply([{ row: rows[0]!, def: def('note'), value: 'n' }])).toEqual([])
+    for (let i = 0; i < 120; i++) s.set(rows[1]!, def('note'), `v${i}`)
+    let n = 0
+    while (s.undo()) n++
+    expect(n).toBe(100)
+    expect(s.read(rows[1]!, def('note'))).toBe('v19') // 20. adımdan geriye gidilemez
+  })
+  it('addRows: anahtar new:n, orijinal yok, anahtar sütunu zorunlu; getChanges create; undo satırı kaldırır, redo geri koyar', () => {
+    const s = make()
+    const added = s.addRows(1)
+    const row = added[0]!.row
+    expect(s.allRows.value).toHaveLength(3)
+    expect(s.isNew('new:1')).toBe(true)
+    expect(s.keyOf(row)).toBe('new:1')
+    s.apply([{ row, def: def('name'), value: 'Fresh' }], added)
+    expect(s.rowIssues('new:1')?.get('sku')?.message).toBe('Required')
+    expect(s.rowIssues('new:1')?.get('listPrice')?.message).toBe('Required')
+    expect(s.getChanges().rows).toEqual([]) // hatalı → gönderilmez
+    s.apply([
+      { row, def: def('sku'), value: 'NEW-1' },
+      { row, def: def('listPrice'), value: 10 },
+      { row, def: def('note'), value: '' },
+    ])
+    expect(s.getChanges().rows).toEqual([
+      { clientId: 'new:1', key: 'NEW-1', op: 'create', values: { name: 'Fresh', sku: 'NEW-1', listPrice: 10 } },
+    ])
+    expect(s.counts.value.newRows).toBe(1)
+    s.undo()
+    s.undo()
+    expect(s.allRows.value).toHaveLength(2)
+    expect(s.counts.value.newRows).toBe(0)
+    s.redo()
+    expect(s.allRows.value).toHaveLength(3)
+    expect(s.read(s.allRows.value[2]!, def('name'))).toBe('Fresh')
+    s.reset()
+    expect(s.allRows.value).toHaveLength(2)
+    expect(s.canUndo.value).toBe(false)
+  })
+  it('seçenek hatasında yakın öneri; readUntracked taslağı görür', () => {
+    const s = make()
+    s.set(rows[0]!, def('category'), 'Pump')
+    expect(s.rowIssues('1')?.get('category')?.suggest?.label).toBe('Pumps')
+    s.set(rows[0]!, def('category'), 'hydraulix')
+    expect(s.rowIssues('1')?.get('category')?.suggest?.label).toBe('Hydraulics')
+    expect(s.readUntracked(rows[0]!, def('category'))).toBe('hydraulix')
+  })
+})
+
+describe('pano ve doldurma yardımcıları (07 §7–8)', () => {
+  it('TSV: tırnaklı hücreler, sekme ve satır sonu; sondaki boş satır atılır; HTML tablo', async () => {
+    const { parseTsv, toTsv, toHtml, parseHtmlTable } = await import('../src/sheet/clipboard')
+    expect(parseTsv('a\tb\nc\td\n')).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ])
+    expect(parseTsv('"x\ty"\t"say ""hi"""\r\n"multi\nline"\tz')).toEqual([
+      ['x\ty', 'say "hi"'],
+      ['multi\nline', 'z'],
+    ])
+    expect(
+      toTsv([
+        ['a\tb', 'c'],
+        ['"q"', ''],
+      ]),
+    ).toBe('"a\tb"\tc\n"""q"""\t')
+    expect(toHtml([['<b>', 'x']])).toBe('<table><tbody><tr><td>&lt;b&gt;</td><td>x</td></tr></tbody></table>')
+    expect(parseHtmlTable('<table><tr><td>1&nbsp;</td><th>2</th></tr></table>')).toEqual([['1', '2']])
+  })
+  it('seri: sabit artış devam eder, aksi halde döngüyle kopya; yukarı yönde geriye', async () => {
+    const { fillValues } = await import('../src/sheet/fill')
+    expect(fillValues([1, 2], 3)).toEqual([3, 4, 5])
+    expect(fillValues([10, 20], 2)).toEqual([30, 40])
+    expect(fillValues([0.1, 0.2], 2)).toEqual([0.3, 0.4])
+    expect(fillValues([5], 3)).toEqual([5, 5, 5])
+    expect(fillValues(['a', 'b'], 3)).toEqual(['a', 'b', 'a'])
+    expect(fillValues([1, 3, 4], 2)).toEqual([1, 3])
+    expect(fillValues([3, 4], 2, true)).toEqual([2, 1])
+    expect(fillValues(['a', 'b'], 3, true)).toEqual(['b', 'a', 'b'])
+  })
+  it('ondalık çıkarımı: 1.234,56 ve 12,5 virgül; 1,234.56 ve 12.5 nokta; 1.250 belirsiz', async () => {
+    const { inferDecimal } = await import('../src/sheet/parse')
+    expect(inferDecimal(['1.234,56'])).toBe(',')
+    expect(inferDecimal(['12,5', '3'])).toBe(',')
+    expect(inferDecimal(['1,234.56'])).toBe('.')
+    expect(inferDecimal(['12.5'])).toBe('.')
+    expect(inferDecimal(['1.250', '3'])).toBeNull()
+    expect(inferDecimal(['1,250'])).toBeNull()
+  })
+  it('boolean, tags ve multiselect yapıştırma çözümlemesi', async () => {
+    const { parseInput } = await import('../src/sheet/parse')
+    const env = { locale: 'en', today: new Date(), todayWord: 'Today', yesWord: 'Yes', noWord: 'No' }
+    const bool: ColumnDef = { id: 'b', header: 'B', type: 'boolean' }
+    expect(parseInput(bool, 'yes', env)).toBe(true)
+    expect(parseInput(bool, '0', env)).toBe(false)
+    expect(parseInput(bool, 'maybe', env)).toBe('maybe')
+    const tags: ColumnDef = { id: 't', header: 'T', type: 'tags' }
+    expect(parseInput(tags, 'a; b, c', env)).toEqual(['a', 'b', 'c'])
+    const multi: ColumnDef = { id: 'm', header: 'M', type: 'multiselect', options: [{ value: 'x', label: 'Ex' }] }
+    expect(parseInput(multi, 'ex; Zed', env)).toEqual(['x', 'Zed'])
   })
 })

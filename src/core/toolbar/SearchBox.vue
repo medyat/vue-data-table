@@ -4,7 +4,7 @@ import { PhMagnifyingGlass, PhX } from '@phosphor-icons/vue'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useDataTableContext } from '../plugin'
 
-const props = defineProps<{ modelValue: string; placeholder: string; collapsed?: boolean }>()
+const props = defineProps<{ modelValue: string; placeholder: string; collapsed?: boolean; kbd?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 const { i18n } = useDataTableContext()
 
@@ -55,7 +55,7 @@ defineExpose({ focus: () => input.value?.focus() })
       >
         <PhX :size="14" aria-hidden="true" />
       </button>
-      <kbd v-else class="dt-kbd" aria-hidden="true">/</kbd>
+      <kbd v-else class="dt-kbd" aria-hidden="true">{{ kbd ?? '/' }}</kbd>
     </span>
   </label>
 </template>

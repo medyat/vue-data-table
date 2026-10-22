@@ -517,3 +517,173 @@
   padding: 0 8px 0 12px;
   border-top: 1px solid var(--dt-a-line);
 }
+
+/* Find in grid (07 §2): 188 px kutu, eşleşen hücrelerde accent-soft-2 iç çerçeve; aktif hücre çerçevesi geçerli eşleşme. */
+.dt-sheet-toolbar .dt-search {
+  width: 188px;
+}
+.dt-find {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dt-find-count {
+  font-size: 12px;
+  color: var(--dt-text-3);
+  white-space: nowrap;
+}
+.dt-sheet-grid .dt-cell[data-col].is-match {
+  box-shadow: inset 0 0 0 1.5px var(--dt-accent-soft-2);
+}
+
+/* Undo / Redo (06 §2): 28 × 32 ikon; yığın boşsa soluk ama odaklanabilir. */
+.dt-sheet-undo {
+  width: 28px;
+  padding: 0;
+  justify-content: center;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--dt-text-2);
+}
+.dt-sheet-undo:hover {
+  background: var(--dt-surface-3);
+}
+.dt-sheet-undo[aria-disabled='true'] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--dt-line-3);
+  cursor: default;
+}
+
+/* Yeni satır (07 §7): anahtar hücresi accent-soft + "New" etiketi; gutter'da `+`. */
+.dt-sheet-grid .dt-cell[data-col].is-new {
+  --dt-row-bg: var(--dt-accent-soft);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.dt-tag-new {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--dt-radius-xs);
+  background: var(--dt-accent);
+  color: var(--dt-on-accent);
+  font-family: var(--dt-font);
+  font-size: 11px;
+  font-weight: 600;
+}
+.dt-mark.is-new {
+  color: var(--dt-accent);
+}
+
+/* Doldurma (06 §5): hedef hücrelerde 1.5 px kesik accent sol/sağ kenar, son hücrede alt kenar; etiket koyu balon. */
+.dt-sheet-grid .dt-cell[data-col].is-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-left: 1.5px dashed var(--dt-accent);
+  border-right: 1.5px dashed var(--dt-accent);
+  pointer-events: none;
+  z-index: 1;
+}
+.dt-sheet-grid .dt-cell[data-col].is-fill-end::before {
+  border-bottom: 1.5px dashed var(--dt-accent);
+}
+.dt-sheet-grid.is-filling {
+  cursor: crosshair;
+  user-select: none;
+}
+.dt-fill-label {
+  position: absolute;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: var(--dt-radius-item);
+  background: var(--dt-tip-bg);
+  color: var(--dt-tip-fg);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Balon içi "Use Pumps" (06 §7): 24 px, bulk-line zemin, beyaz 12 / 600; balon tıklanabilir kalır. */
+.dt-cell-tip:has(.dt-cell-tip-btn) {
+  display: none;
+  pointer-events: auto;
+  align-items: center;
+  gap: 8px;
+}
+.dt-sheet-grid .dt-cell[data-col]:hover > .dt-cell-tip:has(.dt-cell-tip-btn),
+.dt-sheet-grid .dt-cell[data-col].is-active > .dt-cell-tip:has(.dt-cell-tip-btn) {
+  display: inline-flex;
+}
+.dt-cell-tip-btn {
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--dt-radius-xs);
+  background: var(--dt-bulk-line);
+  color: var(--dt-fill-text-light);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Yapıştırma toast'ı (06 §8): kartın altında ortada, alttan 52 px; sorun metni amber, Review link, ayırıcı, Undo + kbd. */
+.dt-sheet .dt-toast {
+  bottom: 52px;
+  font-weight: 500;
+}
+.dt-sheet .dt-toast strong {
+  font-weight: 600;
+}
+.dt-toast-warn {
+  color: var(--dt-bulk-warn);
+}
+.dt-toast-link,
+.dt-toast-undo {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dt-bulk-link);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dt-toast-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dt-bulk-fg);
+}
+.dt-toast-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--dt-bulk-line);
+}
+.dt-toast .dt-kbd {
+  background: var(--dt-bulk-hover);
+  color: var(--dt-bulk-fg-2);
+}
+
+/* Status bar seçim özeti (06 §6): etiket soluk, değer koyu. */
+.dt-status-summary {
+  display: inline-flex;
+  gap: 14px;
+  margin-left: auto;
+}
+.dt-status-summary span {
+  color: var(--dt-text-3);
+}
+.dt-status-summary b {
+  margin-left: 4px;
+  font-weight: 500;
+  color: var(--dt-text);
+}

@@ -65,4 +65,17 @@ export interface SheetApi<Row extends object> {
   save: () => void
   /** F8 / ⇧F8. */
   goToError: (dir: 1 | -1) => void
+  /** Pano olayları (07 §7): seçim TSV + HTML; yapıştırma aktif hücreden. İşlendiyse true (olay engellenir). */
+  copy: (data: DataTransfer | null) => boolean
+  cut: (data: DataTransfer | null) => boolean
+  paste: (data: DataTransfer | null) => boolean
+  /** Fill handle (07 §8): kaynak satır aralığı + sütun dizini aralığı → hedef satıra kadar. */
+  fill: (fromRow: number, toRow: number, cols: [number, number], target: number) => void
+  fillLabel: (fromRow: number, toRow: number, cols: [number, number], target: number) => string
+  /** ⌘D. */
+  fillDown: () => void
+  undo: () => void
+  redo: () => void
+  /** Balondaki "Use Pumps". */
+  useSuggestion: (row: Row, def: ColumnDef<Row>, value: unknown) => void
 }

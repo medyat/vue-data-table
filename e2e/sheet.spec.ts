@@ -158,3 +158,153 @@ test.describe('T11 · DataSheet', () => {
     await expect(cell(page, 12, 'validFrom')).toBeFocused()
   })
 })
+
+/** Sentetik pano olayı: aktif hücreye ClipboardEvent + DataTransfer (gerçek panoya izin gerekmez). */
+const pasteText = (page: Page, text: string) =>
+  page.evaluate((t) => {
+    const dt = new DataTransfer()
+    dt.setData('text/plain', t)
+    const t0 = performance.now()
+    document.activeElement!.dispatchEvent(
+      new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }),
+    )
+    return performance.now() - t0
+  }, text)
+const copyData = (page: Page) =>
+  page.evaluate(() => {
+    const dt = new DataTransfer()
+    const e = new ClipboardEvent('copy', { clipboardData: dt, bubbles: true, cancelable: true })
+    document.activeElement!.dispatchEvent(e)
+    return { prevented: e.defaultPrevented, text: dt.getData('text/plain'), html: dt.getData('text/html') }
+  })
+
+test.describe('T11 · DataSheet · pano, doldurma, geri al, Find (Faz 6b)', () => {
+  test.beforeEach(async ({ page }) => {
+    await settings(page)
+    await page.setViewportSize({ width: 1440, height: 960 })
+    await page.goto('/t11?delay=0')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
+  })
+
+  test('kopyala TSV + HTML (taslak, görüntülenen biçim); seçim özeti; yapıştırma yerel ayar çıkarımı, toast, Review, Undo/Redo', async ({
+    page,
+  }) => {
+    await cell(page, 0, 'listPrice').click()
+    await page.keyboard.type('5')
+    await page.keyboard.press('Enter')
+    await cell(page, 0, 'listPrice').click()
+    await page.keyboard.press('Shift+ArrowDown')
+    await page.keyboard.press('Shift+ArrowRight')
+    const c = await copyData(page)
+    expect(c.prevented).toBe(true)
+    expect(c.text.split('\n')[0]).toMatch(/^5\.00\t/) // taslak değer, para kodu yok
+    expect(c.html).toContain('<table>')
+    await expect(page.locator('.dt-status-summary')).toContainText('Count')
+    await expect(page.locator('.dt-status-summary')).toContainText('Sum')
+    await cell(page, 5, 'minStock').click()
+    await pasteText(page, '1.250\t7\n12,5\t8\n3\t9')
+    await expect(cell(page, 5, 'minStock')).toContainText('1,250') // 12,5 → virgül ondalık → 1.250 = 1250
+    await expect(cell(page, 6, 'minStock')).toHaveClass(/is-error/) // 12.5 tam sayı değil
+    await expect(cell(page, 7, 'leadTime')).toContainText('9')
+    await expect(cell(page, 7, 'leadTime')).toHaveClass(/is-selected/)
+    const toast = page.locator('.dt-toast')
+    await expect(toast).toContainText('Pasted 3 rows × 2 columns')
+    await expect(toast).toContainText('1 cell has an error')
+    await page.locator('.dt-toast-link').click()
+    await expect(cell(page, 6, 'minStock')).toBeFocused()
+    await page.locator('.dt-toast-undo').click()
+    await expect(cell(page, 5, 'minStock')).not.toHaveClass(/is-changed/)
+    await page.locator('.dt-sheet-undo').nth(1).click()
+    await expect(cell(page, 5, 'minStock')).toHaveClass(/is-changed/)
+    await cell(page, 20, 'name').click()
+    await page.keyboard.press('Meta+z')
+    await expect(cell(page, 5, 'minStock')).not.toHaveClass(/is-changed/)
+    await expect(cell(page, 5, 'minStock')).toBeFocused() // undo seçimi adıma taşır
+    // "Pump" → hata + Use Pumps
+    await cell(page, 10, 'category').click()
+    await pasteText(page, 'Pump')
+    await expect(cell(page, 10, 'category')).toHaveClass(/is-error/)
+    await cell(page, 10, 'category').hover()
+    await page.locator('.dt-cell-tip-btn').click()
+    await expect(cell(page, 10, 'category')).toContainText('Pumps')
+    await expect(cell(page, 10, 'category')).not.toHaveClass(/is-error/)
+  })
+
+  test('fill handle: seri devam eder, etiket; ⌘D kopyalar; sona taşan yapıştırma sınırda reddedilir, yeni satır olur', async ({
+    page,
+  }) => {
+    await cell(page, 12, 'minStock').click()
+    await page.keyboard.type('1')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('2')
+    await page.keyboard.press('Enter')
+    await cell(page, 12, 'minStock').click()
+    await page.keyboard.press('Shift+ArrowDown')
+    const handle = page.locator('.dt-fill-handle')
+    const hb = (await handle.boundingBox())!
+    const target = (await cell(page, 16, 'minStock').boundingBox())!
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(target.x + 20, target.y + 10, { steps: 5 })
+    await expect(page.locator('.dt-fill-label')).toHaveText('Fill 3 cells with 3')
+    await expect(cell(page, 16, 'minStock')).toHaveClass(/is-fill-end/)
+    await page.mouse.up()
+    await expect(cell(page, 14, 'minStock')).toContainText('3')
+    await expect(cell(page, 16, 'minStock')).toContainText('5')
+    await expect(cell(page, 16, 'minStock')).toHaveClass(/is-selected/)
+    await cell(page, 18, 'leadTime').click()
+    await page.keyboard.press('Shift+ArrowDown')
+    await page.keyboard.press('Shift+ArrowDown')
+    const v = await cell(page, 18, 'leadTime').innerText()
+    await page.keyboard.press('Meta+d')
+    await expect(cell(page, 20, 'leadTime')).toContainText(v)
+    // sınır: 10.000 satırda taşma reddedilir
+    await page.keyboard.press('Control+End')
+    await cell(page, 9999, 'sku').click()
+    await pasteText(page, 'NEW-1\tA\tPumps\nNEW-2\tB\tSeals')
+    await expect(page.locator('.dt-toast')).toContainText('This paste would make 10,001 rows. The limit is 10,000.')
+    await expect(page.locator('.dt-status')).toContainText('10,000 rows')
+    // 50 satırlık tabloda yeni satır
+    await page.goto('/t11?delay=0&rows=50')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
+    await cell(page, 0, 'name').click()
+    await page.keyboard.press('Control+End')
+    await page.keyboard.press('Home')
+    await pasteText(page, 'NEW-1\tA\tPumps\nNEW-2\tB\tSeals')
+    await expect(page.locator('.dt-status')).toContainText('51 rows')
+    await expect(page.locator('.dt-status')).toContainText('1 new row')
+    await expect(cell(page, 50, 'sku')).toContainText('NEW-2')
+    await expect(cell(page, 50, 'sku')).toHaveClass(/is-new/)
+    await expect(cell(page, 49, 'sku')).not.toHaveClass(/is-changed/) // yüklenmiş satırın anahtarı atlanır
+    await expect(cell(page, 49, 'name')).toContainText('A')
+    await page.keyboard.press('Meta+z')
+    await expect(page.locator('.dt-status')).toContainText('50 rows')
+    await page.keyboard.press('Meta+Shift+z')
+    await expect(page.locator('.dt-status')).toContainText('51 rows')
+  })
+
+  test('Find in grid: ⌘F, sayaç, vurgulama, Enter sonraki; 1.000 × 10 yapıştırma < 300 ms', async ({ page }) => {
+    await cell(page, 0, 'name').click()
+    await page.keyboard.press('Meta+f')
+    await expect(page.locator('.dt-search input')).toBeFocused()
+    await page.keyboard.type('Gear pump GP 3')
+    await expect(page.locator('.dt-find-count')).toContainText('1 of')
+    await expect(cell(page, 17, 'name')).toHaveClass(/is-match/)
+    await expect(cell(page, 17, 'name')).toHaveClass(/is-active/)
+    await page.keyboard.press('Enter')
+    await expect(page.locator('.dt-find-count')).toContainText('2 of')
+    await page.keyboard.press('Escape') // metni temizler → vurgular kalkar
+    await expect(page.locator('.dt-cell.is-match')).toHaveCount(0)
+    await page.keyboard.press('Escape') // ızgaraya döner
+    await expect(page.locator('.dt-cell.is-active')).toBeFocused()
+    await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = 100 * 33))
+    await cell(page, 100, 'name').click()
+    const big = Array.from({ length: 1000 }, (_, i) =>
+      [`Name ${i}`, 'Valves', 'pcs', `${1000 + i}`, `${500 + i}`, '20', `${i}`, '7', 'Yes', '2026-01-01'].join('\t'),
+    ).join('\n')
+    const ms = await pasteText(page, big)
+    expect(ms).toBeLessThan(300)
+    await expect(page.locator('.dt-toast')).toContainText('Pasted 1,000 rows × 10 columns')
+    await expect(page.locator('.dt-sheet-changes')).toContainText('changes in 1,000 rows')
+  })
+})

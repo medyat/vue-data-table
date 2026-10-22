@@ -73,8 +73,10 @@ const mountSheet = async (extra: Record<string, unknown> = {}) => {
 }
 type W = Awaited<ReturnType<typeof mountSheet>>
 const cell = (w: W, i: number, col: string) => w.get(`.dt-row[data-index="${i}"] .dt-cell[data-col="${col}"]`)
+// jsdom'da her getBoundingClientRect 0..1000 × 0..40 döner (mockLayout): fill handle dikdörtgen testi yanılmasın diye
+// tık koordinatları o alanın dışında.
 const click = async (w: W, i: number, col: string) => {
-  await cell(w, i, col).trigger('mousedown', { button: 0 })
+  await cell(w, i, col).trigger('mousedown', { button: 0, clientX: 500, clientY: 500 })
   await flush()
 }
 const key = async (w: W, init: KeyboardEventInit) => {
@@ -255,5 +257,142 @@ describe('formül çubuğu, Save, Discard, handle', () => {
     expect(handle.status.changedCells).toBe(0)
     expect(cell(w, 0, 'name').text()).toBe('Cylinder 1')
     expect(w.get('.dt-sheet-changes').text()).toBe('No changes')
+  })
+})
+
+/** jsdom'da ClipboardEvent/DataTransfer yok: `clipboardData` sahte nesneyle. */
+const clipboardEvent = (type: 'copy' | 'cut' | 'paste', text = '') => {
+  const data: Record<string, string> = { 'text/plain': text }
+  const e = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperty(e, 'clipboardData', {
+    value: { getData: (t: string) => data[t] ?? '', setData: (t: string, v: string) => (data[t] = v) },
+  })
+  return { e, data }
+}
+const dispatchClipboard = async (type: 'copy' | 'cut' | 'paste', text = '') => {
+  const { e, data } = clipboardEvent(type, text)
+  document.activeElement!.dispatchEvent(e)
+  await flush()
+  return { data, prevented: e.defaultPrevented }
+}
+
+describe('pano, doldurma, geri al (Faz 6b)', () => {
+  it('kopyalama: görüntülenen biçimde TSV + HTML; kesme temizler (salt okunur kalır)', async () => {
+    const w = await mountSheet()
+    await click(w, 0, 'sku')
+    await key(w, { key: 'ArrowRight', shiftKey: true })
+    await key(w, { key: 'ArrowDown', shiftKey: true })
+    const c = await dispatchClipboard('copy')
+    expect(c.prevented).toBe(true)
+    expect(c.data['text/plain']).toBe('HC-001\tCylinder 1\nHC-002\tCylinder 2')
+    expect(c.data['text/html']).toContain('<td>HC-001</td>')
+    expect(w.get('.dt-status-summary').text()).toMatch(/Count\s*4/)
+    await dispatchClipboard('cut')
+    expect(cell(w, 0, 'sku').text()).toContain('HC-001') // anahtar salt okunur: kopyalanır, temizlenmez
+    expect(cell(w, 0, 'name').get('.dt-cell-content').text()).toBe('Required')
+    expect(w.get('.dt-sheet-changes').text()).toContain('2 changes in 2 rows')
+  })
+  it('yapıştırma: aktif hücreden, read-only atlanır, tek değer aralığa, toast + Review + Undo; sona taşan yeni satır', async () => {
+    // 20 satır: hepsi DOM'da (jsdom'da programatik kaydırma scroll olayı üretmez, sanal pencere ilerlemez).
+    const w = await mountSheet({ rows: rows.slice(0, 20) })
+    await click(w, 18, 'sku')
+    const p = await dispatchClipboard('paste', 'K1\tPasted A\t5\nK2\tPasted B\t6\nK3\tPasted C\t7')
+    expect(p.prevented).toBe(true)
+    expect(cell(w, 18, 'sku').text()).toContain('HC-019')
+    expect(cell(w, 18, 'name').text()).toBe('Pasted A')
+    expect(cell(w, 19, 'name').text()).toBe('Pasted B')
+    expect(w.get('.dt-status').text()).toContain('21 rows')
+    expect(w.get('.dt-status').text()).toContain('1 new row')
+    expect(cell(w, 20, 'sku').text()).toContain('K3')
+    expect(cell(w, 20, 'sku').classes()).toContain('is-new')
+    expect(cell(w, 20, 'sku').text()).toContain('New')
+    expect(w.get('.dt-row[data-index="20"] [role="rowheader"]').text()).toBe('21')
+    expect(cell(w, 20, 'listPrice').get('.dt-cell-content').text()).toBe('Required')
+    expect(w.get('.dt-toast').text()).toContain('Pasted 3 rows × 3 columns')
+    expect(w.find('.dt-toast-warn').exists()).toBe(false) // category salt okunur: atlandı, hata yok
+    expect(cell(w, 18, 'category').text()).toContain('Hydraulics')
+    expect(cell(w, 18, 'name').classes()).toContain('is-selected')
+    expect(cell(w, 20, 'category').classes()).toContain('is-selected')
+    await w.get('.dt-toast-undo').trigger('click')
+    await flush()
+    expect(w.get('.dt-status').text()).toContain('20 rows')
+    expect(cell(w, 18, 'name').text()).toBe('Cylinder 19')
+    // tek değer + aralık
+    await click(w, 0, 'cost')
+    await key(w, { key: 'ArrowDown', shiftKey: true })
+    await dispatchClipboard('paste', '1')
+    expect(cell(w, 0, 'cost').text()).toContain('1.00')
+    expect(cell(w, 1, 'cost').text()).toContain('1.00')
+    // maxRows sınırı
+    await w.setProps({ maxRows: 20 })
+    await click(w, 19, 'name')
+    await dispatchClipboard('paste', 'x\ny')
+    expect(w.get('.dt-toast').text()).toBe('This paste would make 21 rows. The limit is 20.')
+    expect(w.get('.dt-status').text()).toContain('20 rows')
+  })
+  it('⌘D ilk satırdan aşağı doldurur; undo/redo seçimi adıma taşır; toolbar düğmeleri', async () => {
+    const w = await mountSheet()
+    const undoBtn = w.findAll('.dt-sheet-undo')[0]!
+    expect(undoBtn.attributes('aria-disabled')).toBe('true')
+    await click(w, 2, 'listPrice')
+    await key(w, { key: 'ArrowDown', shiftKey: true })
+    await key(w, { key: 'ArrowDown', shiftKey: true })
+    await key(w, { key: 'd', metaKey: true })
+    expect(cell(w, 3, 'listPrice').text()).toContain('300.00')
+    expect(cell(w, 4, 'listPrice').text()).toContain('300.00')
+    expect(undoBtn.attributes('aria-disabled')).toBeUndefined()
+    await click(w, 10, 'name')
+    await key(w, { key: 'z', metaKey: true })
+    expect(cell(w, 4, 'listPrice').text()).toContain('500.00')
+    expect(cell(w, 3, 'listPrice').classes()).toContain('is-selected')
+    expect(document.activeElement).toBe(cell(w, 3, 'listPrice').element)
+    await key(w, { key: 'z', metaKey: true, shiftKey: true })
+    expect(cell(w, 4, 'listPrice').text()).toContain('300.00')
+    await undoBtn.trigger('click')
+    await flush()
+    expect(cell(w, 4, 'listPrice').text()).toContain('500.00')
+  })
+  it('Find in grid: eşleşme sayısı, vurgulanan hücre, Enter sonraki; ⌘F odaklar', async () => {
+    const w = await mountSheet()
+    await click(w, 0, 'name')
+    await key(w, { key: 'f', metaKey: true })
+    const input = w.get<HTMLInputElement>('.dt-search input')
+    expect(document.activeElement).toBe(input.element)
+    input.element.value = 'Cylinder 1'
+    await input.trigger('input')
+    await new Promise((r) => setTimeout(r, 300))
+    await flush()
+    expect(w.get('.dt-find-count').text()).toBe('1 of 11') // 1, 10–19
+    expect(cell(w, 0, 'name').classes()).toContain('is-match')
+    expect(cell(w, 0, 'name').classes()).toContain('is-active')
+    await input.trigger('keydown', { key: 'Enter' })
+    await flush()
+    expect(w.get('.dt-find-count').text()).toBe('2 of 11')
+    expect(cell(w, 9, 'name').classes()).toContain('is-active')
+  })
+  it('"Use Pumps": balondaki düğme öneriyi yazar', async () => {
+    const w = await mountSheet({
+      columns: columns.map((c) =>
+        c.id === 'category'
+          ? {
+              ...c,
+              editable: true,
+              options: [
+                { value: 'hyd', label: 'Hydraulics' },
+                { value: 'pumps', label: 'Pumps' },
+              ],
+            }
+          : c,
+      ),
+    })
+    await click(w, 0, 'category')
+    await dispatchClipboard('paste', 'Pump')
+    expect(cell(w, 0, 'category').classes()).toContain('is-error')
+    const btn = cell(w, 0, 'category').get('.dt-cell-tip-btn')
+    expect(btn.text()).toBe('Use Pumps')
+    await btn.trigger('click')
+    await flush()
+    expect(cell(w, 0, 'category').classes()).not.toContain('is-error')
+    expect(cell(w, 0, 'category').text()).toContain('Pumps')
   })
 })

@@ -290,6 +290,8 @@ export const tr: Record<string, string> = {
   "sheet.pasted": "{rows} satır × {cols} sütun yapıştırıldı",
   "sheet.pasteIssues.one": "{count} değer seçeneklerde yok",
   "sheet.pasteIssues.other": "{count} değer seçeneklerde yok",
+  "sheet.pasteErrors.one": "{count} hücrede hata var",
+  "sheet.pasteErrors.other": "{count} hücrede hata var",
   "sheet.review": "İncele",
   "sheet.fillPreview": "{count} hücreyi {value} ile doldur",
   "sheet.limitPaste": "Bu yapıştırmayla {count} satır olur. Sınır {max}.",
