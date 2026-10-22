@@ -860,3 +860,317 @@
 .dt-sheet-grid .dt-head-label {
   gap: 4px;
 }
+
+/* Export menüsü ve Import düğmesi (06 §2): ghost 32 px, ikon + etiket. */
+.dt-sheet-toolbar .dt-sheet-import[data-state='open'] {
+  background: var(--dt-surface-3);
+}
+
+/* Import from Excel (06 §11): 560 px; başlık bloğu, gövde, altlık. */
+.dt-import {
+  width: 560px;
+  padding: 0;
+  top: 120px;
+  transform: translateX(-50%);
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+}
+.dt-import-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 14px 0 20px;
+}
+.dt-import-head > div {
+  flex: 1;
+}
+.dt-import-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px 20px;
+  overflow: auto;
+}
+.dt-import-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--dt-line);
+}
+.dt-import-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 176px;
+  border: 1.5px dashed var(--dt-line-3);
+  border-radius: var(--dt-radius-pop);
+  background: var(--dt-surface-2);
+  color: var(--dt-text-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dt-import-drop.is-over {
+  border-color: var(--dt-accent);
+  background: var(--dt-accent-soft);
+}
+.dt-import-drop.is-failed {
+  border-color: var(--dt-r-dot);
+}
+.dt-import-drop-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--dt-line);
+  border-radius: var(--dt-radius-inner);
+  background: var(--dt-surface);
+  color: var(--dt-text-2);
+}
+.dt-import-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 12px;
+  border: 1px solid var(--dt-line);
+  border-radius: var(--dt-radius-pop);
+  background: var(--dt-surface-2);
+}
+.dt-import-file-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--dt-radius-inner);
+  background: var(--dt-g-bg);
+  color: var(--dt-g-fg);
+}
+.dt-import-file-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13px;
+}
+.dt-import-file-text strong {
+  font-weight: 500;
+}
+.dt-import-sheet-info,
+.dt-import-muted {
+  color: var(--dt-text-3);
+}
+.dt-import-match {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.dt-import-match-label {
+  font-weight: 500;
+}
+.dt-import-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--dt-radius-md);
+  background: var(--dt-surface-3);
+  color: var(--dt-text-3);
+}
+.dt-import-key .dt-mono {
+  color: var(--dt-text);
+}
+.dt-import-keysel select {
+  width: 200px;
+  height: 30px;
+}
+.dt-import-keysel.is-missing select {
+  border-color: var(--dt-a-dot);
+  box-shadow: 0 0 0 3px var(--dt-a-bg);
+  color: var(--dt-text-3);
+}
+.dt-import-spacer {
+  flex: 1;
+}
+.dt-import-headerrow {
+  gap: 8px;
+}
+.dt-import-headerrow select {
+  width: 104px;
+  height: 30px;
+}
+.dt-import-warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -8px 0 0;
+  color: var(--dt-a-fg);
+  font-size: 12.5px;
+}
+.dt-import-warn > svg {
+  color: var(--dt-a-dot);
+}
+.dt-import-table {
+  width: 100%;
+  border: 1px solid var(--dt-line);
+  border-radius: var(--dt-radius-pop);
+  border-spacing: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+}
+.dt-import-table th {
+  height: 32px;
+  padding: 0 10px;
+  background: var(--dt-surface-2);
+  color: var(--dt-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+.dt-import-table td {
+  height: 38px;
+  padding: 0 10px;
+  border-top: 1px solid var(--dt-line);
+  vertical-align: middle;
+}
+.dt-import-table td:nth-child(2) {
+  width: 22px;
+  padding: 0;
+  color: var(--dt-text-3);
+}
+.dt-import-col {
+  width: 132px;
+}
+.dt-import-table tr.is-skipped .dt-import-col {
+  color: var(--dt-text-3);
+}
+.dt-import-field select {
+  width: 166px;
+  height: 28px;
+  border-radius: var(--dt-radius-md);
+  box-shadow: var(--dt-shadow-sm);
+}
+.dt-import-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+}
+.dt-import-preview strong {
+  font-weight: 500;
+}
+.dt-import-summary {
+  padding: 10px 12px;
+  border-radius: var(--dt-radius-inner);
+  background: var(--dt-accent-soft);
+  font-size: 13px;
+}
+.dt-import-summary-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dt-import-summary-line > svg {
+  color: var(--dt-accent);
+}
+.dt-import-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dt-accent-text);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dt-import-newlist {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--dt-text-2);
+  word-break: break-all;
+}
+.dt-import .dt-check-row {
+  margin-top: 8px;
+}
+.dt-import .dt-select select {
+  font-size: 12.5px;
+}
+
+/* Telefon salt okunur (06 §12, 07 §17): banner, 44 px satır (02 · Yoğunluk), anahtar 104 px, footer.
+   Yoğunluk token'ları ızgara kökünde (data-density) tanımlı; aynı elemanda daha özgül kuralla ezilir. */
+.dt-sheet.is-phone .dt-sheet-grid[data-density] {
+  --dt-row-h: 44px;
+  --dt-head-h: 36px;
+  --dt-fs: 13.5px;
+}
+.dt-sheet-readonly {
+  display: flex;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 14px;
+  border-radius: var(--dt-radius-card);
+  background: var(--dt-accent-soft);
+}
+.dt-sheet-readonly > svg {
+  flex: none;
+  color: var(--dt-accent);
+}
+.dt-sheet-readonly-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+  color: var(--dt-text-2);
+}
+.dt-sheet-readonly-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dt-text);
+}
+.dt-sheet-readonly .dt-btn {
+  align-self: flex-start;
+  height: 36px;
+  margin-top: 6px;
+}
+.dt-sheet.is-phone .dt-sheet-toolbar {
+  padding: 8px 12px;
+}
+.dt-sheet.is-phone .dt-search {
+  flex: 1;
+  width: auto;
+}
+.dt-sheet.is-phone .dt-search input {
+  height: 44px;
+  border-radius: var(--dt-radius-pop);
+  font-size: 15px;
+}
+.dt-sheet-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 48px;
+  padding: 0 14px;
+  border-top: 1px solid var(--dt-line);
+  background: var(--dt-surface-2);
+  color: var(--dt-text-2);
+  font-size: 13px;
+}
+.dt-sheet-footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dt-text-3);
+}
+.dt-sheet.is-phone .dt-sheet-grid .dt-cell[data-col] {
+  cursor: default;
+}

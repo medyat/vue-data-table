@@ -26,7 +26,7 @@ import type { Direction } from './useSheetTable'
 // İç bileşen: satır tipi DataSheet'te tiplidir.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = any
-const GUTTER_W = 56
+const GUTTER_FULL = 56
 /** Sürüklerken bu kadar yakınken kenar kaydırır (px / kare). */
 const EDGE = 24
 const SCROLL_STEP = 12
@@ -52,8 +52,18 @@ const props = withDefaults(
     /** Yerel sıralama (07 §10): sütun → yön ve öncelik. */
     sort?: ReadonlyMap<string, { dir: 'asc' | 'desc'; index: number | null }>
     entity: Plural
+    /** Telefon (D14, 07 §17): gutter ve işaret yok, seçim aralığı ve fill handle yok; dokunma hücreyi odaklar. */
+    phone?: boolean
   }>(),
-  { density: 'compact', loading: false, skeleton: false, verticalLines: true, found: null, readOnly: false },
+  {
+    density: 'compact',
+    loading: false,
+    skeleton: false,
+    verticalLines: true,
+    found: null,
+    readOnly: false,
+    phone: false,
+  },
 )
 defineSlots<{ state?: () => unknown }>()
 
@@ -69,16 +79,18 @@ const keyOf = store.keyOf
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 const density = computed<Density>(() => (coarse && props.density === 'compact' ? 'standard' : props.density))
 
+const GUTTER_W = computed(() => (props.phone ? 0 : GUTTER_FULL))
 // Gutter track'i başa eklenir; sola sabit sütunların ofseti o kadar kayar (GridRoot ile aynı yöntem).
 watchEffect(
   () => {
     const el = root.value
     if (!el) return
-    el.style.setProperty('--cols', `${GUTTER_W}px ${layout.colsVar.value}`)
-    el.style.setProperty('--dt-min-w', `${layout.minWidth.value + GUTTER_W}px`)
+    const g = GUTTER_W.value
+    el.style.setProperty('--cols', `${g ? `${g}px ` : ''}${layout.colsVar.value}`)
+    el.style.setProperty('--dt-min-w', `${layout.minWidth.value + g}px`)
     const startVars = new Set(layout.start.value.map((c) => c.offsetVar))
     for (const [name, value] of Object.entries(layout.offsetVars.value))
-      el.style.setProperty(name, startVars.has(name) ? `${parseFloat(value) + GUTTER_W}px` : value)
+      el.style.setProperty(name, startVars.has(name) ? `${parseFloat(value) + g}px` : value)
   },
   { flush: 'sync' },
 )
@@ -122,7 +134,7 @@ const selectionFor = (i: number): RowSelection | null => {
 /** Fill handle: tek hücrede aktif hücre, aralıkta sağ alt köşe. */
 const handleFor = (i: number): string | null => {
   const b = table.bounds.value
-  if (!b || fillDrag.value) return null
+  if (!b || fillDrag.value || props.phone) return null
   if (!multi.value) return i === activeIndex.value ? (active.value?.columnId ?? null) : null
   return i === b.maxRowIndex ? (columns.value[b.maxColumnIndex]?.id ?? null) : null
 }
@@ -546,6 +558,11 @@ const onMousedown = (e: MouseEvent) => {
   if (ed?.inCell && h.cell.classList.contains('is-editing')) return
   // Başka hücreye mousedown onaylar (07 §5); hücredeki düğme hücreyi aktif yapar ama düzenlemez.
   sheet.edit.commit()
+  if (props.phone) {
+    // Telefon: dokunma yalnızca hücreyi odaklar (kaydırma serbest, aralık yok).
+    table.focus(keyOf(h.row), h.columnId)
+    return
+  }
   if (!isInteractive(h.target, h.cell)) e.preventDefault()
   table.startHandler(keyOf(h.row), h.columnId)?.(e)
   dragging.value = 'select'
@@ -624,11 +641,12 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
           'is-skeleton': skeleton,
           'has-vlines': verticalLines,
           'is-filling': dragging === 'fill',
+          'is-phone': phone,
         }"
         role="grid"
         :aria-label="label"
         :aria-rowcount="skeleton ? -1 : rows.length"
-        :aria-colcount="columns.length + 1"
+        :aria-colcount="columns.length + (phone ? 0 : 1)"
         :aria-busy="loading || readOnly ? 'true' : undefined"
         :aria-readonly="readOnly ? 'true' : undefined"
         :data-density="density"
@@ -644,7 +662,7 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
       >
         <div ref="scrollEl" class="dt-scroll" @scroll.passive="onScroll">
           <div class="dt-head" role="row" aria-rowindex="1">
-            <div class="dt-head-cell dt-gutter is-pinned-start" style="left: 0px" role="columnheader">
+            <div v-if="!phone" class="dt-head-cell dt-gutter is-pinned-start" style="left: 0px" role="columnheader">
               {{ ctx.i18n.t('sheet.err.row') }}
             </div>
             <div
@@ -708,12 +726,13 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
               :data-index="item.index"
               :style="{ transform: `translateY(${item.start}px)` }"
             >
-              <SkeletonRow v-if="skeleton" :index="item.index" :columns="columns" gutter />
+              <SkeletonRow v-if="skeleton" :index="item.index" :columns="columns" :gutter="!phone" />
               <SheetRow
                 v-else
                 :row="rows[item.index]!"
                 :index="item.index"
                 :row-no="store.rowNoOf(keyOf(rows[item.index]))"
+                :gutter="!phone"
                 :columns="columns"
                 :env="env"
                 :key-column="keyColumn"

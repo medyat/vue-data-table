@@ -6,6 +6,7 @@
 import {
   DataSheet,
   type DataSheetHandle,
+  type ParsedWorkbook,
   type Progress,
   type SheetChanges,
   type SheetRowResult,
@@ -90,6 +91,48 @@ async function lookupKeys(keys: string[], { signal }: { signal: AbortSignal }) {
   return (await res.json()) as Record<string, Product | null>
 }
 const newRowDefaults = (): Partial<Product> => ({ unit: 'pcs', vat: 20, active: true })
+
+/** Dosyayı uygulama ayrıştırır (07 §13). Burada yalnızca CSV (`;` veya `,` ayrılmış, tırnaklı); .xlsx için uygulama exceljs kullanır. */
+async function parseFile(file: File): Promise<ParsedWorkbook> {
+  if (!/\.csv$/i.test(file.name)) throw new Error('Only .csv in the playground (use exceljs for .xlsx in the app)')
+  const text = await file.text()
+  const first = text.split('\n')[0] ?? ''
+  const sep = first.split(';').length > first.split(',').length ? ';' : ','
+  const rows: unknown[][] = []
+  let row: string[] = []
+  let cell = ''
+  let quoted = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') {
+        cell += '"'
+        i++
+      } else if (ch === '"') quoted = false
+      else cell += ch
+    } else if (ch === '"' && cell === '') quoted = true
+    else if (ch === sep) {
+      row.push(cell)
+      cell = ''
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++
+      row.push(cell)
+      rows.push(row)
+      row = []
+      cell = ''
+    } else cell += ch
+  }
+  if (cell !== '' || row.length) {
+    row.push(cell)
+    rows.push(row)
+  }
+  return { sheets: [{ name: file.name.replace(/\.csv$/i, ''), rows }] }
+}
+const lastExport = shallowRef('')
+const onExport = (e: { format: string; scope: string; columns: string[]; rows: Product[] }) => {
+  lastExport.value = `${e.scope} ${e.format} ${e.rows.length} rows ${e.columns.length} cols`
+  console.log('export', e)
+}
 </script>
 
 <template>
@@ -101,6 +144,8 @@ const newRowDefaults = (): Partial<Product> => ({ unit: 'pcs', vat: 20, active: 
       <label>
         Last save
         <code data-testid="last-save">{{ lastSave ? `${lastSave.rows.length} rows` : '—' }}</code>
+        · export
+        <code data-testid="last-export">{{ lastExport || '—' }}</code>
         · status
         <code data-testid="status">
           {{ sheet?.status.phase ?? '' }} {{ sheet?.status.changedCells ?? 0 }} / {{ sheet?.status.errorRows ?? 0 }}
@@ -118,6 +163,8 @@ const newRowDefaults = (): Partial<Product> => ({ unit: 'pcs', vat: 20, active: 
       :max-rows="maxRows"
       :lookup-keys="lookupKeys"
       :new-row-defaults="newRowDefaults"
+      :parse-file="parseFile"
+      @export="onExport"
       :entity-name="{ one: 'product', other: 'products' }"
       @save="onSave"
     />

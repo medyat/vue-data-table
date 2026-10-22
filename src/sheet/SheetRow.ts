@@ -77,6 +77,8 @@ export default defineComponent({
     editing: { type: Object as PropType<CellEditing | null>, default: null },
     /** Hata balonu ilk satırda hücrenin altında (üstte header'ın altında kalırdı). */
     tipBelow: { type: Boolean, default: false },
+    /** Telefonda gutter yok (07 §17). */
+    gutter: { type: Boolean, default: true },
     style: { type: Object as PropType<Record<string, string>>, default: undefined },
   },
   emits: ['edit-value', 'use-suggestion'],
@@ -249,7 +251,7 @@ export default defineComponent({
           'data-index': props.index,
           style: props.style,
         },
-        [gutter(), ...withFill(props.columns, (col) => renderCell(col, index.get(col.id)!))],
+        [props.gutter ? gutter() : null, ...withFill(props.columns, (col) => renderCell(col, index.get(col.id)!))],
       )
     }
   },

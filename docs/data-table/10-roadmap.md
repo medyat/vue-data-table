@@ -180,14 +180,14 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 **Ön koşul:** Q3 cevaplandı.
 **Kapsam:** Import dialog'u (`parseFile` callback'i; dosya, sayfa, başlık satırı tespiti + Header row seçici, anahtar eşleme, sütun eşleme (otomatik + elle, `importAliases`), önizleme dönüşümleri, özet, yeni anahtarlar), grid'e uygulama (tek undo), Export (`export` olayı), telefonda salt okunur mod.
 
-- [ ] Anahtar eşlenmeden Apply pasif.
-- [ ] Başlık satırı otomatik bulunur (07 §13); Header row seçici ile değiştirilince eşleme tablosu yeniden kurulur; `.xlsx` ve `.csv` için aynı kod yolu.
-- [ ] `Stok Kodu`, `Liste Fiyatı` gibi başlıklar `importAliases` ile otomatik eşlenir; büyük/küçük harf, boşluk ve Türkçe karakter farkı eşleşmeyi engellemez.
-- [ ] Hiçbir alana uymayan ya da birden fazla alana uyan sütun boş kalır (otomatik seçim yapılmaz); elle seçilebilir; otomatik eşleme de değiştirilebilir; boş bırakılan sütun Apply'da alınmaz.
-- [ ] `1.650,00 → 1,650.00`, `%20 → 20%` önizlemeleri.
-- [ ] Boş Excel hücresi mevcut değeri silmez.
-- [ ] `maxRows` aşımı engellenir.
-- [ ] < 768 px veya yalnızca dokunmatik: banner, Copy link, düzenleme/aralık/Save yok (D14).
+- [x] Anahtar eşlenmeden Apply pasif.
+- [x] Başlık satırı otomatik bulunur (07 §13); Header row seçici ile değiştirilince eşleme tablosu yeniden kurulur; `.xlsx` ve `.csv` için aynı kod yolu.
+- [x] `Stok Kodu`, `Liste Fiyatı` gibi başlıklar `importAliases` ile otomatik eşlenir; büyük/küçük harf, boşluk ve Türkçe karakter farkı eşleşmeyi engellemez.
+- [x] Hiçbir alana uymayan ya da birden fazla alana uyan sütun boş kalır (otomatik seçim yapılmaz); elle seçilebilir; otomatik eşleme de değiştirilebilir; boş bırakılan sütun Apply'da alınmaz.
+- [x] `1.650,00 → 1,650.00`, `%20 → 20%` önizlemeleri.
+- [x] Boş Excel hücresi mevcut değeri silmez.
+- [x] `maxRows` aşımı engellenir.
+- [x] < 768 px veya yalnızca dokunmatik: banner, Copy link, düzenleme/aralık/Save yok (D14).
 
 ## Faz 7 — Telefon, erişilebilirlik ve yayın cilası
 

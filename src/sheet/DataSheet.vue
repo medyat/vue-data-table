@@ -13,11 +13,26 @@ import {
   PhCircleNotch,
   PhCopy,
   PhLock,
+  PhDownloadSimple,
+  PhExport,
+  PhLink,
+  PhMonitor,
   PhPlus,
   PhWarning,
   PhWarningCircle,
 } from '@phosphor-icons/vue'
-import { ToggleGroupItem, ToggleGroupRoot } from 'reka-ui'
+import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuRoot,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  ToggleGroupItem,
+  ToggleGroupRoot,
+} from 'reka-ui'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef, watch, type Component } from 'vue'
 import { comparator } from '../core/cells/compare'
 import { formatCell, isEmptyValue, optionLabel, type FormatEnv } from '../core/cells/format'
@@ -36,13 +51,21 @@ import ConfirmDialog from '../core/ui/ConfirmDialog.vue'
 import type { ColumnDef, ColumnType } from '../types/columns'
 import type { Density, Plural, TableId } from '../types/core'
 import type { SortRule } from '../types/query'
-import type { Progress, SheetChanges, SheetFilterMode, SheetRowResult, SheetStatus } from '../types/sheet'
+import type {
+  ParsedWorkbook,
+  Progress,
+  SheetChanges,
+  SheetFilterMode,
+  SheetRowResult,
+  SheetStatus,
+} from '../types/sheet'
 import { matrixFromClipboard, parseTsv, toHtml, toTsv } from './clipboard'
 import DateCell from './editors/DateCell.vue'
 import NumberCell from './editors/NumberCell.vue'
 import OptionCell from './editors/OptionCell.vue'
 import TextCell from './editors/TextCell.vue'
 import { fillValues } from './fill'
+import ImportDialog, { type ImportPayload } from './ImportDialog.vue'
 import { inferDecimal, inputText, parseInput, type ParseEnv } from './parse'
 import SaveErrorsDialog, { type ErrorRowItem } from './SaveErrorsDialog.vue'
 import SheetGrid from './SheetGrid.vue'
@@ -69,6 +92,8 @@ const props = withDefaults(
     lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
     /** Add row ile oluşan satırın başlangıç değerleri. */
     newRowDefaults?: () => Partial<Row>
+    /** Import Excel / CSV: dosyayı uygulama ayrıştırır ve ham satırları verir (07 §13). Verilmezse Import yok. */
+    parseFile?: (file: File) => Promise<ParsedWorkbook>
     /** Aşılırsa ilk `maxRows` satır kullanılır ve şerit uyarır (07 §15); yapıştırma ve ekleme bu sınırı aşamaz. */
     maxRows?: number
     /** Bu genişliğin altında veya yalnızca dokunmatikte salt okunur (D14); karar açılışta. */
@@ -79,6 +104,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   /** Save: doğrulama geçen değişmiş + yeni satırlar. Uygulama kaydeder, `saving` verir, `applyResult` çağırır. */
   save: [changes: SheetChanges]
+  /** Export: değerler güncel (kaydedilmemiş değişiklikler dahil); dosyayı uygulama yazar. */
+  export: [payload: { format: 'csv' | 'xlsx'; scope: 'all' | 'visible'; columns: string[]; rows: Row[] }]
 }>()
 defineSlots<{ empty?: () => unknown }>()
 
@@ -108,9 +135,17 @@ const percent = computed(() =>
 )
 
 // Sütunlar (07 §3): anahtar 128 px sola sabit (mono), birincil ad sola sabit ve esnek; sıra sabit, genişlik oturumluk.
+// Telefon / yalnızca dokunmatik: salt okunur, karar açılışta (D14, 07 §17): anahtar 104 px sabit, kalanlar kayar.
+const readOnlyDevice =
+  typeof matchMedia === 'function' &&
+  (matchMedia(`(max-width: ${props.readOnlyBelow - 1}px)`).matches || !matchMedia('(any-pointer: fine)').matches)
 const sheetColumns = computed<Array<ColumnDef<Row>>>(() =>
   props.columns.map((d) =>
-    d.id === props.keyColumn ? { ...d, pinned: 'left', width: 128 } : d.primary ? { ...d, pinned: 'left' } : d,
+    d.id === props.keyColumn
+      ? { ...d, pinned: 'left', width: readOnlyDevice ? 104 : 128 }
+      : d.primary && !readOnlyDevice
+        ? { ...d, pinned: 'left' }
+        : d,
   ),
 )
 const defById = computed(() => new Map(sheetColumns.value.map((d) => [d.id as string, d])))
@@ -194,11 +229,6 @@ const indexByKey = computed(() => {
 })
 const visibleCols = computed(() => layout.columns.value)
 
-// Telefon / yalnızca dokunmatik: salt okunur, karar açılışta (D14; banner ve telefon düzeni 6d).
-const readOnlyDevice =
-  typeof matchMedia === 'function' &&
-  (matchMedia(`(max-width: ${props.readOnlyBelow - 1}px)`).matches ||
-    matchMedia('(hover: none) and (pointer: coarse)').matches)
 const readOnlyNow = computed(() => loadingNow.value || savingNow.value || readOnlyDevice)
 
 // Editörler filtre değer girişleriyle aynı aileden (07 §5); `boolean` editör açmaz (Space). multiselect/tags/ajax/user/
@@ -817,6 +847,87 @@ const openHref = (row: Row): string | undefined => {
   return keyDef.value?.href?.(row) ?? primaryDef.value?.href?.(row)
 }
 
+// Import (07 §13): listede olan anahtar güncellenir; sunucuda olan Update satırı (base), olmayan New satırı; tek undo adımı.
+const importOpen = ref(false)
+const keyIndexSet = computed(() => {
+  void store.version.value
+  const set = new Set<string>()
+  const def = keyDef.value
+  if (!def) return set
+  for (const r of store.allRows.value) {
+    const v = store.readUntracked(r, def)
+    if (!isEmptyValue(v)) set.add(String(v))
+  }
+  return set
+})
+const inList = (key: string) => keyIndexSet.value.has(key)
+const applyImport = (payload: ImportPayload<Row>) => {
+  if (readOnlyNow.value || !keyDef.value) return
+  edit.commit()
+  const def = keyDef.value
+  const byKeyValue = new Map<string, Row>()
+  for (const r of store.allRows.value) {
+    const v = store.readUntracked(r, def)
+    if (!isEmptyValue(v)) byKeyValue.set(String(v), r)
+  }
+  const changes: Array<Change<Row>> = []
+  const addedRows: Array<{ key: string; row: Row }> = []
+  const bases: Array<{ key: string; row: Row }> = []
+  let updated = 0
+  let news = 0
+  for (const item of payload.rows) {
+    let row = byKeyValue.get(item.key)
+    if (!row) {
+      if (item.server === null && !payload.addNew) continue
+      if (store.allRows.value.length + addedRows.length + 1 > props.maxRows) break
+      const [a] = store.addRows(1)
+      if (!a) continue
+      row = a.row
+      addedRows.push(a)
+      byKeyValue.set(item.key, row)
+      changes.push({ row, def, value: item.key })
+      if (item.server) {
+        bases.push({ key: a.key, row: item.server })
+        updated++
+      } else news++
+    } else updated++
+    for (const [id, value] of Object.entries(item.values)) {
+      const d = defById.value.get(id)
+      if (d && canEdit(row, d)) changes.push({ row, def: d, value })
+    }
+  }
+  for (const b of bases) {
+    store.setKeyState(b.key, 'update')
+    store.setBase(b.key, b.row)
+  }
+  store.apply(changes, addedRows)
+  if (addedRows.length && order.value) order.value = [...order.value, ...addedRows.map((a) => a.key)]
+  showToast({
+    text: i18n.t('import.done', {
+      count: fmt.int(payload.rows.length),
+      updated: fmt.int(updated),
+      news: fmt.int(news),
+    }),
+    undo: true,
+  })
+  // Odak ızgaraya, ilk alınan satırın anahtar hücresine (dialog kapanınca odak Import düğmesine dönerdi).
+  const firstKey = payload.rows[0]?.key
+  const firstRow = firstKey ? byKeyValue.get(firstKey) : undefined
+  const i = firstRow ? indexByKey.value.get(store.keyOf(firstRow)) : undefined
+  if (i !== undefined) focusCell(i, props.keyColumn)
+}
+/** Export (07 §2): All / Visible › CSV / Excel; değerler güncel (taslak uygulanmış), dosyayı uygulama yazar. */
+const exportRows = (format: 'csv' | 'xlsx', scope: 'all' | 'visible') => {
+  edit.commit()
+  const rows = (scope === 'all' ? store.allRows.value : rowsAll.value).map((r) => store.current(r))
+  emit('export', { format, scope, columns: visibleCols.value.map((c) => c.id), rows })
+}
+const exportLabel = (scope: 'all' | 'visible') =>
+  i18n.t(scope === 'all' ? 'sheet.exportAll' : 'sheet.exportVisible', {
+    count: fmt.int(scope === 'all' ? store.allRows.value.length : rowsAll.value.length),
+  })
+const copyLink = () => void navigator.clipboard?.writeText(location.href).catch(() => {})
+
 const sheet: SheetApi<Row> = {
   store,
   table,
@@ -1139,7 +1250,24 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="rootEl" class="dt dt-sheet" :data-density="density" @keydown="onRootKeydown">
+  <div
+    ref="rootEl"
+    class="dt dt-sheet"
+    :class="{ 'is-phone': readOnlyDevice }"
+    :data-density="density"
+    @keydown="onRootKeydown"
+  >
+    <div v-if="readOnlyDevice" class="dt-sheet-readonly" role="note">
+      <PhMonitor :size="20" aria-hidden="true" />
+      <div class="dt-sheet-readonly-text">
+        <strong>{{ i18n.t('sheet.readOnly.title') }}</strong>
+        <span>{{ i18n.t('sheet.readOnly.body', { entity }) }}</span>
+        <button type="button" class="dt-btn has-icon" @click="copyLink">
+          <PhLink :size="16" aria-hidden="true" />
+          {{ i18n.t('common.copyLink') }}
+        </button>
+      </div>
+    </div>
     <div class="dt-toolbar dt-sheet-toolbar" role="toolbar">
       <div v-if="loadingNow || savingNow" class="dt-progress-strip">
         <strong>
@@ -1164,6 +1292,16 @@ defineExpose({
         >
           <div class="dt-progress-fill" :style="percent !== null ? { width: `${percent}%` } : undefined" />
         </div>
+      </div>
+      <div v-else-if="readOnlyDevice" class="dt-find" @keydown="onFindKeydown">
+        <SearchBox
+          ref="findBox"
+          :model-value="findText"
+          :placeholder="i18n.t('sheet.find')"
+          :kbd="FIND_KBD"
+          @update:model-value="(v) => (findText = v)"
+        />
+        <span v-if="findCount" class="dt-find-count" role="status">{{ findCount }}</span>
       </div>
       <template v-else>
         <div class="dt-find" @keydown="onFindKeydown">
@@ -1218,24 +1356,55 @@ defineExpose({
           <PhArrowUUpRight :size="16" aria-hidden="true" />
         </button>
         <span class="dt-toolbar-sep" aria-hidden="true" />
-        <button
-          type="button"
-          class="dt-btn dt-btn-ghost has-icon dt-sheet-add"
-          :disabled="readOnlyDevice"
-          @click="addRow()"
-        >
+        <button type="button" class="dt-btn dt-btn-ghost has-icon dt-sheet-add" @click="addRow()">
           <PhPlus :size="16" aria-hidden="true" />
           {{ i18n.t('sheet.addRow') }}
         </button>
+        <button
+          v-if="parseFile"
+          type="button"
+          class="dt-btn dt-btn-ghost has-icon dt-sheet-import"
+          @click="importOpen = true"
+        >
+          <PhDownloadSimple :size="16" aria-hidden="true" />
+          {{ i18n.t('sheet.import') }}
+        </button>
+        <DropdownMenuRoot>
+          <DropdownMenuTrigger as-child>
+            <button type="button" class="dt-btn dt-btn-ghost has-icon dt-sheet-export">
+              <PhExport :size="16" aria-hidden="true" />
+              {{ i18n.t('sheet.export') }}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuContent class="dt-menu" align="start" :side-offset="4">
+              <DropdownMenuSub v-for="scope in ['all', 'visible'] as const" :key="scope">
+                <DropdownMenuSubTrigger class="dt-menu-item">{{ exportLabel(scope) }}</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent class="dt-menu" :side-offset="4">
+                    <DropdownMenuItem class="dt-menu-item" @select="exportRows('xlsx', scope)">
+                      {{ i18n.t('toolbar.xlsx') }}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem class="dt-menu-item" @select="exportRows('csv', scope)">
+                      {{ i18n.t('toolbar.csv') }}
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenuPortal>
+        </DropdownMenuRoot>
         <DisplayPopover v-bind="displayProps" v-on="displayOn" />
       </template>
       <span class="dt-toolbar-spacer" />
-      <span v-if="!savingNow" class="dt-sheet-changes" :class="{ 'is-empty': !counts.changedCells }">
+      <template v-if="readOnlyDevice" />
+      <span v-else-if="!savingNow" class="dt-sheet-changes" :class="{ 'is-empty': !counts.changedCells }">
         <span v-if="counts.changedCells" class="dt-sheet-dot" aria-hidden="true" />
         {{ changesText }}
         <template v-if="counts.newRows">· {{ i18n.t('sheet.newShort', { count: counts.newRows }) }}</template>
       </span>
       <button
+        v-if="!readOnlyDevice"
         type="button"
         class="dt-btn dt-btn-ghost"
         :disabled="savingNow || (!counts.changedCells && !counts.newRows)"
@@ -1244,6 +1413,7 @@ defineExpose({
         {{ i18n.t('sheet.discard') }}
       </button>
       <button
+        v-if="!readOnlyDevice"
         type="button"
         class="dt-btn dt-btn-primary has-icon dt-sheet-save"
         :disabled="!savingNow && !canSave"
@@ -1284,7 +1454,7 @@ defineExpose({
       <span>{{ i18n.t('sheet.firstN', { max: fmt.int(maxRows), entity }) }}</span>
     </div>
 
-    <div class="dt-formula">
+    <div v-if="!readOnlyDevice" class="dt-formula">
       <div class="dt-formula-name">
         <template v-if="rangeText">{{ rangeText }}</template>
         <template v-else-if="activeDef">
@@ -1325,6 +1495,7 @@ defineExpose({
       :key-column="keyColumn"
       :found="matches?.map ?? null"
       :sort="sortMap"
+      :phone="readOnlyDevice"
     >
       <template v-if="!loadingNow && rowsAll.length === 0" #state>
         <slot name="empty">
@@ -1333,7 +1504,15 @@ defineExpose({
       </template>
     </SheetGrid>
 
-    <div class="dt-status" role="status" :aria-label="i18n.t('sheet.statusAria')">
+    <div v-if="readOnlyDevice" class="dt-sheet-footer" role="status">
+      <span>{{ i18n.t('sheet.readOnly.total', { count: fmt.int(store.allRows.value.length), entity }) }}</span>
+      <span aria-hidden="true">·</span>
+      <span class="dt-sheet-footer-badge">
+        <PhLock :size="14" aria-hidden="true" />
+        {{ i18n.t('sheet.readOnly.badge') }}
+      </span>
+    </div>
+    <div v-else class="dt-status" role="status" :aria-label="i18n.t('sheet.statusAria')">
       <span class="dt-status-rows">
         {{
           loadingNow ? i18n.t('common.loading') : i18n.t('sheet.rows', { count: fmt.int(store.allRows.value.length) })
@@ -1414,6 +1593,21 @@ defineExpose({
       :cancel-label="i18n.t('sheet.discard.keep')"
       danger
       @confirm="discard"
+    />
+    <ImportDialog
+      v-if="parseFile && importOpen"
+      v-model:open="importOpen"
+      :parse-file="parseFile"
+      :columns="sheetColumns"
+      :key-column="keyColumn"
+      :entity="entity"
+      :max-rows="maxRows"
+      :row-count="store.allRows.value.length"
+      :in-list="inList"
+      :lookup-keys="lookupKeys"
+      :parse-env="parseEnv"
+      :fmt-env="fmtEnv"
+      @apply="applyImport"
     />
     <SaveErrorsDialog
       v-if="errorDialogOpen"

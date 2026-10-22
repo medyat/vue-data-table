@@ -3,6 +3,7 @@
 // (combobox listesi ve tarih popover'ı: ↓/Enter/Esc önce widget'ta, odak portala gidince düzenleme sürer), sayı ve
 // tarih girişleri, "Was …", aktif satır kaydırmada DOM'da, hücre düzenleme → DOM < 16 ms.
 import { expect, test, type Page } from '@playwright/test'
+import { fileURLToPath } from 'node:url'
 
 const settings = (page: Page) =>
   page.addInitScript(() =>
@@ -10,6 +11,7 @@ const settings = (page: Page) =>
   )
 const cell = (page: Page, i: number, col: string) =>
   page.locator(`.dt-row[data-index="${i}"] .dt-cell[data-col="${col}"]`)
+const csv = fileURLToPath(new URL('./fixtures/products.csv', import.meta.url))
 /** Olaydan DOM güncellemesine süre (MutationObserver): boyama bütçesi 16 ms (01 · Performans). */
 const domLatency = (page: Page, selector: string, key: string) =>
   page.evaluate(
@@ -452,5 +454,84 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     await page.keyboard.press('Enter')
     await expect(page.locator('.dt-sheet-partly')).toHaveCount(0)
     await expect(page.locator('.dt-sheet-views .dt-seg-item[value="errors"] .dt-seg-count')).toHaveText('0')
+  })
+})
+
+test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () => {
+  test('Import from Excel: dosya, başlık satırı tespiti, otomatik eşleme + önizleme, özet, uygulama (boş hücre silmez), Undo; Export', async ({
+    page,
+  }) => {
+    await settings(page)
+    await page.setViewportSize({ width: 1440, height: 960 })
+    await page.goto('/t11?delay=0&rows=30&fresh=1')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
+    await page.locator('.dt-sheet-import').click()
+    const dlg = page.locator('.dt-import')
+    await expect(dlg).toBeVisible()
+    await expect(dlg.locator('.dt-btn-primary')).toBeDisabled()
+    await dlg.locator('input[type=file]').setInputFiles(csv)
+    await expect(dlg.locator('.dt-import-file')).toContainText('products')
+    await expect(dlg.locator('.dt-import-headerrow select')).toHaveValue('2')
+    await expect(dlg.locator('.dt-import-keysel select')).toHaveValue('0')
+    const rowsEl = dlg.locator('.dt-import-table tbody tr')
+    await expect(rowsEl).toHaveCount(7)
+    console.log(
+      'MAPPING',
+      await rowsEl.evaluateAll((trs) =>
+        trs.map(
+          (tr) =>
+            `${tr.querySelector('td')?.textContent?.trim()} → ${(tr.querySelector('select') as HTMLSelectElement | null)?.value ?? 'KEY'} | ${tr.querySelectorAll('td')[3]?.textContent?.replace(/\s+/g, ' ').trim()}`,
+        ),
+      ),
+    )
+    await expect(rowsEl.nth(3)).toContainText('1,650.00')
+    await expect(rowsEl.nth(5)).toContainText('20%')
+    await expect(rowsEl.nth(2).locator('select')).toHaveValue('') // Birim eşleşmedi
+    await expect(dlg.locator('.dt-import-summary')).toContainText('2 update existing products · 1 new SKUs')
+    await dlg.locator('.dt-import-link').click()
+    await expect(dlg.locator('.dt-import-newlist')).toContainText('NEW-CSV-1')
+    await expect(dlg.locator('.dt-btn-primary')).toBeEnabled()
+    await dlg.locator('.dt-btn-primary').click()
+    await expect(dlg).toHaveCount(0)
+    await expect(page.locator('.dt-toast')).toContainText('Imported 3 rows · 2 updated · 1 new')
+    await expect(cell(page, 0, 'name')).toContainText('Hidrolik silindir HC-1')
+    await expect(cell(page, 0, 'listPrice')).toContainText('1,650.00')
+    await expect(cell(page, 1, 'listPrice')).toContainText('2,240.00')
+    await expect(cell(page, 1, 'name')).toContainText('Gear pump GP 1') // boş hücre silmedi
+    await expect(cell(page, 1, 'minStock')).toContainText('12')
+    await expect(page.locator('.dt-status')).toContainText('31 rows')
+    await expect(page.locator('.dt-status')).toContainText('1 new row')
+    await expect(cell(page, 0, 'sku')).toBeFocused() // odak ızgaraya döndü
+    await page.keyboard.press('Control+End')
+    await expect(cell(page, 30, 'sku')).toContainText('NEW-CSV-1')
+    await expect(cell(page, 30, 'sku')).toContainText('New')
+    await expect(cell(page, 30, 'listPrice')).toContainText('99.50')
+    await page.keyboard.press('Meta+z')
+    await expect(page.locator('.dt-status')).toContainText('30 rows')
+    await expect(cell(page, 0, 'name')).toContainText('Hydraulic cylinder HC 1')
+    // export
+    await page.locator('.dt-sheet-export').click()
+    await page.locator('.dt-menu-item', { hasText: 'Export visible rows (30)' }).hover()
+    await page.locator('.dt-menu-item', { hasText: 'CSV' }).click()
+    await expect(page.getByTestId('last-export')).toHaveText('visible csv 30 rows 11 cols')
+  })
+
+  test('telefon: banner, Copy link, salt okunur, gutter yok, 44 px satır (D14)', async ({ page }) => {
+    await settings(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/t11?delay=0&rows=30')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('.dt-sheet')).toHaveClass(/is-phone/)
+    await expect(page.locator('.dt-sheet-readonly')).toContainText('Editing needs a larger screen.')
+    await expect(page.locator('.dt-sheet-footer')).toContainText('30 products')
+    await expect(page.locator('.dt-sheet-footer')).toContainText('Read-only')
+    await expect(page.locator('.dt-sheet-add')).toHaveCount(0)
+    await expect(page.locator('.dt-sheet-save')).toHaveCount(0)
+    await expect(page.locator('.dt-gutter')).toHaveCount(0)
+    await cell(page, 2, 'name').click()
+    await page.keyboard.type('x')
+    await expect(page.locator('.dt-cell-input')).toHaveCount(0)
+    const h = await page.locator('.dt-row[data-index="0"]').boundingBox()
+    expect(Math.round(h!.height)).toBe(45) // 44 + 1 px kenarlık
   })
 })

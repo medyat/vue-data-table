@@ -1,0 +1,6 @@
+Ürün Fiyat Listesi;;;;;;
+;;;;;;
+Stok Kodu;Ürün Adı;Birim;Liste Fiyatı;Maliyet;KDV;Min. Stok
+HC-0001-S;Hidrolik silindir HC-1;adet;1.650,00;1.120,00;%20;
+GP-0001-A;;adet;2.240,00;;%20;12
+NEW-CSV-1;Yeni ürün;adet;99,50;50,00;%10;5

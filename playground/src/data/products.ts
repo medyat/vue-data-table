@@ -18,8 +18,22 @@ const money = new Intl.NumberFormat('en', { minimumFractionDigits: 2, maximumFra
 const num = (v: unknown): v is number => typeof v === 'number'
 
 export const productColumns: Array<ColumnDef<Product>> = [
-  { id: 'sku', header: 'SKU', type: 'id', href: (r) => `/products/${r.id}` },
-  { id: 'name', header: 'Product name', type: 'string', primary: true, editable: true, required: true },
+  {
+    id: 'sku',
+    header: 'SKU',
+    type: 'id',
+    href: (r) => `/products/${r.id}`,
+    importAliases: ['Stok Kodu', 'Stock code'],
+  },
+  {
+    id: 'name',
+    header: 'Product name',
+    type: 'string',
+    primary: true,
+    editable: true,
+    required: true,
+    importAliases: ['Ürün Adı', 'Name'],
+  },
   {
     id: 'category',
     header: 'Category',
@@ -28,6 +42,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
     width: 148,
     editable: true,
     required: true,
+    importAliases: ['Kategori'],
   },
   {
     id: 'unit',
@@ -40,6 +55,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
   {
     id: 'listPrice',
     header: 'List price',
+    importAliases: ['Liste Fiyatı', 'Price'],
     type: 'currency',
     currency: 'TRY',
     width: 116,
@@ -55,6 +71,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
   {
     id: 'cost',
     header: 'Cost',
+    importAliases: ['Maliyet'],
     type: 'currency',
     currency: 'TRY',
     width: 116,
@@ -67,6 +84,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
   {
     id: 'vat',
     header: 'VAT',
+    importAliases: ['KDV'],
     type: 'percentage',
     width: 72,
     editable: true,
@@ -77,12 +95,21 @@ export const productColumns: Array<ColumnDef<Product>> = [
   {
     id: 'minStock',
     header: 'Min stock',
+    importAliases: ['Min. Stok'],
     type: 'int',
     width: 92,
     editable: true,
     validate: (v) => (num(v) && (v < 0 || !Number.isInteger(v)) ? 'Whole number, 0 or more' : null),
   },
-  { id: 'leadTime', header: 'Lead time', type: 'int', unit: 'd', width: 100, editable: true },
-  { id: 'active', header: 'Active', type: 'boolean', width: 84, editable: true },
+  {
+    id: 'leadTime',
+    header: 'Lead time',
+    type: 'int',
+    unit: 'd',
+    width: 100,
+    editable: true,
+    importAliases: ['Tedarik Süresi (gün)'],
+  },
+  { id: 'active', header: 'Active', type: 'boolean', width: 84, editable: true, importAliases: ['Aktif'] },
   { id: 'validFrom', header: 'Price valid from', type: 'date', width: 132, editable: true },
 ]

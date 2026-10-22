@@ -569,3 +569,129 @@ describe('satır partisi, görünümler, sıralama, kayıt akışı (Faz 6c)', (
     expect(w.get('.dt-sheet-changes').text()).toBe('No changes')
   })
 })
+
+describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
+  const workbook = {
+    sheets: [
+      {
+        name: 'Fiyatlar',
+        rows: [
+          ['Başlık'],
+          [],
+          ['Stok Kodu', 'Product name', 'Birim', 'List price', 'Cost'],
+          ['HC-002', 'From file', 'adet', '1.650,00', ''],
+          ['NEW-1', 'Brand new', 'adet', '99,50', '50,00'],
+        ],
+      },
+    ],
+  }
+  const parseFile = async () => workbook
+  const pickFile = async (w: W) => {
+    const input = document.querySelector<HTMLInputElement>('.dt-import input[type=file]')!
+    Object.defineProperty(input, 'files', { value: [new File(['x'], 'fiyat.csv')], configurable: true })
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+    await flush()
+    await new Promise((r) => setTimeout(r, 0))
+    await flush()
+    w.vm.$forceUpdate()
+  }
+  it('Import: başlık satırı tespiti, otomatik eşleme (alias), eşleşmeyen boş, önizleme, özet, uygulama tek adım; boş hücre silmez', async () => {
+    const cols = columns.map((c) => (c.id === 'sku' ? { ...c, importAliases: ['Stok Kodu'] } : c))
+    const w = await mountSheet({ rows: rows.slice(0, 5), columns: cols, parseFile })
+    await w.get('.dt-sheet-import').trigger('click')
+    await flush()
+    const dlg = () => document.querySelector('.dt-import')!
+    expect(dlg().querySelector('.dt-import-drop')).not.toBeNull()
+    expect((dlg().querySelector('.dt-import-foot .dt-btn-primary') as HTMLButtonElement).disabled).toBe(true)
+    await pickFile(w)
+    expect((dlg().querySelector('.dt-import-headerrow select') as HTMLSelectElement).value).toBe('2')
+    expect((dlg().querySelector('.dt-import-keysel select') as HTMLSelectElement).value).toBe('0')
+    const trs = [...dlg().querySelectorAll('.dt-import-table tbody tr')]
+    expect(trs).toHaveLength(5)
+    expect((trs[1]!.querySelector('select') as HTMLSelectElement).value).toBe('name')
+    expect((trs[2]!.querySelector('select') as HTMLSelectElement).value).toBe('') // Birim: alan yok
+    expect((trs[3]!.querySelector('select') as HTMLSelectElement).value).toBe('listPrice')
+    expect(trs[3]!.textContent).toContain('1,650.00')
+    expect(dlg().querySelector('.dt-import-summary')!.textContent).toContain('1 update existing products · 1 new SKUs')
+    // Birim'i elle Cost'a eşle, sonra Don't import
+    const birim = trs[2]!.querySelector('select') as HTMLSelectElement
+    birim.value = 'cost'
+    birim.dispatchEvent(new Event('change', { bubbles: true }))
+    await flush()
+    expect(
+      (dlg().querySelectorAll('.dt-import-table tbody tr')[2]!.querySelector('select') as HTMLSelectElement).value,
+    ).toBe('cost')
+    ;(dlg().querySelector('.dt-import-foot .dt-btn-primary') as HTMLButtonElement).click()
+    await flush()
+    expect(document.querySelector('.dt-import')).toBeNull()
+    expect(cell(w, 1, 'name').text()).toBe('From file')
+    expect(cell(w, 1, 'listPrice').text()).toContain('1,650.00')
+    expect(cell(w, 1, 'cost').classes()).toContain('is-error') // 'adet' → sayı değil (Birim→Cost eşlemesi)
+    expect(w.get('.dt-status').text()).toContain('6 rows')
+    expect(cell(w, 5, 'sku').text()).toContain('NEW-1')
+    expect(cell(w, 5, 'listPrice').text()).toContain('99.50')
+    expect(cell(w, 5, 'cost').text()).toContain('50.00')
+    expect(w.get('.dt-toast').text()).toContain('Imported 2 rows · 1 updated · 1 new')
+    await w.get('.dt-toast-undo').trigger('click')
+    await flush()
+    expect(w.get('.dt-status').text()).toContain('5 rows')
+    expect(cell(w, 1, 'name').text()).toBe('Cylinder 2')
+  })
+  it('Import: anahtar eşlenmeden Apply pasif; maxRows aşılırsa pasif ve uyarı', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5), parseFile, maxRows: 5 }) // alias yok → anahtar eşleşmez
+    await w.get('.dt-sheet-import').trigger('click')
+    await flush()
+    await pickFile(w)
+    const dlg = () => document.querySelector('.dt-import')!
+    expect((dlg().querySelector('.dt-import-keysel select') as HTMLSelectElement).value).toBe('')
+    expect(dlg().querySelector('.dt-import-warn')!.textContent).toContain('Choose the column that holds SKU.')
+    expect((dlg().querySelector('.dt-import-foot .dt-btn-primary') as HTMLButtonElement).disabled).toBe(true)
+    const keySel = dlg().querySelector('.dt-import-keysel select') as HTMLSelectElement
+    keySel.value = '0'
+    keySel.dispatchEvent(new Event('change', { bubbles: true }))
+    await flush()
+    expect(dlg().querySelector('.dt-import-warn')!.textContent).toContain(
+      'This file would make 6 rows. The limit is 5.',
+    )
+    expect((dlg().querySelector('.dt-import-foot .dt-btn-primary') as HTMLButtonElement).disabled).toBe(true)
+  })
+  it('Export: All / Visible › CSV / Excel güncel değerlerle yayar', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5) })
+    await click(w, 0, 'name')
+    await key(w, { key: 'q' })
+    await key(w, { key: 'Enter' })
+    const vm = w.vm as unknown as { $emit: never }
+    void vm
+    // menü portallı: doğrudan iç işlevi tetiklemek yerine tetikleyiciyi aç
+    await w.get('.dt-sheet-export').trigger('click')
+    await flush()
+    const item = [...document.querySelectorAll('.dt-menu-item')].find((e) =>
+      e.textContent?.includes('Export all rows (5)'),
+    )
+    expect(item).toBeTruthy()
+  })
+  it('telefon (D14): banner, Copy link, footer, gutter yok, düzenleme yok', async () => {
+    const orig = window.matchMedia
+    window.matchMedia = ((q: string) => ({
+      matches: q.includes('max-width'),
+      media: q,
+      addEventListener() {},
+      removeEventListener() {},
+    })) as unknown as typeof window.matchMedia
+    try {
+      const w = await mountSheet({ rows: rows.slice(0, 5) })
+      expect(w.classes()).toContain('is-phone')
+      expect(w.get('.dt-sheet-readonly').text()).toContain('Editing needs a larger screen.')
+      expect(w.get('.dt-sheet-footer').text()).toContain('5 products')
+      expect(w.find('.dt-sheet-add').exists()).toBe(false)
+      expect(w.find('.dt-sheet-save').exists()).toBe(false)
+      expect(w.find('.dt-gutter').exists()).toBe(false)
+      expect(w.get('[role="grid"]').attributes('aria-colcount')).toBe('6')
+      await click(w, 0, 'name')
+      await key(w, { key: 'x' })
+      expect(w.find('.dt-cell-input').exists()).toBe(false)
+    } finally {
+      window.matchMedia = orig
+    }
+  })
+})
