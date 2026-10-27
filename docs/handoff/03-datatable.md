@@ -94,6 +94,7 @@ Yükseklik `--dt-head-h`, `--dt-surface-2`, üst ve alt 1 px `--dt-line`, metin 
 | Filtrelenmiş | etiketin sağında 20 px `Funnel` `--dt-accent-text`; tıklayınca çipini açar |
 | Pinned | etiketten sonra `PushPin` 12 `--dt-text-3`; kenar gölgesi yalnızca kaydırılmışken |
 | Uzun etiket | `…`, tam metin tooltip'te |
+| Açıklama (`description`) | tooltip iki satır: ad + açıklama (`--dt-tip-bg`, 12 / 500, satır 16, dolgu 5 × 8); header'da ikon yok. Tasarım dosyasında çizilmedi, 05'e göre (D33) |
 | Resize | sütunun sağ kenarında 2 px `--dt-accent` tutamaç + canlı rozet (“184 px”, `--dt-tip-bg`, 20 px, 11 / 500); en az 80 px; çift tık içeriğe sığdırır |
 
 ### 5.2 Sütun menüsü (248)
@@ -116,7 +117,7 @@ Satırlar 36 px: öncelik rozeti · sütun adı · yön düğmesi (24 px, kenarl
 |---|---|---|
 | Sol sabit | 176 = 40 + 136 | seçim sütunu 40 · Order no. 136 (sol dolgu `--dt-cell-x + 24`, expand chevron'u için) |
 | Orta (kayar) | `minmax(200px,1.6fr) minmax(160px,1.2fr) 124px 176px 156px 132px 148px`, en az 1096 | Product · Customer · Status · Produced · Owner · Due date · Value |
-| Sağ sabit | 56 | satır aksiyonları (yalnızca ⋯, D28) |
+| Sağ sabit | 44 (hatalı satır varken 66) | satır aksiyonları: dolgu 8, öğeler arası 8, ⋯ sağa yaslı (D28, D35) |
 
 Toplam en az ~1330 px; dar ekranda orta blok yatay kayar, sabit blokların kenarında `--dt-shadow-pin-l/-r` yalnızca o yönde kaydırma varken.
 
@@ -130,6 +131,7 @@ Yükseklik `--dt-row-h` + 1 px alt çizgi `--dt-line`; hücre dolgusu `--dt-cell
 | Hover | `--dt-row-hover` | ⋯ `--dt-text-2`; hücre aksiyonları görünür (T7) |
 | Selected | `--dt-row-selected` | checkbox dolu |
 | Selected + hover | `--dt-row-selected-hover` | |
+| Error (`rowError`) | `--dt-r-bg` (hover ve seçimin üstünde) | ⋯ hücresinde, ⋯'nın solunda 14 px `WarningCircle` `--dt-r-dot`, 8 px ara; sütun 66 px; tooltip satırın her yerinde (imlecin altında) ve ikonda. Tasarım dosyasında çizilmedi, 05'e göre (D35) |
 | Klavye odağı | değişmez | 2 px `--dt-accent` iç çerçeve, yarıçap 3 (`::after`) |
 | Menü açık | hover zemini | ⋯ `--dt-line-2` zemin, `--dt-text` (görünüm satırı ve header ⋯'leriyle aynı; T6-03 ekranında `--dt-surface-3` çizildi, `--dt-line-2` esas alınmalı) |
 
@@ -173,7 +175,7 @@ Kaydırma hapı: gövde kayarken sağdan 22, alttan 62 px; 24 px, dolgu `0 10px`
 
 **Expand:** alt satır tam genişlik, `--dt-surface-2`, dolgu `12px 12px 12px (--dt-cell-x + 24)`; sol kenarı seçim sütununun sağından başlar. İçerik uygulamanın; örnek: mini tablo (en çok 920, 1 px `--dt-line`, yarıçap 8, header 34 `--dt-surface-2` 12 / 500, satırlar 34) + özet satırı (“4 operations · Line 2 routing” 12.5 `--dt-text-2`, sağda “Open routing →” 500). Birden fazla satır açık olabilir.
 
-**Satır aksiyonları:** sağ sabit 56 px sütunda yalnızca ⋯ (28 × 28, yarıçap 6, `--dt-text-3`, her zaman görünür). Sağ tık ve `⇧F10` aynı menüyü açar.
+**Satır aksiyonları:** sağ sabit, içeriğe göre sütunda (dolgu 8, aralar 8; yalnızca ⋯ 44; `rowError` ikonu + 22; inline aksiyon başına + 36, D36; inline düğme ⋯ ile aynı 28 px, hover `--dt-surface-3`) ⋯ (28 × 28, yarıçap 6, `--dt-text-3`, her zaman görünür). Sağ tık ve `⇧F10` aynı menüyü açar.
 
 **Satır menüsü** (268, ⋯'nin altında sağa hizalı): **Open** `↵` · Open in new tab · **Copy order number** · ayırıcı · uygulamanın aksiyonları (pasif olan iki satırlı: “Release / Already running”) · ayırıcı · yıkıcı (`--dt-r-fg`, “Cancel order…”). Copy order number “Copied” toast'ı gösterir ([02 §6](02-ortak-bilesenler.md)).
 

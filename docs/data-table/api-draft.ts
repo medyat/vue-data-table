@@ -176,6 +176,8 @@ interface BaseColumn<Row, V = unknown> {
   header: string
   /** Dar alanlarda (telefon) kısa header: "Disc.". */
   headerShort?: string
+  /** Sütun açıklaması (uygulama i18n'den verir): header tooltip'inde ad altında ikinci satır, Columns panelinde ad altında; hücrede gösterilmez. */
+  description?: string
   /** Hesaplanan değer. Verilirse `fields` ile sunucudan istenecek alanlar bildirilir. */
   accessor?: (row: Row) => V
   /** Sunucu modunda `query.fields`'e eklenecek alan yolları (hesaplanan sütunlar için). */
@@ -357,9 +359,19 @@ export interface CountRequest {
 export interface RowAction<Row> {
   id: string
   label: string
+  /** Menüde etiketin altında ikinci satır (`disabled` gerekçesi varsa o gösterilir); inline düğmede tooltip "Label — description" (D36). */
+  description?: string
   icon?: Component
   /** Gösterim için: "⌘↵". Kısayolu paket bağlamaz; yalnızca Open yerleşiktir. */
   shortcut?: string
+  /** Yetkiye bağlı: false → ne menüde ne inline (D34). Duruma bağlı pasiflik için `disabled`. */
+  when?: (row: Row) => boolean
+  /**
+   * ⋯'nın solunda 28 px ikon düğmesi olarak çizilir (`icon` zorunlu; yoksa yalnızca menüde). Çizildiği satırın ⋯ menüsünde
+   * yer almaz (klavye: satırda `→` ile düğmeye gelinir). Satır başına ilk 2 inline görünür, fazlası menüde kalır; ⋯ sütunu
+   * sayfadaki en kalabalık satıra göre genişler (05 §4). Menü boş kalırsa o satırda ⋯ çizilmez (D36).
+   */
+  inline?: boolean
   /** true veya gerekçe metni ("Already running") → pasif, gerekçe ikinci satırda. */
   disabled?: (row: Row) => boolean | string
   destructive?: boolean
@@ -376,10 +388,14 @@ export interface RowAction<Row> {
 export interface BulkAction<Row> {
   id: string
   label: string
+  /** Bar düğmesinde tooltip, ⋯ menüsünde ikinci satır (`disabled` gerekçesi varsa o) (D36). */
+  description?: string
   icon?: Component
   /** Bar'da görünür; değilse ⋯ menüsünde. Bar'da en fazla 3 görünür aksiyon. */
   inBar?: boolean
   destructive?: boolean
+  /** Yetkiye bağlı (seçime göre): false → bar'da ve menüde yok (D36). Duruma bağlı pasiflik için `disabled`. */
+  when?: (rows: Row[]) => boolean
   disabled?: (rows: Row[]) => boolean | string
   run: (rows: Row[]) => void | Promise<void>
 }
@@ -578,6 +594,13 @@ export interface DataTableProps<Row> extends CommonProps<Row> {
   /** Varsayılan 'none'. */
   rowClick?: RowClickMode
   expand?: boolean | ExpandOptions<Row>
+  /**
+   * Satır hatası (D35): metin ya da metin listesi dönerse satır `--dt-r-bg` (seçim ve hover'ın üstünde), ⋯ hücresinde (yoksa
+   * ilk hücrede) kırmızı uyarı ikonu; mesajlar satırın her yerinde tooltip'te alt alta, satıra `aria-describedby`. Boş metin,
+   * boş dizi, null → hata yok.
+   * Haritayı uygulama tutar ve temizler (toplu aksiyonun kısmi hatası); paket saklamaz.
+   */
+  rowError?: (row: Row) => string | string[] | null | undefined
   /** Varsayılan 100; tercih varsa o. */
   pageSize?: number
   /** Varsayılan [50, 100, 250, 500]. */

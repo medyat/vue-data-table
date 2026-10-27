@@ -525,6 +525,18 @@ describe('satır partisi, görünümler, sıralama, kayıt akışı (Faz 6c)', (
     // değişmemiş-hatalı satır üret: satır 5'i kes
     expect(w.get('.dt-sheet-views [value="errors"]').text()).toContain('1')
   })
+  it('description (D33): sheet header tooltip ad + açıklama; anahtar sütunda anahtar metni + açıklama', async () => {
+    const w = await mountSheet({
+      rows: rows.slice(0, 2),
+      columns: columns.map((c) => (c.id === 'cost' || c.id === 'sku' ? { ...c, description: `About ${c.id}` } : c)),
+    })
+    const cost = w.get('.dt-head-cell[data-col="cost"] .dt-head-label')
+    expect(cost.attributes('data-dt-tip')).toBe('Cost\nAbout cost')
+    expect(document.getElementById(cost.attributes('aria-describedby')!)?.textContent).toBe('About cost')
+    const sku = w.get('.dt-head-cell[data-col="sku"] .dt-head-label')
+    expect(sku.attributes('data-dt-tip')).toMatch(/^Match key .*\nAbout sku$/s) // anahtar metni + açıklama
+    expect(w.get('.dt-head-cell[data-col="name"] .dt-head-label').attributes('aria-describedby')).toBeUndefined()
+  })
   it('header tıklaması yerel sıralar (anlık görüntü, gutter numaraları değişmez); üçüncü tık kapatır', async () => {
     const w = await mountSheet({ rows: rows.slice(0, 5) })
     const head = w.get('.dt-head-cell[data-col="listPrice"] .dt-head-label')

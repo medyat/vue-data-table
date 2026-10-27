@@ -1613,7 +1613,13 @@ defineExpose({
     </div>
     <span class="dt-sr-only" aria-live="polite">{{ polite }}</span>
     <span class="dt-sr-only" aria-live="assertive">{{ assertive }}</span>
-    <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
+    <div
+      v-show="tooltip.open.value"
+      class="dt-tip"
+      :class="{ 'is-multi': tooltip.text.value.includes('\n') }"
+      role="tooltip"
+      :style="tooltip.style.value"
+    >
       {{ tooltip.text.value }}
     </div>
     <ConfirmDialog

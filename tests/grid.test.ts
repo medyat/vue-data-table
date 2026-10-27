@@ -121,6 +121,60 @@ describe('roller ve yapı', () => {
     expect(cell.get('.dt-cell-content').text()).toBe('Pump 0')
     w.unmount()
   })
+  it('description (D33): header tooltip ad + açıklama ve aria-describedby gizli açıklamaya; yoksa yalnızca ad', async () => {
+    const w = await mountTable({
+      columns: columns.map((c) => (c.id === 'value' ? { ...c, description: 'Net of discounts' } : c)),
+    })
+    const label = w.get('.dt-head-cell[data-col="value"] .dt-head-label')
+    expect(label.attributes('data-dt-tip')).toBe('Value\nNet of discounts')
+    expect(document.getElementById(label.attributes('aria-describedby')!)?.textContent).toBe('Net of discounts')
+    expect(label.text()).not.toContain('Net of discounts') // erişilebilir ad değişmez
+    await label.trigger('focusin')
+    const tip = w.get('.dt-tip')
+    expect(tip.text()).toContain('Net of discounts')
+    expect(tip.classes()).toContain('is-multi')
+    const plain = w.get('.dt-head-cell[data-col="status"] .dt-head-label')
+    expect(plain.attributes('data-dt-tip')).toBe('Status')
+    expect(plain.attributes('aria-describedby')).toBeUndefined()
+    w.unmount()
+  })
+  it('rowError (D35): hatalı satırda is-error, ⋯ hücresinde ikon, satır ve ikon tooltip, aria-describedby; seçimde kalır; ⋯ yoksa ilk hücre', async () => {
+    const w = await mountTable({
+      selectable: true,
+      rowError: (r: Order) => (r.id === 1 ? ['Open despatch', 'Locked by Ayşe'] : r.id === 3 ? '' : null),
+    })
+    const bad = w.get('.dt-row[data-index="0"]')
+    expect(bad.classes()).toContain('is-error')
+    const icon = bad.get('.dt-cell-menu .dt-row-error')
+    expect(icon.attributes('data-dt-tip')).toBe('Open despatch\nLocked by Ayşe')
+    expect(bad.attributes('data-dt-tip')).toBe('Open despatch\nLocked by Ayşe')
+    expect(icon.attributes('role')).toBe('img')
+    expect(bad.attributes('aria-describedby')).toBe(icon.attributes('id'))
+    expect(bad.get('.dt-cell.is-primary').text()).toBe('WO-26-400') // numara kesilmez, ikon birincil hücrede değil
+    const menuW = (x: typeof w) => (x.get('.dt-grid').element as HTMLElement).style.getPropertyValue('--dt-menu-w')
+    expect(menuW(w)).toBe('66px') // sayfada hatalı satır var: ⋯ sütunu ikona yer açar
+    for (const i of [1, 2]) {
+      const ok = w.get(`.dt-row[data-index="${i}"]`)
+      expect(ok.classes()).not.toContain('is-error')
+      expect(ok.find('.dt-row-error').exists()).toBe(false)
+      expect(ok.attributes('aria-describedby')).toBeUndefined()
+    }
+    await bad.get('.dt-select-box').trigger('click')
+    expect(bad.classes()).toContain('is-selected')
+    expect(bad.find('.dt-row-error').exists()).toBe(true)
+    w.unmount()
+
+    const w2 = await mountTable({ columns: columns.filter((c) => !c.primary), rowError: () => 'Oops' })
+    const first = w2.get('.dt-row[data-index="0"]')
+    expect(first.find('.dt-cell-menu').exists()).toBe(false)
+    expect(first.findAll('.dt-cell')[0]!.find('.dt-row-error').exists()).toBe(true)
+    expect(first.findAll('.dt-row-error')).toHaveLength(1)
+    w2.unmount()
+
+    const w3 = await mountTable({ rowError: () => null })
+    expect(menuW(w3)).toBe('44px') // hata yok: yalnızca ⋯
+    w3.unmount()
+  })
 })
 
 describe('guard ve klavye', () => {

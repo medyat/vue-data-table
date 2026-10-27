@@ -108,6 +108,7 @@ export const productColumns: Array<ColumnDef<Product>> = [
     type: 'int',
     unit: 'd',
     width: 100,
+    description: 'Supplier lead time in calendar days',
     editable: true,
     importAliases: ['Tedarik Süresi (gün)'],
   },

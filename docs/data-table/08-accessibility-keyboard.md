@@ -6,8 +6,8 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 
 | Bileşen | Kök | Satır | Hücre | Header |
 |---|---|---|---|---|
-| DataTable | `role="grid"` + `aria-label` (ör. “Production orders”), `aria-rowcount` (bilinmiyorsa `-1`), `aria-colcount` | `role="row"`, `aria-rowindex` (header = 1, ilk veri satırı = 2 + sayfa ofseti), `aria-selected` (seçim açıksa), `aria-expanded` (detayı varsa) | `role="gridcell"` | `role="columnheader"`, `aria-sort` (`ascending`/`descending`; sıralı değilse öznitelik yok) |
-| DataSheet | `role="grid"`, `aria-rowcount` = parti büyüklüğü, `aria-multiselectable="true"` | `role="row"`, `aria-rowindex` | `role="gridcell"`, `aria-colindex`, `aria-selected` (aralıktaysa), `aria-readonly`, `aria-invalid` + `aria-describedby` (hata) | `role="columnheader"`, `aria-sort`, zorunluysa `aria-required` açıklaması |
+| DataTable | `role="grid"` + `aria-label` (ör. “Production orders”), `aria-rowcount` (bilinmiyorsa `-1`), `aria-colcount` | `role="row"`, `aria-rowindex` (header = 1, ilk veri satırı = 2 + sayfa ofseti), `aria-selected` (seçim açıksa), `aria-expanded` (detayı varsa), `aria-describedby` (`rowError` varsa, hata ikonuna; ikon `role="img"` + mesaj) | `role="gridcell"` | `role="columnheader"`, `aria-sort` (`ascending`/`descending`; sıralı değilse öznitelik yok); `description` varsa etiket düğmesinde `aria-describedby` → görsel olarak gizli açıklama |
+| DataSheet | `role="grid"`, `aria-rowcount` = parti büyüklüğü, `aria-multiselectable="true"` | `role="row"`, `aria-rowindex` | `role="gridcell"`, `aria-colindex`, `aria-selected` (aralıktaysa), `aria-readonly`, `aria-invalid` + `aria-describedby` (hata) | `role="columnheader"`, `aria-sort`, zorunluysa `aria-required` açıklaması; `description` varsa `aria-describedby` (DataTable ile aynı) |
 
 - Alt satır (expand): `role="row"` içinde tek `role="gridcell"` (`aria-colspan` = sütun sayısı); expand butonunda `aria-controls` → alt satır id'si.
 - Gutter (sheet): `role="rowheader"`.
@@ -22,7 +22,7 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 - Izgara **tek tab durağıdır** (roving tabindex). Tab ile girilince son odaklanan satıra (ilk seferde ilk satıra) gelir.
 - Odaklı satır: 2 px `--dt-accent` çerçeve (05 §4). Odak görünürlüğü fareyle tıklamada da korunur (`:focus-visible` yerine kendi `is-focus` sınıfı, klavye ile gelindiyse).
 - `→` satırdayken: genişletilebilir ve kapalıysa açar; değilse odağı satırın **ilk widget'ına** (birincil link) taşır. Widget'lar arası `←`/`→` (APG: next/previous widget); ilkinde `←` satıra döner; `Esc` her zaman satıra. Satırdayken `←` açık satırı kapatır.
-- Hücre içindeki widget'lar (link, buton, `actions`, `cell` içeriği, input) her zaman `tabindex="-1"` taşır; `Tab` ızgaradan çıkar. Odak bir widget içindeyken ızgara tuşları (`↑↓`, `Space`, `Enter`, `X`, tek harfliler) devre dışıdır; input/combobox kendi tuşlarını alır; widget odaklıyken `Enter`/`Space` onu çalıştırır (native), satır kısayolunu tetiklemez.
+- Hücre içindeki widget'lar (link, buton, `actions`, `cell` içeriği, input, ⋯ hücresindeki inline satır aksiyonları) her zaman `tabindex="-1"` taşır; `Tab` ızgaradan çıkar. Odak bir widget içindeyken ızgara tuşları (`↑↓`, `Space`, `Enter`, `X`, tek harfliler) devre dışıdır; input/combobox kendi tuşlarını alır; widget odaklıyken `Enter`/`Space` onu çalıştırır (native), satır kısayolunu tetiklemez.
 - Hover'da beliren aksiyonlar (`actions`) `:focus-within`'de de görünür; yalnızca hover'a bağlı işlev yoktur.
 - Sanallaştırma: odaklı satır (ya da detayında odak varsa o satır) her zaman render edilir (virtualizer `rangeExtractor` odak indeksini ekler); kaydırma odağı kaybettirmez. Sayfa/sorgu değişiminde odak önce `role="grid"` köküne alınır, veri gelince aynı anahtar → aynı indeks → ilk satır sırasıyla geri verilir.
 - Tab ızgaradan çıkar: footer → bulk bar. `F6` bölgeler arası atlar: toolbar → filtre satırı → ızgara → footer → bulk bar.

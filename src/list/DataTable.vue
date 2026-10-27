@@ -112,6 +112,8 @@ const props = withDefaults(
     /** Satır gövdesine tıklama (D6). Varsayılan 'none'. */
     rowClick?: RowClickMode
     expand?: boolean | ExpandOptions<Row>
+    /** Satır hatası (D35): metin/metin listesi → `--dt-r-bg` + ⋯ hücresinde uyarı ikonu + satırda tooltip. Harita uygulamanın. */
+    rowError?: (row: Row) => string | string[] | null | undefined
   }>(),
   {
     rowKey: 'id',
@@ -981,6 +983,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
       :can-expand="canExpandFn"
       :row-menu="rowMenu"
       :row-actions="rowActions"
+      :row-error="rowError"
       :primary-href="primaryHref"
       :primary-label="primaryLabel"
       :primary-header="primaryDef?.header"
@@ -1089,7 +1092,13 @@ defineExpose({ refresh: req.refresh, clearSelection })
     />
     <span class="dt-sr-only" aria-live="polite">{{ polite }}</span>
     <span class="dt-sr-only" aria-live="assertive">{{ assertive }}</span>
-    <div v-show="tooltip.open.value" class="dt-tip" role="tooltip" :style="tooltip.style.value">
+    <div
+      v-show="tooltip.open.value"
+      class="dt-tip"
+      :class="{ 'is-multi': tooltip.text.value.includes('\n') }"
+      role="tooltip"
+      :style="tooltip.style.value"
+    >
       {{ tooltip.text.value }}
     </div>
     <ViewDialog

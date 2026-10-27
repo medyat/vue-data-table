@@ -477,7 +477,7 @@ Aynı satır, üç derinlik:
 
 - **Satır gövdesi varsayılan olarak hiçbir şey yapmaz** (`row-click: 'none'`): metin seçilip kopyalanabilir. Uygulama `row-click` ile open/expand'den birini bağlayabilir; her durumda etkileşimli hedefe tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; seçim asla tıklamayla yapılmaz.
 - **Satır durumları:** Default `--dt-surface` · Hover `--dt-row-hover` · Selected · Klavye odağı 2 px accent çerçeve (`::after`, 3 px yarıçap).
-- **Satır aksiyonları** (sağa sabit, 56 px): yalnızca **⋯** (her zaman görünür; D28). Sağ tık da menüyü açar. Satır menüsü (268 px): Open `↵` · Open in new tab · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
+- **Satır aksiyonları** (sağa sabit, içeriğe göre 44 / 66 px): yalnızca **⋯** (her zaman görünür; D28). Sağ tık da menüyü açar. Satır menüsü (268 px): Open `↵` · Open in new tab · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
 - **Expand:** chevron 20 px birincil hücrede ID'nin solunda; açıkken 90° döner. Alt satır tam genişlik, `--dt-surface-2`, sol kenarı seçim sütununun sağından; içinde uygulamanın içeriği — örnek: mini tablo (8 px yarıçap, kendi header'ı, 34 px satırlar) + özet satırı (“4 operations · Line 2 routing” + “Open routing”). **Veriyi uygulamanın içeriği çeker;** yükleniyor/hata görünümü de onun (paket “Loading…” göstermez). Birden çok satır açık olabilir; sorgu/sayfa değişince kapanır; sanal listede zıplama olmaz.
 
 ### 6.13 Sayfalama ve footer [Karar D7]
@@ -523,7 +523,7 @@ Izgara tek Tab durağıdır (roving tabindex); Tab ile girilince son odaklanan s
 |---|---|
 | ≥ 1024 px | Varsayılan |
 | 640–1023 px | Toolbar daralır |
-| < 640 px | Seçim ve birincil sütun sola sabit, diğerleri yatay kayar (sağ kenarda solma); toolbar: görünüm adı, arama ikonu (tam genişlik alana açılır), filtre ikonu + sayaç, ⋯; çip satırı tek satır kayar; tüm popover'lar alt sayfa (52 px satırlar, tutamaç, tam genişlik birincil buton); bulk bar telefon düzeni; dokunmatikte Compact → Standard, satır ≥ 48 px, checkbox dokunma alanı 44 px (görsel 16); satır ⋯ sütunu (56 px) sağa sabit kalır |
+| < 640 px | Seçim ve birincil sütun sola sabit, diğerleri yatay kayar (sağ kenarda solma); toolbar: görünüm adı, arama ikonu (tam genişlik alana açılır), filtre ikonu + sayaç, ⋯; çip satırı tek satır kayar; tüm popover'lar alt sayfa (52 px satırlar, tutamaç, tam genişlik birincil buton); bulk bar telefon düzeni; dokunmatikte Compact → Standard, satır ≥ 48 px, checkbox dokunma alanı 44 px (görsel 16); satır ⋯ sütunu (44 / 66 px) sağa sabit kalır |
 
 **Filters alt sayfası** (< 640 px): başlık “Filters” + Clear all; uygulanmış filtreler, sonra `suggested` sütunlar (`Owner · Any`) 52 px satırlar; Add filter; **Sort** bölümü; altta tam genişlik **Show results** (değişiklikler bu düğmeyle uygulanır, masaüstündeki anında uygulamadan farklı).
 

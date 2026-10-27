@@ -13,6 +13,7 @@ import {
 import { computed, toRaw } from 'vue'
 import type { RowAction } from '../../types/list'
 import { useDataTableContext } from '../plugin'
+import { inlineActionsOf } from './inlineActions'
 
 const props = defineProps<{
   row: object
@@ -27,15 +28,19 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:open': [open: boolean]; open: [event: MouseEvent]; copy: [] }>()
 const { i18n } = useDataTableContext()
 
-/** Yıkıcı aksiyonlar en altta, kendi ayırıcısıyla. */
-const ordered = computed(() => [
-  ...props.actions.filter((a) => !a.destructive),
-  ...props.actions.filter((a) => a.destructive),
-])
+/** `when(row)` false olan gösterilmez (yetki; D34); satırda inline çizilen de menüde yoktur (D36); yıkıcılar en altta. */
+const ordered = computed(() => {
+  const inline = new Set(inlineActionsOf(props.actions, props.row))
+  const shown = props.actions.filter((a) => !inline.has(a) && (!a.when || a.when(props.row)))
+  return [...shown.filter((a) => !a.destructive), ...shown.filter((a) => a.destructive)]
+})
+/** Menüde hiçbir şey yoksa ⋯ çizilmez; hizalama için yeri boş kalır. */
+const hasItems = computed(() => !!props.href || !!props.primaryHeader || ordered.value.length > 0)
 const firstDestructive = computed(() => ordered.value.findIndex((a) => a.destructive))
-const reasonOf = (a: RowAction): string | null => {
+/** İkinci satır: `disabled` gerekçesi varsa o, yoksa `description` (D36). */
+const subOf = (a: RowAction): string | null => {
   const d = a.disabled?.(props.row)
-  return typeof d === 'string' ? d : null
+  return typeof d === 'string' ? d : (a.description ?? null)
 }
 const isDisabled = (a: RowAction) => !!a.disabled?.(props.row)
 const run = (a: RowAction) => {
@@ -48,7 +53,8 @@ const onOpen = (e: MouseEvent) => {
 </script>
 
 <template>
-  <DropdownMenuRoot :open="open" @update:open="(o) => emit('update:open', o)">
+  <span v-if="!hasItems" class="dt-row-more-space" aria-hidden="true" />
+  <DropdownMenuRoot v-else :open="open" @update:open="(o) => emit('update:open', o)">
     <DropdownMenuTrigger as-child>
       <button
         type="button"
@@ -81,14 +87,14 @@ const onOpen = (e: MouseEvent) => {
           <DropdownMenuSeparator v-if="a.separatorBefore || i === firstDestructive" class="dt-menu-sep" />
           <DropdownMenuItem
             class="dt-menu-item"
-            :class="{ 'is-destructive': a.destructive, 'is-two-line': reasonOf(a) }"
+            :class="{ 'is-destructive': a.destructive, 'is-two-line': subOf(a) }"
             :disabled="isDisabled(a)"
             @select="run(a)"
           >
             <component :is="a.icon" v-if="a.icon" :size="16" aria-hidden="true" />
             <span class="dt-menu-text">
               <span>{{ a.label }}</span>
-              <span v-if="reasonOf(a)" class="dt-menu-sub">{{ reasonOf(a) }}</span>
+              <span v-if="subOf(a)" class="dt-menu-sub">{{ subOf(a) }}</span>
             </span>
             <kbd v-if="a.shortcut" class="dt-kbd">{{ a.shortcut }}</kbd>
           </DropdownMenuItem>

@@ -40,7 +40,10 @@ const hiddenCols = computed(() => props.columns.filter((c) => !c.visible && matc
       <span>{{ i18n.t('columns.alwaysShown') }}</span>
     </div>
     <div v-for="c in pinnedCols" :key="c.id" class="dt-col-row">
-      <span class="dt-col-name">{{ c.def.header }}</span>
+      <span class="dt-col-name">
+        <span>{{ c.def.header }}</span>
+        <span v-if="c.def.description" class="dt-col-desc">{{ c.def.description }}</span>
+      </span>
       <PhLock :size="14" class="dt-col-lock" aria-hidden="true" />
     </div>
   </template>
@@ -51,7 +54,10 @@ const hiddenCols = computed(() => props.columns.filter((c) => !c.visible && matc
     </button>
   </div>
   <div v-for="(c, i) in shownCols" :key="c.id" class="dt-col-row">
-    <span class="dt-col-name">{{ c.def.header }}</span>
+    <span class="dt-col-name">
+      <span>{{ c.def.header }}</span>
+      <span v-if="c.def.description" class="dt-col-desc">{{ c.def.description }}</span>
+    </span>
     <button
       type="button"
       class="dt-icon-btn-xs"
@@ -87,7 +93,10 @@ const hiddenCols = computed(() => props.columns.filter((c) => !c.visible && matc
     </button>
   </div>
   <div v-for="c in hiddenCols" :key="c.id" class="dt-col-row is-hidden">
-    <span class="dt-col-name">{{ c.def.header }}</span>
+    <span class="dt-col-name">
+      <span>{{ c.def.header }}</span>
+      <span v-if="c.def.description" class="dt-col-desc">{{ c.def.description }}</span>
+    </span>
     <button
       type="button"
       class="dt-icon-btn-sm"

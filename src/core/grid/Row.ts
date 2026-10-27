@@ -1,14 +1,15 @@
 // Satır + hücreler: render fonksiyonu (sanal listede yüzlerce örnek; şablon derleyicisi yerine düz h()).
 // Kabuk burada: hizalama, kesme, sabit sütun sticky'si, --dt-row-bg, ikinci satır, aksiyon overlay'i (05 §4, 03);
 // seçim hücresi (40 px, sol sabit), birincil hücrede expand chevron'u, sağ sabit ⋯ hücresi (56 px) (05 §6–7, D6, D28).
-import { PhCaretRight } from '@phosphor-icons/vue'
-import { defineComponent, h, onMounted, onUpdated, type PropType, type VNodeChild } from 'vue'
+import { PhCaretRight, PhWarningCircle } from '@phosphor-icons/vue'
+import { defineComponent, h, onMounted, onUpdated, toRaw, type PropType, type VNodeChild } from 'vue'
 import type { RowAction } from '../../types/list'
 import CellActions from '../cells/CellActions.vue'
 import { cellFillStyle, renderCellContent, type RenderEnv } from '../cells/renderCell'
 import { alignOf, isNumericType } from '../cells/specs'
 import type { LayoutColumn } from '../columns/useColumnLayout'
 import { INTERACTIVE_SELECTOR, isInteractive } from '../interaction/isInteractive'
+import { inlineActionsOf } from './inlineActions'
 import RowMenu from './RowMenu.vue'
 
 export default defineComponent({
@@ -39,6 +40,10 @@ export default defineComponent({
     menuOpen: { type: Boolean, default: false },
     menuEdge: { type: Boolean, default: false },
     rowActions: { type: Array as PropType<RowAction[]>, default: () => [] },
+    /** Satır hatası mesajları (05 §4, D35); boş = yok. */
+    error: { type: Array as PropType<string[]>, default: () => [] },
+    /** Satıra özgü id öneki (GridRoot uid + satır anahtarı): hata ikonu ve inline açıklamaları için. */
+    uid: { type: String, default: '' },
     href: { type: String, default: undefined },
     primaryHeader: { type: String, default: undefined },
     style: { type: Object as PropType<Record<string, string>>, default: undefined },
@@ -54,6 +59,42 @@ export default defineComponent({
     onMounted(demote)
     onUpdated(demote)
     const t = (key: string, params?: Record<string, string>) => props.env.i18n.t(key, params)
+
+    /** Satır hatası ikonu (05 §4, D35): ⋯ hücresinde; ⋯ yoksa ilk görünür hücrede (sabit genişlikli birincil id'yi kesmesin). */
+    const errorTip = () => props.error.join('\n')
+    const errorId = () => `${props.uid}-err`
+    const errorIcon = () =>
+      h(
+        'span',
+        { id: errorId(), class: 'dt-row-error', role: 'img', 'aria-label': errorTip(), 'data-dt-tip': errorTip() },
+        [h(PhWarningCircle, { size: 14, weight: 'fill', 'aria-hidden': 'true' })],
+      )
+    /** Inline satır aksiyonu (D36): ⋯ ile aynı 28 px düğme; label aria'da, açıklama tooltip'te ve gizli span'da. */
+    const inlineButton = (a: RowAction) => {
+      const d = a.disabled?.(props.row)
+      const reason = typeof d === 'string' ? d : null
+      const descId = a.description ? `${props.uid}-${a.id}` : undefined
+      return h('span', { class: 'dt-row-inline-wrap' }, [
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'dt-row-inline',
+            tabindex: -1,
+            disabled: !!d,
+            'aria-label': a.label,
+            'aria-describedby': descId,
+            'data-dt-tip': reason ?? (a.description ? `${a.label} — ${a.description}` : a.label),
+            onClick: () => void a.run(toRaw(props.row)),
+            onKeydown: (e: KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+            },
+          },
+          [h(a.icon!, { size: 16, 'aria-hidden': 'true' })],
+        ),
+        descId ? h('span', { id: descId, class: 'dt-sr-only' }, a.description) : null,
+      ])
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderCell = (col: LayoutColumn<any>): VNodeChild => {
@@ -71,6 +112,7 @@ export default defineComponent({
           : null
       const overlay = actions?.length ? h(CellActions, { actions, row: props.row }) : null
       const withExpand = def.primary && props.expandable
+      const lead = props.error.length && !props.menu && col.id === props.columns[0]?.id ? errorIcon() : null
       const children: VNodeChild[] = withExpand
         ? [
             props.canExpand
@@ -88,10 +130,13 @@ export default defineComponent({
                   [h(PhCaretRight, { size: 14, 'aria-hidden': 'true' })],
                 )
               : h('span', { class: 'dt-expand-space', 'aria-hidden': 'true' }),
+            lead,
             h('span', { class: 'dt-cell-main' }, [main, secondary]),
             overlay,
           ]
-        : [main, secondary, overlay]
+        : lead
+          ? [lead, h('span', { class: 'dt-cell-main' }, [main, secondary]), overlay]
+          : [main, secondary, overlay]
       return h(
         'div',
         {
@@ -101,7 +146,7 @@ export default defineComponent({
             {
               'is-numeric': isNumericType(def.type),
               'is-primary': def.primary,
-              'has-expand': withExpand,
+              'has-expand': withExpand || !!lead,
               'is-pinned-start': col.pinned === 'start',
               'is-pinned-end': col.pinned === 'end',
               'is-pin-edge': col.pinEdge,
@@ -152,6 +197,8 @@ export default defineComponent({
           role: 'gridcell',
         },
         [
+          props.error.length ? errorIcon() : null,
+          ...inlineActionsOf(props.rowActions, props.row).map(inlineButton),
           h(RowMenu, {
             row: props.row,
             label: props.label,
@@ -183,10 +230,14 @@ export default defineComponent({
               'is-focus': props.focused && props.keyboardFocus,
               'is-selected': props.selected,
               'is-expanded': props.expanded,
+              'is-error': props.error.length > 0,
             },
           ],
           role: 'row',
           'aria-rowindex': props.rowIndex,
+          'aria-describedby': props.error.length ? errorId() : undefined,
+          // Satırın tamamı tooltip anchor'ı: hatalı satırda nereye gelinirse gelinsin mesaj görünür (05 §4).
+          'data-dt-tip': props.error.length ? errorTip() : undefined,
           'aria-selected': props.selectable ? (props.selected ? 'true' : 'false') : undefined,
           tabindex: props.focused ? 0 : -1,
           'data-index': props.index,

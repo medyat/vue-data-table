@@ -124,6 +124,8 @@ export interface BaseColumn<Row, V = unknown> {
   header: string
   /** Dar alanlarda (telefon) kısa header. */
   headerShort?: string
+  /** Sütun açıklaması: header tooltip'inde ad altında ikinci satır, Columns panelinde ad altında; hücrede gösterilmez. */
+  description?: string
   /** Hesaplanan değer. Verilirse `fields` ile sunucudan istenecek alanlar bildirilir. */
   accessor?: (row: Row) => V
   fields?: string[]

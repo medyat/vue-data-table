@@ -27,10 +27,12 @@ export function useDelegatedTooltip(root: Ref<HTMLElement | null>) {
     open.value = false
   }
 
-  const show = (el: HTMLElement, t: string) => {
+  const show = (el: HTMLElement, t: string, x?: number) => {
     const r = el.getBoundingClientRect()
     text.value = t
-    style.value = { left: `${Math.round(r.left + r.width / 2)}px`, top: `${Math.round(r.bottom + 6)}px` }
+    // Geniş anchor'da (hatalı satır) imlecin altında, dar anchor'da ortada.
+    const left = x !== undefined && r.width > 320 ? x : r.left + r.width / 2
+    style.value = { left: `${Math.round(left)}px`, top: `${Math.round(r.bottom + 6)}px` }
     open.value = true
   }
 
@@ -40,7 +42,8 @@ export function useDelegatedTooltip(root: Ref<HTMLElement | null>) {
     if (hit.el === anchor) return
     hide()
     anchor = hit.el
-    timer = setTimeout(() => show(hit.el, hit.text), DELAY)
+    const x = (e as MouseEvent).clientX
+    timer = setTimeout(() => show(hit.el, hit.text, x), DELAY)
   }
   const onOut = (e: MouseEvent) => {
     if (anchor && !anchor.contains(e.relatedTarget as Node | null)) hide()

@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from 'reka-ui'
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { TYPE_SPECS, alignOf, isNumericType, typeLabelKey } from '../cells/specs'
 import type { LayoutColumn } from '../columns/useColumnLayout'
 import { useDataTableContext } from '../plugin'
@@ -47,6 +47,9 @@ const align = computed(() => alignOf(def.value))
 const unit = computed(() => (typeof def.value.unit === 'string' ? def.value.unit : undefined))
 const canSort = computed(() => props.sortable ?? false)
 const canFilter = computed(() => def.value.filterable ?? TYPE_SPECS[def.value.type].filterable)
+// D33: açıklama tooltip'te ikinci satır, ekran okuyucuya aria-describedby; düğme metnine girmez (erişilebilir ad değişmez).
+const descId = useId()
+const tip = computed(() => (def.value.description ? `${def.value.header}\n${def.value.description}` : def.value.header))
 const menuOpen = ref(false)
 
 const resizeHandler = (e: MouseEvent | TouchEvent) => {
@@ -118,7 +121,8 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
       :class="{ 'is-static': !canSort }"
       tabindex="-1"
       :aria-disabled="canSort ? undefined : 'true'"
-      :data-dt-tip="def.header"
+      :data-dt-tip="tip"
+      :aria-describedby="def.description ? descId : undefined"
       @click="canSort && emit('sort', column, $event.shiftKey)"
       @keydown="onKeydown"
     >
@@ -134,6 +138,7 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
       </span>
       <PhPushPin v-if="column.pinned" :size="12" class="dt-head-pin" aria-hidden="true" />
     </button>
+    <span v-if="def.description" :id="descId" class="dt-sr-only">{{ def.description }}</span>
     <button
       v-if="filtered"
       type="button"

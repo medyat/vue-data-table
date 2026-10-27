@@ -750,6 +750,23 @@ describe('görünümler (04 §7)', () => {
     w.unmount()
   })
 
+  it('Columns panelinde description ad altında ikinci satır (D33)', async () => {
+    const w = await mountViews({
+      props: { columns: columns.map((c) => (c.id === 'value' ? { ...c, description: 'Net of discounts' } : c)) },
+    })
+    await w
+      .findAll('.dt-toolbar button')
+      .find((b) => b.text() === 'Display')!
+      .trigger('click')
+    await flush()
+    const pop = document.querySelector<HTMLElement>('.dt-display')!
+    ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes('Columns'))!.click()
+    await flush()
+    const row = [...pop.querySelectorAll<HTMLElement>('.dt-col-row')].find((r) => r.textContent?.includes('Value'))!
+    expect(row.querySelector('.dt-col-desc')?.textContent).toBe('Net of discounts')
+    expect(pop.querySelectorAll('.dt-col-desc')).toHaveLength(1)
+    w.unmount()
+  })
   it('columns.visible beyaz liste; bilinmeyen sütun atlanır; Columns › Reset görünümün düzenine döner ve Edited kalkar', async () => {
     const views: View[] = [
       {

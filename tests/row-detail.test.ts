@@ -1,6 +1,7 @@
 // Satır etkileşimleri (05 §4, §7, D6, D28; 08 §2): satır menüsü (⋯, sağ tık, ⇧F10; Open / Open in new tab / Copy; uygulama
 // aksiyonları), row-open sözleşmesi, row-click modları, expand (chevron, → ←, slot, close, sorgu değişince kapanır),
 // sayfa değişiminde odağın anahtarla geri gelmesi.
+import { PhCopy } from '@phosphor-icons/vue'
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import DataTable from '../src/list/DataTable.vue'
@@ -96,6 +97,71 @@ describe('satır menüsü ve row-open', () => {
     expect(w2.find('.dt-row-more').exists()).toBe(false)
     expect(w2.find('.dt-head-menu-col').exists()).toBe(false)
     w2.unmount()
+  })
+  it('when(row) false → aksiyon menüde yok (D34); disabled pasif + gerekçe olarak kalır', async () => {
+    const w = await mountTable({
+      rowActions: [
+        ...rowActions,
+        { id: 'archive', label: 'Archive', when: (r: Order) => r.status !== 'in_progress', run },
+      ],
+    })
+    const running = rows.findIndex((r) => r.status === 'in_progress')
+    const idle = rows.findIndex((r) => r.status !== 'in_progress')
+    await openMenu(w, running)
+    expect(menuItems().map(itemText)).not.toContain('Archive')
+    expect(menuItems().map(itemText)).toContain('Release Already running')
+    rowAt(w, running).get('.dt-row-more').trigger('keydown', { key: 'Escape' })
+    await flush()
+    await openMenu(w, idle)
+    expect(menuItems().map(itemText)).toContain('Archive')
+  })
+  it('inline + description (D36): when true satırda ⋯ solunda ikon düğme, run; menüde açıklama ikinci satır, gerekçe açıklamayı ezer; sütun genişler', async () => {
+    const edit = vi.fn()
+    const w = await mountTable({
+      rowActions: [
+        ...rowActions,
+        {
+          id: 'edit',
+          label: 'Edit',
+          description: 'Open in editor',
+          icon: PhCopy,
+          inline: true,
+          when: (r: Order) => r.status === 'done',
+          run: edit,
+        },
+        { id: 'noicon', label: 'No icon', inline: true, run: () => {} }, // icon yok → inline çizilmez, menüde kalır
+        { id: 'ship', label: 'Ship', description: 'Create despatch', disabled: () => 'Locked', run: () => {} },
+      ],
+    })
+    const done = rows.findIndex((r) => r.status === 'done')
+    const running = rows.findIndex((r) => r.status === 'in_progress')
+    const btn = rowAt(w, done).get('.dt-cell-menu .dt-row-inline')
+    expect(btn.attributes('aria-label')).toBe('Edit')
+    expect(btn.attributes('data-dt-tip')).toBe('Edit — Open in editor')
+    expect(btn.attributes('tabindex')).toBe('-1')
+    expect(rowAt(w, done).findAll('.dt-row-inline')).toHaveLength(1)
+    expect(rowAt(w, running).find('.dt-row-inline').exists()).toBe(false)
+    expect((w.get('.dt-grid').element as HTMLElement).style.getPropertyValue('--dt-menu-w')).toBe('80px')
+    await btn.trigger('click')
+    expect(edit).toHaveBeenCalledWith(rows[done])
+    await openMenu(w, done)
+    const texts = menuItems().map(itemText)
+    expect(texts).not.toContain('Edit Open in editor') // inline çizilen menüde yok
+    expect(texts).toContain('No icon') // ikonsuz inline menüde kalır
+    expect(texts).toContain('Ship Locked') // gerekçe açıklamayı ezer
+    w.unmount()
+
+    // Menü boşalırsa ⋯ çizilmez: birincil yok, tek aksiyon inline (Done) ya da gizli (diğerleri)
+    const w2 = await mountTable({
+      columns: [{ id: 'status', header: 'Status', type: 'string' }],
+      rowActions: [
+        { id: 'edit', label: 'Edit', icon: PhCopy, inline: true, when: (r: Order) => r.status === 'done', run: edit },
+      ],
+    })
+    expect(rowAt(w2, done).find('.dt-row-inline').exists()).toBe(true)
+    expect(rowAt(w2, done).find('.dt-row-more').exists()).toBe(false)
+    expect(rowAt(w2, done).find('.dt-row-more-space').exists()).toBe(true)
+    expect(rowAt(w2, running).find('.dt-row-more').exists()).toBe(false)
   })
   it('Copy panoya yazar ve "Copied" toast; sağ tık düz hücrede menüyü açar, linkte açmaz; ⇧F10 açar', async () => {
     const writeText = vi.fn()

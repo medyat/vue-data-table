@@ -26,18 +26,21 @@ const emit = defineEmits<{ clear: [] }>()
 defineSlots<{ default?: () => unknown }>()
 const { i18n } = useDataTableContext()
 
-const inBar = computed(() => props.actions.filter((a) => a.inBar).slice(0, props.phone ? 2 : 3))
+/** `when(rows)` false olan ne bar'da ne menüde (D36). */
+const shown = computed(() => props.actions.filter((a) => !a.when || a.when(props.rows)))
+const inBar = computed(() => shown.value.filter((a) => a.inBar).slice(0, props.phone ? 2 : 3))
 /** ⋯ menüsü: bar'da olmayanlar; yıkıcılar en altta, ayırıcıdan sonra. */
 const rest = computed(() => {
   const bar = new Set(inBar.value)
-  const others = props.actions.filter((a) => !bar.has(a))
+  const others = shown.value.filter((a) => !bar.has(a))
   return [...others.filter((a) => !a.destructive), ...others.filter((a) => a.destructive)]
 })
 const firstDestructive = computed(() => rest.value.findIndex((a) => a.destructive))
 const disabledOf = (a: BulkAction<Row>): boolean | string => a.disabled?.(props.rows) ?? false
+/** Tooltip / ikinci satır: `disabled` gerekçesi varsa o, yoksa `description` (D36). */
 const tipOf = (a: BulkAction<Row>): string | undefined => {
   const d = disabledOf(a)
-  return typeof d === 'string' ? d : undefined
+  return typeof d === 'string' ? d : a.description
 }
 const moreOpen = ref(false)
 const run = (a: BulkAction<Row>) => {

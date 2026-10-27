@@ -657,6 +657,11 @@ const menuHref = computed(() => {
 const sortOf = (id: string) => props.sort?.get(id)
 
 const unitOf = (def: ColumnDef<AnyRow>) => (typeof def.unit === 'string' ? def.unit : undefined)
+// D33: anahtar sütunda anahtar metni, açıklama varsa altına ikinci satır; aksi halde ad + açıklama.
+const headTip = (col: { id: string; def: ColumnDef<AnyRow> }) => {
+  const key = col.id === props.keyColumn ? ctx.i18n.t('sheet.keyTooltip', { key: col.def.header }) : undefined
+  return col.def.description ? `${key ?? col.def.header}\n${col.def.description}` : key
+}
 const resize = (col: LayoutColumn<AnyRow>, e: MouseEvent | TouchEvent) => {
   const cell = (e.currentTarget as HTMLElement).parentElement!
   layout.setWidth(col.id, cell.getBoundingClientRect().width)
@@ -728,9 +733,8 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
                 type="button"
                 class="dt-head-label"
                 tabindex="-1"
-                :data-dt-tip="
-                  col.id === keyColumn ? ctx.i18n.t('sheet.keyTooltip', { key: col.def.header }) : undefined
-                "
+                :data-dt-tip="headTip(col)"
+                :aria-describedby="col.def.description ? `${uid}-desc-${col.id}` : undefined"
                 @click="sheet.sort(col.id, $event.shiftKey)"
               >
                 <span class="dt-head-text">{{ col.def.header }}</span>
@@ -741,6 +745,9 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
                   <span v-if="sortOf(col.id)!.index" class="dt-head-sort-index">{{ sortOf(col.id)!.index }}</span>
                 </span>
               </button>
+              <span v-if="col.def.description" :id="`${uid}-desc-${col.id}`" class="dt-sr-only">
+                {{ col.def.description }}
+              </span>
               <span class="dt-head-sep" aria-hidden="true" />
               <span
                 class="dt-resize"

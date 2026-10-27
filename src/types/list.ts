@@ -5,9 +5,15 @@ import type { Component } from 'vue'
 export interface RowAction<Row = any> {
   id: string
   label: string
+  /** Menüde etiketin altında ikinci satır (gerekçe varsa o gösterilir); inline düğmede tooltip "Label — description" (D36). */
+  description?: string
   icon?: Component
   /** Gösterim için ("⌘↵"); paket kısayol bağlamaz, yalnızca Open yerleşiktir. */
   shortcut?: string
+  /** Yetkiye bağlı: false → ne menüde ne inline (D34). Duruma bağlı pasiflik için `disabled`. */
+  when?: (row: Row) => boolean
+  /** ⋯'nın solunda 28 px ikon düğmesi olarak çizilir (`icon` zorunlu); çizildiği satırın menüsünde yer almaz. Satır başına ilk 2 (D36). */
+  inline?: boolean
   /** true veya gerekçe metni ("Already running") → pasif, gerekçe ikinci satırda. */
   disabled?: (row: Row) => boolean | string
   destructive?: boolean
@@ -22,10 +28,14 @@ export interface RowAction<Row = any> {
 export interface BulkAction<Row = any> {
   id: string
   label: string
+  /** Bar düğmesinde tooltip, ⋯ menüsünde ikinci satır (gerekçe varsa o) (D36). */
+  description?: string
   icon?: Component
   /** Bar'da görünür; değilse ⋯ menüsünde. Bar'da en fazla 3. */
   inBar?: boolean
   destructive?: boolean
+  /** Yetkiye bağlı: false → bar'da ve menüde yok (D36). Duruma bağlı pasiflik için `disabled`. */
+  when?: (rows: Row[]) => boolean
   disabled?: (rows: Row[]) => boolean | string
   run: (rows: Row[]) => void | Promise<void>
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Izgara kökü (05 §2–4, §6–8, §10; 08 §1–3; brief §5.5): tek kayan alan, sticky header, sabit sütunlar + koşullu kenar gölgesi,
 // sanal satırlar (@tanstack/vue-virtual; öğe = satır + açık detay, ölçülen yükseklik), satır odaklı klavye, header klavyesi ve
-// sütun menüsü, seçim sütunu (40 px) ve ⋯ sütunu (56 px), satır menüsü, kaydırma hapı. Veri çekmez, sütun düzenini dışarıdan
+// sütun menüsü, seçim sütunu (40 px) ve ⋯ sütunu (44 px; hatalı satır varken 66), satır menüsü, kaydırma hapı. Veri çekmez, sütun düzenini dışarıdan
 // (useColumnLayout) alır; seçim/expand durumunu üstten alır ve niyet olarak yayar.
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, useId, watch, watchEffect } from 'vue'
@@ -21,6 +21,7 @@ import { useRovingRows } from '../interaction/useRovingRows'
 import { useDataTableContext } from '../plugin'
 import HeaderCell from './HeaderCell.vue'
 import type { HeaderAction } from './headerActions'
+import { inlineActionsOf } from './inlineActions'
 import Row from './Row'
 import SkeletonRow from './SkeletonRow'
 
@@ -59,6 +60,8 @@ const props = withDefaults(
     /** ⋯ sütunu ve satır menüsü: Open / Copy yerleşik, `rowActions` uygulamanın. */
     rowMenu?: boolean
     rowActions?: RowAction[]
+    /** Satır hatası (05 §4, D35): metin/metin listesi; boş → yok. */
+    rowError?: (row: AnyRow) => string | string[] | null | undefined
     primaryHref?: (row: AnyRow) => string | undefined
     primaryLabel?: (row: AnyRow) => string
     primaryHeader?: string
@@ -94,12 +97,25 @@ const layout = props.layout
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 const density = computed<Density>(() => (coarse && props.density === 'compact' ? 'standard' : props.density))
 
-// Seçim (40; telefonda 48) ve ⋯ (56) sütunları düzenin dışında: track'ler başa/sona eklenir, sabit sütun ofsetleri o kadar kayar.
+// Seçim (40; telefonda 48) ve ⋯ sütunları düzenin dışında: track'ler başa/sona eklenir, sabit sütun ofsetleri o kadar kayar.
+// ⋯ sütunu içeriğe göre (05 §4): 8 + ⋯ 28 + 8 = 44; sayfada hatalı satır varsa (D35) + 14 + 8; inline aksiyon başına (D36,
+// sayfadaki en kalabalık satır) + 28 + 8. CSS: .dt-cell-menu (dolgu 8, gap 8).
 const SELECT_W = 40
 const SELECT_W_PHONE = 48
-const MENU_W = 56
+const MENU_PAD = 8
+const MORE_W = 28
+const ERROR_SLOT = 14 + 8
+const INLINE_SLOT = 28 + 8
 const selW = computed(() => (props.selectable ? (props.phone ? SELECT_W_PHONE : SELECT_W) : 0))
-const menuW = computed(() => (props.rowMenu ? MENU_W : 0))
+const anyError = computed(() => !!props.rowError && props.rows.some((r) => errorOf(r).length > 0))
+const maxInline = computed(() => {
+  const actions = props.rowActions ?? []
+  if (!actions.some((a) => a.inline)) return 0
+  return props.rows.reduce((m, r) => Math.max(m, inlineActionsOf(actions, r).length), 0)
+})
+const menuW = computed(() =>
+  props.rowMenu ? MENU_PAD + (anyError.value ? ERROR_SLOT : 0) + maxInline.value * INLINE_SLOT + MORE_W + MENU_PAD : 0,
+)
 // Genişlikler ve sabit ofsetleri Vue render'ı dışında, senkron (05 · Resize: kare başına < 1 ms).
 watchEffect(
   () => {
@@ -166,6 +182,12 @@ const canExpandRow = (row: AnyRow) => !!props.expandable && (props.canExpand?.(r
 const labelOf = (row: AnyRow) => props.primaryLabel?.(row) ?? layout.rowId(row)
 const uid = useId()
 const subrowId = (row: AnyRow) => `${uid}-sub-${layout.rowId(row)}`
+const rowUid = (row: AnyRow) => `${uid}-r-${layout.rowId(row)}`
+/** `rowError` sonucunu mesaj listesine indirger; boş metinler düşer, boş liste = hata yok. */
+const errorOf = (row: AnyRow): string[] => {
+  const e = props.rowError?.(row)
+  return (Array.isArray(e) ? e : [e]).filter((m): m is string => !!m)
+}
 const rowEl = (i: number) => root.value?.querySelector<HTMLElement>(`.dt-row[data-index="${i}"]`) ?? null
 
 const roving = useRovingRows({
@@ -558,6 +580,8 @@ defineExpose({
               :menu-open="menuIndex === item.index"
               :menu-edge="!layout.end.value.length"
               :row-actions="rowActions"
+              :error="errorOf(rows[item.index])"
+              :uid="rowUid(rows[item.index])"
               :href="primaryHref?.(rows[item.index])"
               :primary-header="primaryHeader"
               @select="(v, shift) => onSelect(item.index, v, shift)"

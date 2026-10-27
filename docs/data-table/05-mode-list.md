@@ -103,9 +103,9 @@ Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 
 | `phone` 156 · `email` 200 · `url` 180 · `color` 132 · `array` 160 | |
 | `uppercase`, `lowercase` | `string` ile aynı |
 | `cell` ile çizilen sütun | Tipin varsayılanı; gerekirse `width` (Main'deki Produced: `object`, 176 px) |
-| Satır aksiyonları | 56 px (yalnızca ⋯, D28), sağa sabit |
+| Satır aksiyonları | İçeriğe göre: 8 + [hata ikonu 14 + 8] + [inline aksiyon × (28 + 8)] + ⋯ 28 + 8. Yalnızca ⋯ → 44 px (D28); `rowError` olan satır varsa + 22 (D35); `inline` aksiyon varsa sayfadaki en kalabalık satıra göre + 36 / + 72 (D36). Sağa sabit |
 
-Örnek düzen (Production orders): `40 │ 136 │ minmax(200,1.6fr) │ minmax(160,1.2fr) │ 124 │ 176 │ 156 │ 132 │ 148 │ 56` → min genişlik 1330 px. Toplam genişlik kabı aşarsa yatay kayar.
+Örnek düzen (Production orders): `40 │ 136 │ minmax(200,1.6fr) │ minmax(160,1.2fr) │ 124 │ 176 │ 156 │ 132 │ 148 │ 44` → min genişlik 1318 px. Toplam genişlik kabı aşarsa yatay kayar.
 
 ### Header
 
@@ -118,6 +118,7 @@ Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 
 | Filtered | Etiketin yanında `--dt-accent-text` filtre işareti; tıklanınca o çip açılır. |
 | Pinned | Etiketin yanında 12 px raptiye; kenar gölgesi **yalnızca** içerik o yöne kaydırılmışken. |
 | Long label | Kesilir, tam ad tooltip'te. |
+| Description | `description` varsa tooltip iki satırdır: ad + açıklama (etiket kesilmese de); ekran okuyucuya `aria-describedby` ile verilir. Header'da ek ikon yok (D33). |
 | Sayısal | Sağa hizalı; ok etiketin solunda, `⋯` en solda. |
 | Resize | Kenarda hover'da 2 px `--dt-accent` tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; genişlikler tek `--cols` değişkenine Vue dışından yazılır. Çift tık = içeriğe sığdır (görünür satırlar + header). Sabit sütunlar px, orta sütunlar `minmax(min, fr)`, resize sonrası px; bölge sonunda `auto` dolgu. |
 | Sıra | Header menüsü › **Move left / Move right**; klavye `⌥⇧←` / `⌥⇧→`. Sürükleme yok (D22). Sabit sütunlar kendi bölgeleri içinde taşınır. |
@@ -134,11 +135,13 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 | Selected | `--dt-row-selected` | Hover: `--dt-row-selected-hover` |
 | Klavye odağı | — | Satır üstünde 2 px `--dt-accent` çerçeve (yarıçap 3 px, `::after`) |
 | Dim | opacity .55 | İşlem süren satır (bulk aksiyon çalışırken) |
+| Error | `--dt-r-bg` | `rowError(row)` metin ya da metin listesi dönerse. Zemin Hover ve Selected'ın **üstündedir** (sheet'teki Error önceliği; seçim checkbox'tan okunur). ⋯ hücresinde, ⋯'nın solunda 14 px `WarningCircle` `--dt-r-dot`; sayfada en az bir hatalı satır varken ⋯ sütunu 44'ten 66'ya genişler, ⋯ sağa yaslı kaldığı için hizası değişmez (⋯ hücresi yoksa ikon ilk görünür hücrenin başında; sabit genişlikli birincil id kesilmesin). Mesajlar alt alta tooltip'te: satırın **herhangi bir yerine** gelince imlecin altında, ikona gelince ikonun altında; klavye odağı satıra gelince hemen. Satıra `aria-describedby` → ikon (`role="img"`, adı mesaj). Hata haritası uygulamanındır (D35). |
 
 - Hücreler zemin rengini `--dt-row-bg`'den alır; sabit hücreler opak kalsın diye bu zorunludur (01).
 - **Birincil hücre gerçek `<a href>`** (D6). Satır gövdesine tıklamak varsayılan olarak (`row-click: 'none'`) hiçbir şey yapmaz: seçim yapmaz, açmaz; metin seçilip kopyalanabilir. `row-click: 'open' | 'expand'` satır tıklamasına bir eylem bağlar (§7). Hangi değer olursa olsun: etkileşimli hedefe (link, buton, checkbox, input, menü) tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; satır tıklaması asla seçim yapmaz. Guard tek yerdedir; `cell`/`actions` içindeki düğmeler `stopPropagation` yazmaz.
-- Satır aksiyonları (sağa sabit, 56 px): yalnızca **⋯** (28 × 28, her zaman görünür, `--dt-text-3`, hover'da `--dt-text-2`; satır menüsünü açar). Sağ tık ve `⇧F10` da satır menüsünü açar. Önizleme düğmesi ve paneli yoktur (D28).
-- Satır menüsü (268 px): Open `↵` (gerçek `<a href>`; düz tıkta `row-open`) · Open in new tab (gerçek `<a target="_blank">`, tarayıcı açar) · **Copy {birincil sütun}** (yerleşik, ör. “Copy order number”; birincil değeri panoya yazar, toast “Copied”) · ─ · uygulamanın `rowActions` listesi (`run(row)` beklenmez; onay ve toast uygulamanın). Pasif aksiyon gerekçesiyle iki satırlı gösterilir (“Release — Already running”). Yıkıcı aksiyon en altta, ayırıcıdan sonra, kırmızı metin, sonu `…` (onay ister).
+- Satır aksiyonları (sağa sabit, içeriğe göre): **⋯** (28 × 28; hücre dolgusu 8, öğeler arası 8, sağa yaslı; hata ikonu ve inline aksiyonlar soluna gelince ⋯'nın hizası değişmez, sütun genişler; her zaman görünür, `--dt-text-3`, hover'da `--dt-text-2`; satır menüsünü açar). Sağ tık ve `⇧F10` da satır menüsünü açar. Önizleme düğmesi ve paneli yoktur (D28).
+- Satır menüsü (268 px): Open `↵` (gerçek `<a href>`; düz tıkta `row-open`) · Open in new tab (gerçek `<a target="_blank">`, tarayıcı açar) · **Copy {birincil sütun}** (yerleşik, ör. “Copy order number”; birincil değeri panoya yazar, toast “Copied”) · ─ · uygulamanın `rowActions` listesi (`run(row)` beklenmez; onay ve toast uygulamanın). `when(row)` false dönen aksiyon menüde **yoktur** (yetki için; D34); `disabled` durum içindir: pasif aksiyon gerekçesiyle iki satırlı gösterilir (“Release — Already running”). `description` varsa etiketin altında soluk ikinci satır (gerekçe varsa yalnızca gerekçe). Yıkıcı aksiyon en altta, ayırıcıdan sonra, kırmızı metin, sonu `…` (onay ister).
+- **Inline satır aksiyonu** (D36): `inline: true` + `icon` olan aksiyon ⋯'nın solunda ⋯ ile aynı 28 px ikon düğmesi olarak da çizilir (gri, hover'da koyu; yıkıcı olsa da kırmızı değil); `when(row)` satır satır belirler, `disabled` pasif + gerekçe tooltip'te; label `aria-label`'da, `description` tooltip'te (“Edit — Open in editor”) ve `aria-describedby` ile. Satır başına ilk 2 inline; **inline çizilen aksiyon o satırın ⋯ menüsünde yer almaz** (ikonsuz ya da 3. ve sonraki inline'lar menüde kalır). Menüde hiçbir öğe kalmazsa (Open/Copy yok, tüm aksiyonlar inline ya da gizli) o satırda ⋯ çizilmez, 28 px yeri boş kalır. Hücre düzeni: `[hata ikonu?] [inline…] [⋯]`. Inline düğmeler satır widget'ıdır (08 §2: Tab durağı değil, `→` ile ulaşılır, Enter çalıştırır).
 
 ## 5. Sütun yönetimi
 
@@ -146,7 +149,7 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 
 - Drill-in görünüm (Display popover'ı içinde, 320 px), başlıkta geri oku + “Columns” + `8 of 14 shown`; altında **Find a column** araması.
 - Bölümler: **Pinned** (kilit, “Always shown” notu), **Shown** (sağda “Hide all”), **Hidden** (sağda “Show all”).
-- Satır: tip ikonu · ad · göz switch'i · **Move up / Move down** ok butonları (sürükle tutamacı yok, D22).
+- Satır: tip ikonu · ad (altında varsa `description`, 12 px `--dt-text-3`, tek satır kesilir) · göz switch'i · **Move up / Move down** ok butonları (sürükle tutamacı yok, D22).
 - Altta **Reset** (görünümün kayıtlı sütun düzenine).
 - Değişiklikler anında uygulanır ve görünümü “edited” yapar.
 
@@ -176,6 +179,7 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 | Normal | `4 selected` (yalnızca bu sayfadaki satırlar) |
 
 - `⋯` menüsü: kalan bulk aksiyonlar; yıkıcı olanlar en altta (“Cancel 7 orders…”).
+- `when(rows)` false dönen aksiyon ne bar'da ne menüdedir (seçime göre yetki; D36); `disabled(rows)` pasif + gerekçe. `description` bar düğmesinde tooltip, menüde ikinci satır (gerekçe varsa yalnızca gerekçe).
 - `×` (Clear selection, `Esc`).
 - Telefonda: yanlardan 10 px, alttan 30 px, yarıçap `--dt-radius-dialog` (14 px); butonlar 44 px yüksek, **ikon üstte + etiket altta** dikey düzen; başparmak erişiminde.
 
@@ -282,7 +286,7 @@ Telefonda (< 640 px):
 - Filtre çip satırı tek satır, yatay kayar; çipe dokunmak **Filters alt sayfasını** açar (04 §9).
 - Tüm popover'lar **alt sayfa** olur: 52 px satırlar, üstte tutamaç, altta tam genişlik birincil buton.
 - Bulk bar §6'daki telefon düzeninde.
-- Dokunmatikte (`pointer: coarse`) Compact otomatik Standard'a döner; satır en az 48 px; checkbox dokunma alanı 44 px (görsel 16 px kalır); satır aksiyon sütunu (`⋯`, 56 px) sağa sabit kalır, düğmenin dokunma alanı 44 px.
+- Dokunmatikte (`pointer: coarse`) Compact otomatik Standard'a döner; satır en az 48 px; checkbox dokunma alanı 44 px (görsel 16 px kalır); satır aksiyon sütunu (`⋯`, 44 / 66 px) sağa sabit kalır, düğmenin dokunma alanı 44 px.
 
 ## 12. Kenar durumlar
 

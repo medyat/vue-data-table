@@ -281,9 +281,22 @@
 .dt-col-name {
   flex: 1;
   min-width: 0;
+}
+.dt-col-name > span {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* D33: açıklama satırı (05 §5). */
+.dt-col-desc {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dt-text-3);
+}
+.dt-col-row:has(.dt-col-desc) {
+  height: auto;
+  padding-block: 5px;
 }
 .dt-col-row.is-hidden .dt-col-name {
   color: var(--dt-text-2);

@@ -173,6 +173,50 @@ describe('bulk bar', () => {
     expect(selected(w)).toHaveLength(0)
     w.unmount()
   })
+  it('bulk when(rows) false → bar ve ⋯ menüsünde yok (D36); description bar düğmesinde tooltip, menüde ikinci satır', async () => {
+    const w = await mountTable({
+      bulkActions: [
+        { id: 'release', label: 'Release', inBar: true, description: 'Send to the line', run: () => {} },
+        {
+          id: 'archive',
+          label: 'Archive',
+          inBar: true,
+          when: (rs: Order[]) => rs.every((r) => r.status === 'done'),
+          run: () => {},
+        },
+        { id: 'hold', label: 'Put on hold', description: 'Pause work', run: () => {} },
+        { id: 'export', label: 'Export', when: () => false, run: () => {} },
+      ],
+    })
+    const labels = () =>
+      bulk(w)
+        .findAll('.dt-bulk-btn')
+        .map((b) => b.text())
+        .filter(Boolean)
+    await boxAt(w, 1).trigger('click') // yalnızca done → Archive görünür
+    await flush()
+    expect(labels()).toEqual(['Release', 'Archive'])
+    await boxAt(w, 0).trigger('click') // in_progress eklendi → Archive gizlenir
+    await flush()
+    expect(labels()).toEqual(['Release'])
+    const bar = bulk(w)
+    expect(
+      bar
+        .findAll('.dt-bulk-btn')
+        .find((b) => b.text() === 'Release')!
+        .attributes('data-dt-tip'),
+    ).toBe('Send to the line')
+    const more = bar.get('.dt-bulk-more').element as HTMLElement
+    more.focus()
+    more.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+    await flush()
+    const text = (el: HTMLElement) =>
+      [...el.querySelectorAll<HTMLElement>('.dt-menu-text > span')].map((s) => s.textContent?.trim()).join(' ')
+    expect([...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].map(text)).toEqual([
+      'Put on hold Pause work',
+    ])
+    w.unmount()
+  })
   it("selection-bar=toolbar toolbar'ın yerini alır; #selection-actions aksiyon alanını değiştirir; clearSelection handle'da", async () => {
     const w = await mountTable(
       { selectionBar: 'toolbar' },

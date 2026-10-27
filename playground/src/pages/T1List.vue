@@ -4,7 +4,7 @@
 // Görünümler: sistem görünümleri `orderViews`, kişisel görünümler plugin'deki localStorage adapter'ında (T3: hazır görünümler).
 // Seçim + bulk bar (T5), satır menüsü ve expand (T6): aksiyonlar yalnızca konsola yazar (iş mantığı uygulamanın, D20).
 // Sunucu senaryosu başlıktaki seçimle ya da URL ile: ?delay=800 ?fail=1 ?failAfter=1 ?size=500; ?bar=toolbar seçim çubuğu toolbar'da.
-import { PhCalendarBlank, PhPlay, PhPlus, PhUser } from '@phosphor-icons/vue'
+import { PhCalendarBlank, PhPencilSimple, PhPlay, PhPlus, PhUser } from '@phosphor-icons/vue'
 import {
   DataTable,
   type BulkAction,
@@ -18,6 +18,8 @@ import { ref, useTemplateRef } from 'vue'
 import { orderColumns, orderViews, type Order } from '../data/orders'
 
 const rows = ref<Order[]>([])
+/** Toplu aksiyonun kısmi hatası (D35): harita uygulamada, paket yalnızca okur. */
+const rowErrors = ref(new Map<number, string>())
 const hasMore = ref(false)
 const total = ref<number>()
 const error = ref<TableError>()
@@ -40,9 +42,14 @@ const bulkActions: Array<BulkAction<Order>> = [
   {
     id: 'release',
     label: 'Release',
+    description: 'Send the selected orders to the line',
     icon: PhPlay,
     inBar: true,
-    run: (rows) => console.log('bulk release', rows.length),
+    // D35 demo: her üçüncü satır sunucuda reddedilmiş gibi haritaya yazılır; refresh'te id aynı kaldığı için işaret kalır.
+    run: (rows) => {
+      rowErrors.value = new Map(rows.filter((_, i) => i % 3 === 2).map((r) => [r.id, 'Open despatch DS-1042']))
+      console.log('bulk release', rows.length, 'failed', rowErrors.value.size)
+    },
   },
   {
     id: 'reschedule',
@@ -59,6 +66,13 @@ const bulkActions: Array<BulkAction<Order>> = [
     run: (rows) => console.log('bulk assign', rows.length),
   },
   { id: 'hold', label: 'Put on hold', run: (rows) => console.log('bulk hold', rows.length) },
+  {
+    // D36: yalnızca hepsi Done seçiliyken görünür
+    id: 'archive',
+    label: 'Archive',
+    when: (rows) => rows.every((r) => r.status === 'done'),
+    run: (rows) => console.log('bulk archive', rows.length),
+  },
   { id: 'priority', label: 'Change priority…', run: (rows) => console.log('bulk priority', rows.length) },
   { id: 'print', label: 'Print job cards', run: (rows) => console.log('bulk print', rows.length) },
   {
@@ -79,6 +93,16 @@ const bulkActions: Array<BulkAction<Order>> = [
 ]
 const rowActions: Array<RowAction<Order>> = [
   {
+    // D36: yalnızca Done satırlarda ⋯'nın solunda kalem; menüde de var
+    id: 'edit',
+    label: 'Edit',
+    description: 'Open the order in the editor',
+    icon: PhPencilSimple,
+    inline: true,
+    when: (r) => r.status === 'done',
+    run: (r) => console.log('edit', r.number),
+  },
+  {
     id: 'release',
     label: 'Release',
     disabled: (r) => (r.status === 'in_progress' ? 'Already running' : r.status === 'done' ? true : false),
@@ -86,6 +110,13 @@ const rowActions: Array<RowAction<Order>> = [
   },
   { id: 'reschedule', label: 'Reschedule…', run: (r) => console.log('reschedule', r.number) },
   { id: 'hold', label: 'Put on hold', run: (r) => console.log('hold', r.number) },
+  {
+    id: 'archive',
+    label: 'Archive',
+    // D34: yetki örneği — yalnızca bitmiş siparişte görünür (pasif değil, yok)
+    when: (r) => r.status === 'done',
+    run: (r) => console.log('archive', r.number),
+  },
   { id: 'cancel', label: 'Cancel order…', destructive: true, run: (r) => console.log('cancel', r.number) },
 ]
 /** Alt satır için sahte operasyonlar (aynı sipariş → aynı liste); gerçek uygulamada slot bileşeni çeker. */
@@ -157,6 +188,7 @@ async function onCount({ query, signal }: CountRequest) {
       :selection-bar="params.get('bar') === 'toolbar' ? 'toolbar' : 'floating'"
       :bulk-actions="bulkActions"
       :row-actions="rowActions"
+      :row-error="(r) => rowErrors.get(r.id)"
       :row-click="rowClick"
       expand
       :auto-refresh="30"

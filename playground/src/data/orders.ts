@@ -50,7 +50,14 @@ export const orderColumns: Array<ColumnDef<Order>> = [
     suggested: true,
     filterNoun: { one: 'status', other: 'statuses' },
   },
-  { id: 'produced', header: 'Produced', type: 'percentage', display: 'bar', width: 176 },
+  {
+    id: 'produced',
+    header: 'Produced',
+    type: 'percentage',
+    display: 'bar',
+    width: 176,
+    description: 'Completed share of the ordered quantity',
+  },
   {
     id: 'owner',
     header: 'Owner',
