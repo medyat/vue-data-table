@@ -78,7 +78,16 @@ const onKeydown = (e: KeyboardEvent) => {
     else emit('resize-by', props.column, left ? -16 : 16)
   }
 }
-const act = (action: HeaderAction) => emit('action', props.column, action)
+// Filter by this column… ile kapanınca odak ⋯'ya dönmez: açılan çip editörü alır (08 §2 · Popover).
+let toFilter = false
+const act = (action: HeaderAction) => {
+  toFilter = action === 'filter'
+  emit('action', props.column, action)
+}
+const onMenuCloseAutoFocus = (e: Event) => {
+  if (toFilter) e.preventDefault()
+  toFilter = false
+}
 </script>
 
 <template>
@@ -151,7 +160,12 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent class="dt-menu dt-col-menu" align="end" :side-offset="4">
+        <DropdownMenuContent
+          class="dt-menu dt-col-menu"
+          align="end"
+          :side-offset="4"
+          @close-auto-focus="onMenuCloseAutoFocus"
+        >
           <DropdownMenuLabel class="dt-menu-label">{{ i18n.t(typeLabelKey(def.type)) }}</DropdownMenuLabel>
           <template v-if="canSort">
             <DropdownMenuItem class="dt-menu-item" @select="act('sort-asc')">
@@ -182,7 +196,6 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
               {{ i18n.t('header.pinRight') }}
             </DropdownMenuItem>
           </template>
-          <DropdownMenuItem class="dt-menu-item" @select="act('fit')">{{ i18n.t('header.fit') }}</DropdownMenuItem>
           <DropdownMenuItem class="dt-menu-item" @select="act('move-left')">
             {{ i18n.t('header.moveLeft') }}
             <kbd class="dt-kbd">{{ MOVE_KBD.left }}</kbd>
@@ -203,13 +216,7 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
       </DropdownMenuPortal>
     </DropdownMenuRoot>
     <span class="dt-head-sep" aria-hidden="true" />
-    <span
-      class="dt-resize"
-      aria-hidden="true"
-      @mousedown="resizeHandler"
-      @touchstart.passive="resizeHandler"
-      @dblclick="act('fit')"
-    >
+    <span class="dt-resize" aria-hidden="true" @mousedown="resizeHandler" @touchstart.passive="resizeHandler">
       <span v-if="resizing !== null && resizing !== undefined" class="dt-resize-badge">
         {{ Math.round(resizing) }} px
       </span>

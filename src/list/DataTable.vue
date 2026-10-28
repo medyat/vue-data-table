@@ -191,11 +191,22 @@ const pref = usePreferences(() => props.tableId, ctx.preferences, {
 })
 const density = computed<Density>(() => props.density ?? pref.prefs.density)
 
+// Varsayılan sütun genişlikleri 13 px yazıya göre (03); yoğunluğun hücre yazısı (--dt-fs) büyüdükçe o oranda genişler.
+const colScale = ref(1)
+watch(
+  [density, rootEl],
+  () => {
+    const fs = rootEl.value ? parseFloat(getComputedStyle(rootEl.value).getPropertyValue('--dt-fs')) : NaN
+    colScale.value = Number.isFinite(fs) ? fs / 13 : 1
+  },
+  { flush: 'post' },
+)
 const layout = useColumnLayout<Row>({
   columns: () => props.columns,
   rows: () => props.rows,
   rowKey: () => props.rowKey,
   phone: () => phone.value,
+  scale: colScale,
 })
 
 // Sorgu durumu. Arama/sıralama değişince sayfa 1 (aynı tick → tek talep).

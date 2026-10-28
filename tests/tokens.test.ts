@@ -27,7 +27,7 @@ const b = blocks(css)
 describe('tokens.css ↔ 02-design-tokens.md', () => {
   it('parser dokümanı gerçekten okuyor', () => {
     expect(Object.keys(doc.light).length).toBeGreaterThan(70)
-    expect(Object.keys(doc.fixed)).toHaveLength(12)
+    expect(Object.keys(doc.fixed)).toHaveLength(33) // 12 + ölçek (D41)
     expect(Object.keys(doc.density.standard)).toHaveLength(10)
   })
   it('her token iki temada da var', () => {

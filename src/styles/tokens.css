@@ -83,6 +83,27 @@
   --dt-shadow-editing: 0 6px 16px -6px rgba(16,24,40,.28);
   --dt-font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --dt-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --dt-ui-fs: 14px;
+  --dt-ui-fs-3xs: calc(var(--dt-ui-fs) - 2px);
+  --dt-ui-fs-2xs: calc(var(--dt-ui-fs) - 1.5px);
+  --dt-ui-fs-xs: calc(var(--dt-ui-fs) - 1px);
+  --dt-ui-fs-sm: calc(var(--dt-ui-fs) - 0.5px);
+  --dt-ui-fs-md: calc(var(--dt-ui-fs) + 1px);
+  --dt-ui-fs-lg: calc(var(--dt-ui-fs) + 2px);
+  --dt-ui-fs-xl: calc(var(--dt-ui-fs) + 3px);
+  --dt-ui-fs-2xl: calc(var(--dt-ui-fs) + 4px);
+  --dt-icon: 18px;
+  --dt-control-h: 36px;
+  --dt-control-h-lg: calc(var(--dt-control-h) + 4px);
+  --dt-control-h-sm: calc(var(--dt-control-h) - 4px);
+  --dt-control-h-xs: calc(var(--dt-control-h) - 8px);
+  --dt-control-h-2xs: calc(var(--dt-control-h) - 12px);
+  --dt-checkbox: 18px;
+  --dt-space: 10px;
+  --dt-space-sm: calc(var(--dt-space) - 2px);
+  --dt-space-lg: calc(var(--dt-space) + 2px);
+  --dt-pop-pad: 6px;
+  --dt-item-x: 10px;
   --dt-radius-xs: 4px;
   --dt-radius-sm: 5px;
   --dt-radius-md: 7px;
@@ -180,29 +201,29 @@
 
 /* Yoğunluk: bileşen kökü data-density taşır; :root varsayılanı standard. */
 :root, [data-density="standard"] {
-  --dt-row-h: 40px;
-  --dt-head-h: 36px;
-  --dt-cell-x: 12px;
-  --dt-fs: 13px;
-  --dt-fs-head: 12px;
-  --dt-av: 20px;
-  --dt-badge-h: 22px;
-  --dt-mono-fs: 12.5px;
-  --dt-currency-fs: 11px;
-  --dt-avatar-fs: 9px;
+  --dt-row-h: 44px;
+  --dt-head-h: 40px;
+  --dt-cell-x: 14px;
+  --dt-fs: 14px;
+  --dt-fs-head: 13px;
+  --dt-av: 22px;
+  --dt-badge-h: 24px;
+  --dt-mono-fs: 13.5px;
+  --dt-currency-fs: 12px;
+  --dt-avatar-fs: 10px;
 }
 
 [data-density="comfortable"] {
-  --dt-row-h: 52px;
-  --dt-head-h: 40px;
+  --dt-row-h: 56px;
+  --dt-head-h: 44px;
   --dt-cell-x: 16px;
-  --dt-fs: 13.5px;
-  --dt-fs-head: 12px;
-  --dt-av: 24px;
-  --dt-badge-h: 24px;
-  --dt-mono-fs: 13px;
-  --dt-currency-fs: 11px;
-  --dt-avatar-fs: 10px;
+  --dt-fs: 14.5px;
+  --dt-fs-head: 13px;
+  --dt-av: 26px;
+  --dt-badge-h: 26px;
+  --dt-mono-fs: 14px;
+  --dt-currency-fs: 12px;
+  --dt-avatar-fs: 11px;
 }
 
 [data-density="compact"] {

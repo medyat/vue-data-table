@@ -185,7 +185,6 @@ export const tr: Record<string, string> = {
   "header.pinLeft": "Sola sabitle",
   "header.pinRight": "Sağa sabitle",
   "header.unpin": "Sabitlemeyi kaldır",
-  "header.fit": "İçeriğe sığdır",
   "header.moveLeft": "Sola taşı",
   "header.moveRight": "Sağa taşı",
   "header.hide": "Sütunu gizle",

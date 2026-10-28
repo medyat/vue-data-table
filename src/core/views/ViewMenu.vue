@@ -93,7 +93,7 @@ const pick = (id: unknown) => {
     align="start"
   >
     <template #trigger>
-      <button type="button" class="dt-btn dt-btn-ghost has-icon dt-view-trigger" :aria-label="label">
+      <button type="button" class="dt-btn has-icon dt-view-trigger" :aria-label="label">
         <span class="dt-view-name">{{ active?.name ?? i18n.t('views.title') }}</span>
         <template v-if="edited">
           <span class="dt-view-dot" aria-hidden="true" />

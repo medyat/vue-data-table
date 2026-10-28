@@ -1,12 +1,14 @@
 /* Görünümler (04 §7, handoff 03 §2 ve §4): toolbar seçicisi, görünüm menüsü (316), satır ⋯ menüsü (200), dialog özeti. */
 
 /* Seçici: 32 px ghost, ad 13/600; düzenlenmişse 6 px accent nokta + “Edited” 12/500 text-2; CaretDown 14 text-3. */
+/* Tetikleyici select kutusu gibi: input kenarlığı ve gölgesi, sağda chevron. */
 .dt-view-trigger {
-  height: 32px;
-  padding: 0 8px;
-  gap: 6px;
+  height: var(--dt-control-h);
+  padding: 0 8px 0 10px;
+  gap: var(--dt-space-sm);
   color: var(--dt-text);
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
+  box-shadow: var(--dt-shadow-sm);
 }
 .dt-view-name {
   font-weight: 600;
@@ -20,7 +22,7 @@
 }
 .dt-view-edited {
   color: var(--dt-text-2);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   font-weight: 500;
 }
 .dt-view-trigger > svg {
@@ -29,7 +31,7 @@
 
 /* Menü: üstte kaydetme bölümü (iki satırlı öğe 44 px), Find a view…, bölümler, altta New view. */
 .dt-views {
-  width: 316px;
+  width: calc(316 * var(--dt-ui-fs) / 13);
 }
 .dt-view-action {
   flex-direction: column;
@@ -40,13 +42,13 @@
   cursor: pointer;
 }
 .dt-view-action.is-single {
-  min-height: 32px;
+  min-height: var(--dt-control-h);
   justify-content: center;
 }
 .dt-view-action-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
 }
 .dt-view-action-main .dt-kbd {
   margin-left: auto;
@@ -55,7 +57,7 @@
 }
 .dt-view-action-sub {
   color: var(--dt-text-3);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
 }
 .dt-views-list {
   max-height: 360px;
@@ -71,9 +73,9 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   min-width: 0;
-  height: 32px;
+  height: var(--dt-control-h);
   padding: 0 32px 0 8px;
   border-radius: var(--dt-radius-item);
   cursor: default;
@@ -95,7 +97,7 @@
 }
 .dt-view-default {
   color: var(--dt-text-3);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
 }
 .dt-view-more {
   position: absolute;
@@ -108,12 +110,12 @@
   opacity: 1;
 }
 .dt-view-row-menu {
-  min-width: 200px;
+  min-width: calc(200 * var(--dt-ui-fs) / 13);
 }
 .dt-view-note {
   padding: 6px 8px;
   color: var(--dt-text-3);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   line-height: 1.4;
 }
 .dt-view-new {
@@ -130,7 +132,7 @@
   padding: 12px;
   border-radius: var(--dt-radius-inner);
   background: var(--dt-surface-2);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
 }
 .dt-view-summary > span:nth-child(odd) {
   color: var(--dt-text-2);

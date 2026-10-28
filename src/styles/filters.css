@@ -4,10 +4,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   flex: none;
-  min-height: 44px;
-  padding: 8px 12px;
+  min-height: calc(var(--dt-control-h-sm) + 2 * var(--dt-space-lg));
+  padding: var(--dt-space-lg);
   border-bottom: 1px solid var(--dt-line);
 }
 /* Tek satır (D29): sığmayan çipler yatay kayar; sağ kenarda solma yalnızca kayacak içerik varken.
@@ -18,7 +18,7 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   min-width: 0;
   padding: 4px;
   margin: -4px;
@@ -47,12 +47,12 @@
 .dt-chip {
   display: inline-flex;
   align-items: stretch;
-  height: 28px;
+  height: var(--dt-control-h-sm);
   border: 1px solid var(--dt-line-2);
   border-radius: var(--dt-radius-md);
   background: var(--dt-surface);
   box-shadow: var(--dt-shadow-sm);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
   white-space: nowrap;
   transition: box-shadow 120ms ease;
 }
@@ -63,7 +63,7 @@
 .dt-chip-body {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   padding: 0 8px 0 9px;
   border: 0;
   border-radius: var(--dt-radius-md) 0 0 var(--dt-radius-md);
@@ -88,7 +88,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 180px;
+  max-width: calc(180 * var(--dt-ui-fs) / 13);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,11 +138,12 @@
 
 /* Column picker (272). */
 .dt-picker {
-  width: 272px;
+  width: calc(272 * var(--dt-ui-fs) / 13);
 }
+/* Arama popover dolgusunda (4) durur: üst ve yanlar eşit (T2-01, T3-01). */
 .dt-picker-search {
-  width: calc(100% - 8px);
-  margin: 0 4px 4px;
+  width: 100%;
+  margin-bottom: var(--dt-pop-pad);
 }
 .dt-picker-search input {
   box-shadow: none;
@@ -155,11 +156,11 @@
 .dt-picker-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 8px;
+  gap: var(--dt-space);
+  height: var(--dt-control-h);
+  padding: 0 var(--dt-item-x);
   border-radius: var(--dt-radius-item);
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
   cursor: default;
   outline: none;
 }
@@ -177,24 +178,24 @@
 }
 .dt-picker-hint {
   color: var(--dt-text-3);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
 }
 
 /* Değer popover'ı (296; tarih 520): başlık (alan + operatör düğmesi), gövde, alt satır. */
 .dt-chip-pop {
-  width: 296px;
+  width: calc(296 * var(--dt-ui-fs) / 13);
 }
 .dt-chip-pop.is-date {
-  width: 520px;
+  width: calc(520 * var(--dt-ui-fs) / 13);
 }
 .dt-chip-pop-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
+  gap: var(--dt-space-sm);
+  height: var(--dt-control-h);
   padding: 0 4px 0 8px;
   color: var(--dt-text-2);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
 }
 .dt-chip-pop.is-date .dt-chip-pop-head {
   height: 40px;
@@ -205,14 +206,14 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 24px;
+  height: var(--dt-control-h-xs);
   padding: 0 6px;
   border: 0;
   border-radius: var(--dt-radius-sm);
   background: var(--dt-surface-3);
   color: var(--dt-text);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   font-weight: 500;
   cursor: pointer;
 }
@@ -223,19 +224,16 @@
     0 0 0 4px var(--dt-focus);
 }
 .dt-op-menu {
-  min-width: 220px;
+  min-width: calc(220 * var(--dt-ui-fs) / 13);
 }
 .dt-op-menu .dt-menu-item.is-selected {
   font-weight: 500;
-}
-.dt-chip-pop-body {
-  padding: 0 4px;
 }
 
 /* Seçenek listesi. */
 .dt-options-search {
   width: 100%;
-  margin-bottom: 4px;
+  margin-bottom: var(--dt-pop-pad);
 }
 .dt-options-search input {
   box-shadow: none;
@@ -248,9 +246,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 8px;
+  gap: var(--dt-space);
+  height: var(--dt-control-h);
+  padding: 0 var(--dt-item-x);
   border-radius: var(--dt-radius-item);
   cursor: pointer;
 }
@@ -261,7 +259,7 @@
   flex: 1;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -284,7 +282,7 @@
 .dt-options-empty {
   padding: 8px;
   color: var(--dt-text-3);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
 }
 .dt-options-more {
   width: 100%;
@@ -292,8 +290,8 @@
 }
 .dt-checkbox {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: var(--dt-checkbox);
+  height: var(--dt-checkbox);
   margin: 0;
   appearance: none;
   border: 1.5px solid var(--dt-line-3);
@@ -328,17 +326,17 @@
   padding: 4px 0;
 }
 .dt-seg.dt-seg-xs {
-  height: 24px;
+  height: var(--dt-control-h-xs);
   width: 100%;
   margin-bottom: 8px;
 }
 .dt-seg-xs .dt-seg-item {
-  font-size: 11px;
+  font-size: var(--dt-ui-fs-3xs);
 }
 .dt-editor-fields {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--dt-space);
 }
 .dt-editor-field {
   flex: 1;
@@ -349,7 +347,7 @@
 }
 .dt-editor-label {
   color: var(--dt-text-3);
-  font-size: 11.5px;
+  font-size: var(--dt-ui-fs-2xs);
   font-weight: 500;
 }
 .dt-editor-field .dt-input {
@@ -365,13 +363,13 @@
 .dt-input-suffix {
   right: 10px;
   color: var(--dt-text-3);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
   pointer-events: none;
 }
 .dt-editor-and {
   padding-bottom: 8px;
   color: var(--dt-text-3);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
 }
 .dt-editor-stars {
   display: flex;
@@ -401,7 +399,7 @@
 }
 .dt-date-presets {
   flex: none;
-  width: 168px;
+  width: calc(168 * var(--dt-ui-fs) / 13);
   padding-right: 4px;
   border-right: 1px solid var(--dt-line);
 }
@@ -419,7 +417,7 @@
   margin-bottom: 4px;
 }
 .dt-cal-title {
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
   font-weight: 600;
 }
 .dt-cal-grid {
@@ -427,9 +425,9 @@
   border-collapse: collapse;
 }
 .dt-cal-dow {
-  height: 24px;
+  height: var(--dt-control-h-xs);
   color: var(--dt-text-3);
-  font-size: 11.5px;
+  font-size: var(--dt-ui-fs-2xs);
   font-weight: 500;
   text-align: center;
 }
@@ -441,14 +439,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--dt-control-h);
+  height: var(--dt-control-h);
   border: 0;
   border-radius: var(--dt-radius-item);
   background: transparent;
   color: var(--dt-text);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }

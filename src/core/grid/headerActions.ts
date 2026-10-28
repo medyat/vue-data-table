@@ -7,7 +7,6 @@ export type HeaderAction =
   | 'pin-left'
   | 'pin-right'
   | 'unpin'
-  | 'fit'
   | 'move-left'
   | 'move-right'
   | 'hide'

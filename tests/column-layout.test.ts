@@ -67,6 +67,13 @@ describe('useColumnLayout', () => {
     expect(api.widthOf('customer')).toBe(80)
     expect(api.resizing.value).toBeNull()
   })
+  it('kaydedilen genişlik min/max ile kırpılır: görünümden gelen 28 → 80, state ve resolve aynı', async () => {
+    const { api } = setup()
+    api.reset({ widths: { customer: 28, 'product.name': 200 } })
+    await nextTick()
+    expect(api.state.value.widths).toEqual({ customer: 80, 'product.name': 200 })
+    expect(api.resolve({ widths: { customer: 28 } }).widths).toEqual({ customer: 80 })
+  })
   it('görünürlük: gizle / göster', async () => {
     const { api } = setup()
     api.setVisible('customer', false)

@@ -21,6 +21,9 @@
   height: 44px;
   max-width: 55%;
   padding: 0 8px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
   font-size: 14px;
 }
 .dt-toolbar.is-phone .dt-view-name {

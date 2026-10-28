@@ -22,6 +22,20 @@ const chipText = (page: Page, col: string) =>
         })
         .join(' '),
     )
+/** `inner`'ın `pop` kenarlarına uzaklığı (kenarlık içinden): popover içeriği her yönde aynı 4 px'te (T2-01, T2-02, T2-06, T3-01). */
+const insets = async (page: Page, pop: string, inner: string) => {
+  await page.locator(`${pop} ${inner}`).first().waitFor()
+  return page.evaluate(
+    ([p, i]) => {
+      const P = document.querySelector(p)!
+      const r = P.getBoundingClientRect()
+      const b = parseFloat(getComputedStyle(P).borderTopWidth)
+      const ir = P.querySelector(i)!.getBoundingClientRect()
+      return { top: ir.top - r.top - b, left: ir.left - r.left - b, right: r.right - b - ir.right }
+    },
+    [pop, inner] as const,
+  )
+}
 const pick = async (page: Page, name: string) => {
   await filterBtn(page).click()
   await page.getByRole('option', { name: new RegExp(`^${name}`) }).click()
@@ -82,6 +96,51 @@ test.describe('T1 · filtreler', () => {
     await page.keyboard.press('Escape')
     await expect(chip(page, 'customer')).toHaveCount(0)
     await expect(page.locator('.dt-filter-trigger .dt-counter')).toHaveText('1')
+  })
+
+  test("editör açılınca odak ilk alanda (08 §2 · Popover): picker'dan ve mevcut çipten; doğrudan yazılır", async ({
+    page,
+  }) => {
+    await pick(page, 'Product')
+    const text = page.locator('.dt-chip-pop .dt-editor-text input')
+    await expect(text).toBeFocused()
+    await page.keyboard.type('cylinder')
+    await expect(text).toHaveValue('cylinder')
+    await page.keyboard.press('Enter')
+    await chip(page, 'product.name').locator('.dt-chip-body').click()
+    await expect(text).toBeFocused()
+    await page.keyboard.press('Escape')
+    await pick(page, 'Value')
+    await expect(page.locator('.dt-chip-pop input').first()).toBeFocused()
+    await page.keyboard.press('Escape')
+    // Header menüsü › Filter by this column… da aynı: odak editörde.
+    const customer = page.locator('.dt-head-cell[data-col="customer"]')
+    await customer.hover()
+    await customer.locator('.dt-head-menu').click()
+    await page.getByRole('menuitem', { name: 'Filter by this column…' }).click()
+    await expect(page.locator('.dt-chip-pop input').first()).toBeFocused()
+  })
+
+  test('popover içeriği kenarlara eşit: arama kutuları ve editör gövdesi her yönde --dt-pop-pad (6 px)', async ({
+    page,
+  }) => {
+    await filterBtn(page).click()
+    expect(await insets(page, '.dt-picker', '.dt-picker-search')).toEqual({ top: 6, left: 6, right: 6 })
+    await page.getByRole('option', { name: /^Status/ }).click()
+    const opt = await insets(page, '.dt-chip-pop', '.dt-option')
+    expect([opt.left, opt.right]).toEqual([6, 6])
+    await page.keyboard.press('Escape')
+    await pick(page, 'Product')
+    const text = await insets(page, '.dt-chip-pop', '.dt-editor-text')
+    expect([text.left, text.right]).toEqual([6, 6])
+    await page.keyboard.press('Escape')
+    await page.locator('.dt-view-trigger').click()
+    expect(await insets(page, '.dt-views', '.dt-picker-search')).toEqual({ top: 6, left: 6, right: 6 })
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.getByRole('button', { name: /^Columns/ }).click()
+    const find = await insets(page, '.dt-display', '.dt-pop-find')
+    expect([find.left, find.right]).toEqual([6, 6])
   })
 
   test('operatör menüsü: metin, değer korunur; is empty değer parçasını gizler', async ({ page }) => {

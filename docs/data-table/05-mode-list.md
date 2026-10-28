@@ -119,12 +119,12 @@ Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 
 | Pinned | Etiketin yanında 12 px raptiye; kenar gölgesi **yalnızca** içerik o yöne kaydırılmışken. |
 | Long label | Kesilir, tam ad tooltip'te. |
 | Description | `description` varsa tooltip iki satırdır: ad + açıklama (etiket kesilmese de); ekran okuyucuya `aria-describedby` ile verilir. Header'da ek ikon yok (D33). |
-| Sayısal | Sağa hizalı; ok etiketin solunda, `⋯` en solda. |
-| Resize | Kenarda hover'da 2 px `--dt-accent` tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; genişlikler tek `--cols` değişkenine Vue dışından yazılır. Çift tık = içeriğe sığdır (görünür satırlar + header). Sabit sütunlar px, orta sütunlar `minmax(min, fr)`, resize sonrası px; bölge sonunda `auto` dolgu. |
+| Sayısal | Sağa hizalı; ok etiketin solunda, `⋯` en sağda (etiket `⋯`'nın soluna yaslanır). |
+| Resize | Kenarda hover'da 2 px `--dt-accent` tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; genişlikler tek `--cols` değişkenine Vue dışından yazılır. İçeriğe sığdırma yok: ne çift tık ne menü öğesi (D42). Sabit sütunlar px, orta sütunlar `minmax(min, fr)`, resize sonrası px; bölge sonunda `auto` dolgu. |
 | Sıra | Header menüsü › **Move left / Move right**; klavye `⌥⇧←` / `⌥⇧→`. Sürükleme yok (D22). Sabit sütunlar kendi bölgeleri içinde taşınır. |
 
 Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık: **Column menu** —
-`[Tip etiketi başlıkta]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Pin left · Pin right (sabitse Unpin) · Fit to content · Move left · Move right · Hide column
+`[Tip etiketi başlıkta]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Pin left · Pin right (sabitse Unpin) · Move left · Move right · Hide column
 
 ### Satır
 

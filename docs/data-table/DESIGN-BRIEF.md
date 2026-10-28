@@ -419,10 +419,10 @@ Filtre değildir: çip üretmez, sayaca girmez, görünüme kaydedilmez, görün
 | Filtered | Etiketin yanında `--dt-accent-text` filtre işareti; tıklanınca çip açılır |
 | Pinned | 12 px raptiye; kenar gölgesi yalnızca kaydırılmışken |
 | Long label | Kesilir, tooltip |
-| Resize | Kenarda hover'da 2 px accent tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; çift tık içeriğe sığdırır |
+| Resize | Kenarda hover'da 2 px accent tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; içeriğe sığdırma yok (D42) |
 | Sıra | Menüden **Move left / Move right**, klavye `⌥⇧←/→`. Sürükleme yok (D22); sabit sütunlar kendi bölgesinde taşınır |
 
-**Sütun menüsü** (`⋯` veya sağ tık, 248 px): `[tip etiketi]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Pin left · Pin right / Unpin · Fit to content · Move left · Move right · Hide column.
+**Sütun menüsü** (`⋯` veya sağ tık, 248 px): `[tip etiketi]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Pin left · Pin right / Unpin · Move left · Move right · Hide column.
 
 ### 6.8 Sütun yönetimi: Display › Columns [Karar D22]
 

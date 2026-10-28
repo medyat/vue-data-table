@@ -45,10 +45,17 @@ const rest = computed(() => {
   return filterable.value.filter((c) => !taken.has(c.id as string) && match(c))
 })
 const empty = computed(() => !filtered.value.length && !suggested.value.length && !rest.value.length)
+// Seçimle kapanınca odak tetikleyiciye dönmez: açılan çip editörü alır (08 §2 · Popover). Esc'te döner.
+let picked = false
 const pick = (id: unknown) => {
   if (typeof id !== 'string') return
+  picked = true
   open.value = false
   emit('pick', id)
+}
+const onCloseAutoFocus = (e: Event) => {
+  if (picked) e.preventDefault()
+  picked = false
 }
 </script>
 
@@ -56,7 +63,7 @@ const pick = (id: unknown) => {
   <PopoverRoot v-model:open="open">
     <PopoverTrigger as-child><slot name="trigger" /></PopoverTrigger>
     <PopoverPortal>
-      <PopoverContent class="dt-pop dt-picker" align="start" :side-offset="4">
+      <PopoverContent class="dt-pop dt-picker" align="start" :side-offset="4" @close-auto-focus="onCloseAutoFocus">
         <ListboxRoot
           :model-value="undefined"
           selection-behavior="replace"

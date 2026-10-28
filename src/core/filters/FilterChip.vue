@@ -14,7 +14,7 @@ import {
   PopoverRoot,
   PopoverTrigger,
 } from 'reka-ui'
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import type { ColumnDef } from '../../types/columns'
 import type { FilterOp } from '../../types/query'
 import type { RemoteLabels } from '../cells/remoteLabels'
@@ -85,6 +85,14 @@ const onFocusOutside = (e: CustomEvent<{ originalEvent: FocusEvent }>) => {
   const t = e.detail.originalEvent.target
   if (t instanceof Element && t.closest('.dt-filter-trigger, .dt-head-menu, .dt-head-filtered')) e.preventDefault()
 }
+/** Açılınca odak editörün ilk alanına (08 §2 · Popover); reka varsayılanı üstteki operatör düğmesini seçerdi. */
+const body = ref<HTMLElement | null>(null)
+const onOpenAutoFocus = (e: Event) => {
+  const field = body.value?.querySelector<HTMLElement>('input, textarea')
+  if (!field) return
+  e.preventDefault()
+  field.focus()
+}
 const toggleBool = () => update({ value: !(props.chip.value === true) })
 </script>
 
@@ -137,6 +145,7 @@ const toggleBool = () => update({ value: !(props.chip.value === true) })
           align="start"
           :side-offset="4"
           @focus-outside="onFocusOutside"
+          @open-auto-focus="onOpenAutoFocus"
         >
           <div class="dt-chip-pop-head">
             <span class="dt-chip-pop-field">{{ column.header }}</span>
@@ -167,7 +176,7 @@ const toggleBool = () => update({ value: !(props.chip.value === true) })
               </DropdownMenuPortal>
             </DropdownMenuRoot>
           </div>
-          <div v-if="editor" class="dt-chip-pop-body">
+          <div v-if="editor" ref="body" class="dt-chip-pop-body">
             <OptionsEditor
               v-if="editor === 'options'"
               :column="column"

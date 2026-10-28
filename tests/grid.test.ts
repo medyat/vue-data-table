@@ -150,7 +150,9 @@ describe('roller ve yapı', () => {
     expect(bad.attributes('aria-describedby')).toBe(icon.attributes('id'))
     expect(bad.get('.dt-cell.is-primary').text()).toBe('WO-26-400') // numara kesilmez, ikon birincil hücrede değil
     const menuW = (x: typeof w) => (x.get('.dt-grid').element as HTMLElement).style.getPropertyValue('--dt-menu-w')
-    expect(menuW(w)).toBe('66px') // sayfada hatalı satır var: ⋯ sütunu ikona yer açar
+    expect(menuW(w)).toBe(
+      'calc(16px + var(--dt-icon) - 2px + var(--dt-space) + 1 * var(--dt-control-h-sm) + 0 * var(--dt-space))',
+    ) // sayfada hatalı satır var: ⋯ sütunu ikona yer açar
     for (const i of [1, 2]) {
       const ok = w.get(`.dt-row[data-index="${i}"]`)
       expect(ok.classes()).not.toContain('is-error')
@@ -170,7 +172,7 @@ describe('roller ve yapı', () => {
     w2.unmount()
 
     const w3 = await mountTable({ rowError: () => null })
-    expect(menuW(w3)).toBe('44px') // hata yok: yalnızca ⋯
+    expect(menuW(w3)).toBe('calc(16px + 1 * var(--dt-control-h-sm) + 0 * var(--dt-space))') // hata yok: yalnızca ⋯
     w3.unmount()
   })
 })

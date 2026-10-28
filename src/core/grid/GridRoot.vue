@@ -97,14 +97,11 @@ const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)
 const density = computed<Density>(() => (coarse && props.density === 'compact' ? 'standard' : props.density))
 
 // Seçim (40; telefonda 48) ve ⋯ sütunları düzenin dışında: track'ler başa/sona eklenir, sabit sütun ofsetleri o kadar kayar.
-// ⋯ sütunu içeriğe göre (05 §4): 8 + ⋯ 28 + 8 = 44; sayfada hatalı satır varsa (D35) + 14 + 8; inline aksiyon başına (D36,
-// sayfadaki en kalabalık satır) + 28 + 8. CSS: .dt-cell-menu (dolgu 8, gap 8).
+// ⋯ sütunu içeriğe göre (05 §4): dolgu 8 + ⋯ + 8; sayfada hatalı satır varsa (D35) + ikon + gap; inline aksiyon başına (D36,
+// sayfadaki en kalabalık satır) + düğme + gap. Ölçü token'lardan (02 · Ölçek), CSS: .dt-cell-menu, .dt-row-error.
 const SELECT_W = 40
 const SELECT_W_PHONE = 48
 const MENU_PAD = 8
-const MORE_W = 28
-const ERROR_SLOT = 14 + 8
-const INLINE_SLOT = 28 + 8
 const selW = computed(() => (props.selectable ? (props.phone ? SELECT_W_PHONE : SELECT_W) : 0))
 const anyError = computed(() => !!props.rowError && props.rows.some((r) => errorOf(r).length > 0))
 const maxInline = computed(() => {
@@ -112,24 +109,29 @@ const maxInline = computed(() => {
   if (!actions.some((a) => a.inline)) return 0
   return props.rows.reduce((m, r) => Math.max(m, inlineActionsOf(actions, r).length), 0)
 })
-const menuW = computed(() =>
-  props.rowMenu ? MENU_PAD + (anyError.value ? ERROR_SLOT : 0) + maxInline.value * INLINE_SLOT + MORE_W + MENU_PAD : 0,
-)
+const menuW = computed(() => {
+  if (!props.rowMenu) return ''
+  const err = anyError.value ? ' + var(--dt-icon) - 2px + var(--dt-space)' : ''
+  const n = maxInline.value
+  return `calc(${2 * MENU_PAD}px${err} + ${n + 1} * var(--dt-control-h-sm) + ${n} * var(--dt-space))`
+})
 // Genişlikler ve sabit ofsetleri Vue render'ı dışında, senkron (05 · Resize: kare başına < 1 ms).
 watchEffect(
   () => {
     const el = root.value
     if (!el) return
-    const cols = [selW.value ? `${selW.value}px` : '', layout.colsVar.value, menuW.value ? `${menuW.value}px` : '']
+    const cols = [selW.value ? `${selW.value}px` : '', layout.colsVar.value, menuW.value]
     el.style.setProperty('--cols', cols.filter(Boolean).join(' '))
-    el.style.setProperty('--dt-min-w', `${layout.minWidth.value + selW.value + menuW.value}px`)
+    const min = `${layout.minWidth.value + selW.value}px`
+    el.style.setProperty('--dt-min-w', menuW.value ? `calc(${min} + ${menuW.value})` : min)
     el.style.setProperty('--dt-sel-w', `${selW.value}px`)
-    el.style.setProperty('--dt-menu-w', `${menuW.value}px`)
+    el.style.setProperty('--dt-menu-w', menuW.value || '0px')
     const startVars = new Set(layout.start.value.map((c) => c.offsetVar))
     const endVars = new Set(layout.end.value.map((c) => c.offsetVar))
     for (const [name, value] of Object.entries(layout.offsetVars.value)) {
-      const extra = startVars.has(name) ? selW.value : endVars.has(name) ? menuW.value : 0
-      el.style.setProperty(name, extra ? `${parseFloat(value) + extra}px` : value)
+      if (startVars.has(name)) el.style.setProperty(name, `${parseFloat(value) + selW.value}px`)
+      else if (endVars.has(name) && menuW.value) el.style.setProperty(name, `calc(${value} + ${menuW.value})`)
+      else el.style.setProperty(name, value)
     }
   },
   { flush: 'sync' },
@@ -303,29 +305,6 @@ const sortOf = (id: string) => props.sort?.get(id)
 const columnSortable = (c: LayoutColumn<AnyRow>) =>
   props.sortable && (c.def.sortable ?? TYPE_SPECS[c.def.type].sortable)
 
-/** Çift tık / menü: içeriğe sığdır (görünür satırlar + header). */
-const fitToContent = (col: LayoutColumn<AnyRow>) => {
-  const el = root.value
-  if (!el) return
-  const items = cellsOf(col.id).flatMap((c) => [...c.querySelectorAll<HTMLElement>('.dt-cell-content, .dt-head-text')])
-  // Blok eleman hücre genişken onu doldurur; içeriğin gerçek genişliği için geçici max-content (tek reflow: önce yaz, sonra oku).
-  // max-width: 100% kesilmiş içeriği hücreye, flex-shrink header metnini düğmeye sıkıştırır; ölçüm için ikisi de kalkar.
-  for (const c of items) {
-    c.style.width = 'max-content'
-    c.style.maxWidth = 'none'
-    c.style.flex = 'none'
-  }
-  const max = items.reduce((m, c) => Math.max(m, c.getBoundingClientRect().width), 0)
-  for (const c of items) {
-    c.style.width = ''
-    c.style.maxWidth = ''
-    c.style.flex = ''
-  }
-  const pad = parseFloat(getComputedStyle(el).getPropertyValue('--dt-cell-x')) || 12
-  // 24 px: hover'da beliren hücre aksiyonları ve header'daki ok/⋯ için pay.
-  layout.setWidth(col.id, Math.ceil(max) + pad * 2 + 24)
-}
-
 /** Sütun menüsü ve ⌥⇧←/→ (05 §4): sıralama dışındakiler düzenin kendi işi. Taşınan başlığın odağı korunur. */
 const onHeaderAction = (col: LayoutColumn<AnyRow>, action: HeaderAction) => {
   switch (action) {
@@ -345,9 +324,6 @@ const onHeaderAction = (col: LayoutColumn<AnyRow>, action: HeaderAction) => {
       return
     case 'unpin':
       layout.pin(col.id, null)
-      return
-    case 'fit':
-      fitToContent(col)
       return
     case 'hide':
       layout.setVisible(col.id, false)

@@ -111,24 +111,58 @@ Tüm sayısal hücreler, sayfalama aralıkları ve sayaçlar `font-variant-numer
 
 ## Yoğunluk
 
-`data-density` özniteliği (`comfortable | standard | compact`) aşağıdaki değişkenleri ayarlar. Varsayılan: list = standard, sheet = compact.
+`data-density` özniteliği (`comfortable | standard | compact`) aşağıdaki değişkenleri ayarlar. Varsayılan: list = standard, sheet = compact. Comfortable ve Standard D41 ile büyüdü (tasarımda Standard 40 / 36 / 12 / 13 px); Compact DataSheet'in Excel'e yakın yoğunluğu olarak aynı kaldı.
 
 | Token | Comfortable | Standard | Compact |
 |---|---|---|---|
-| `--dt-row-h` | 52 px | 40 px | 32 px |
-| `--dt-head-h` | 40 px | 36 px | 32 px |
-| `--dt-cell-x` (yatay hücre dolgusu) | 16 px | 12 px | 10 px |
-| `--dt-fs` | 13.5 px | 13 px | 12.5 px |
-| `--dt-fs-head` | 12 px | 12 px | 11.5 px |
-| `--dt-av` (avatar) | 24 px | 20 px | 18 px |
-| `--dt-badge-h` | 24 px | 22 px | 20 px |
-| `--dt-mono-fs` (ID / kod) | 13 px | 12.5 px | 12 px |
-| `--dt-currency-fs` (para birimi kodu) | 11 px | 11 px | 10.5 px |
-| `--dt-avatar-fs` (avatar baş harfleri) | 10 px | 9 px | 8 px |
+| `--dt-row-h` | 56 px | 44 px | 32 px |
+| `--dt-head-h` | 44 px | 40 px | 32 px |
+| `--dt-cell-x` (yatay hücre dolgusu) | 16 px | 14 px | 10 px |
+| `--dt-fs` | 14.5 px | 14 px | 12.5 px |
+| `--dt-fs-head` | 13 px | 13 px | 11.5 px |
+| `--dt-av` (avatar) | 26 px | 22 px | 18 px |
+| `--dt-badge-h` | 26 px | 24 px | 20 px |
+| `--dt-mono-fs` (ID / kod) | 14 px | 13.5 px | 12 px |
+| `--dt-currency-fs` (para birimi kodu) | 12 px | 12 px | 10.5 px |
+| `--dt-avatar-fs` (avatar baş harfleri) | 11 px | 10 px | 8 px |
 
 - İkinci satır (`secondary`) yalnızca Comfortable'da görünür; diğerlerinde tooltip'e taşınır.
 - Dokunmatik cihazda (`pointer: coarse`) Compact otomatik Standard'a döner; mobil liste satırı en az 48 px, sheet salt-okunur satırı 44 px.
 - Satır yüksekliğine 1 px alt kenarlık eklenir (sanallaştırmada `estimateSize = row-h + 1`).
+
+## Ölçek
+
+Arayüz ölçüsü dört temel token'dan türetilir (D41). Uygulama bunları kendi CSS'inde ezerek tüm paketi (DataTable ve DataSheet) büyütüp küçültebilir; türetilmiş token'lar kendiliğinden uyar. Tasarım dosyaları ve handoff belgeleri 13 / 16 / 32 / 8 px temel ölçekte çizildi; uygulamada bu tablo geçerlidir. Telefon düzeni (05 §11) kendi yazı ve dokunma ölçülerini kullanır; ikonlar orada da `--dt-icon`'a uyar.
+
+| Token | Değer | Kullanım |
+|---|---|---|
+| `--dt-ui-fs` | `14px` | Arayüz metni: buton, input, menü öğesi, popover (tasarımda 13) |
+| `--dt-ui-fs-3xs` | `calc(var(--dt-ui-fs) - 2px)` | kbd, sayaç ayrıntıları (tasarımda 11) |
+| `--dt-ui-fs-2xs` | `calc(var(--dt-ui-fs) - 1.5px)` | Bölüm etiketi, rozet sayacı (tasarımda 11.5) |
+| `--dt-ui-fs-xs` | `calc(var(--dt-ui-fs) - 1px)` | Küçük metin, ipucu, xs buton (tasarımda 12) |
+| `--dt-ui-fs-sm` | `calc(var(--dt-ui-fs) - 0.5px)` | Çip, sm buton, ikincil metin (tasarımda 12.5) |
+| `--dt-ui-fs-md` | `calc(var(--dt-ui-fs) + 1px)` | Vurgulu metin (tasarımda 14) |
+| `--dt-ui-fs-lg` | `calc(var(--dt-ui-fs) + 2px)` | Popover / bölüm başlığı (tasarımda 15) |
+| `--dt-ui-fs-xl` | `calc(var(--dt-ui-fs) + 3px)` | Dialog başlığı (tasarımda 16) |
+| `--dt-ui-fs-2xl` | `calc(var(--dt-ui-fs) + 4px)` | Büyük başlık (tasarımda 17) |
+| `--dt-icon` | `18px` | İkon temel boyutu (tasarımda 16). Bileşenler ikon boyutunu tasarım değeriyle verir; gerçek boyut `--dt-icon + (tasarım − 16)` |
+| `--dt-control-h` | `36px` | Buton, input, segmented, menü ve liste öğesi (tasarımda 32) |
+| `--dt-control-h-lg` | `calc(var(--dt-control-h) + 4px)` | Popover başlık/alt satırı, şerit, formül ve durum çubuğu (tasarımda 36) |
+| `--dt-control-h-sm` | `calc(var(--dt-control-h) - 4px)` | Ghost / sm buton, çip, satır ⋯ ve inline aksiyon, bölüm etiketi (tasarımda 28) |
+| `--dt-control-h-xs` | `calc(var(--dt-control-h) - 8px)` | xs buton, hücre aksiyonu, operatör düğmesi, header etiketi (tasarımda 24) |
+| `--dt-control-h-2xs` | `calc(var(--dt-control-h) - 12px)` | Header ikonları, expand chevron'u (tasarımda 20) |
+| `--dt-checkbox` | `18px` | Checkbox (tasarımda 16) |
+| `--dt-space` | `10px` | Bileşen içi aralık (tasarımda 8) |
+| `--dt-space-sm` | `calc(var(--dt-space) - 2px)` | İkon–metin ve çip aralığı (tasarımda 6) |
+| `--dt-space-lg` | `calc(var(--dt-space) + 2px)` | Toolbar öğe aralığı ve dolgusu (tasarımda 8 / 10–12) |
+| `--dt-pop-pad` | `6px` | Popover ve menü iç dolgusu, dört yönde eşit (tasarımda 4) |
+| `--dt-item-x` | `10px` | Menü ve liste öğesinin yatay dolgusu (tasarımda 8) |
+
+Popover ve menü genişlikleri yazıyla orantılıdır: tasarımdaki genişlik `W` px ise `calc(W * var(--dt-ui-fs) / 13)`; `--dt-ui-fs` 14 px iken ≈ %8 geniş.
+
+Toolbar, filtre satırı ve footer dolgusu dört yönde `--dt-space-lg`; yükseklikleri kontrol + 2 × dolgu (toolbar `--dt-control-h`, filtre satırı ve footer `--dt-control-h-sm`). Satır ⋯ sütunu genişliği de bu token'lardan `calc` ile hesaplanır.
+
+DataTable'da tip varsayılan sütun genişlikleri (03) 13 px hücre yazısına göredir ve yoğunluğun `--dt-fs` değeriyle orantılı büyür (Standard 14/13, Comfortable 14.5/13, Compact değişmez). Geliştiricinin `width`'i de bu orana tabidir; kullanıcının elle verdiği / görünümde saklanan genişlik değişmez. DataSheet varsayılanı Compact olduğundan sütunları ölçeklenmez.
 
 ## Yarıçap
 

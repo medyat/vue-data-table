@@ -64,7 +64,7 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 - [x] Sıralama: tık asc → desc → kapalı; ⇧ ikincil, en fazla 3; `aria-sort` yalnızca birincil sütunda; Türkçe metin collator ile; `null` asc'de sonda, desc'te başta (PostgreSQL ile aynı).
 - [x] Sayfa boyutu değişince 1. sayfa; sayfa değişince gövde başa kayar; `Alt←/→` çalışır.
 - [x] Toolbar yalnızca yapılandırılmış yuvaları gösterir; ≥1024 / 640–1023 / <640 eşiklerinde DESIGN-BRIEF §6.3 daralma kurallarıyla aynı. *(< 640'ta Display ⋯ menüsünden açılır ve ⋯ düğmesine hizalanır; alt sayfa biçimi Faz 7.)*
-- [x] Sütun resize min 80 px, çift tık sığdırır; pin/unpin; hide; Move left/right ve `⌥⇧←/→`; görünür olan yeni sütun `fields`'te yoksa `reason: 'columns'` talebi (400 ms birleştirme), gizleme/sıra/genişlik talep üretmez.
+- [x] Sütun resize min 80 px (içeriğe sığdırma D42 ile kaldırıldı); pin/unpin; hide; Move left/right ve `⌥⇧←/→`; görünür olan yeni sütun `fields`'te yoksa `reason: 'columns'` talebi (400 ms birleştirme), gizleme/sıra/genişlik talep üretmez.
 - [x] Yoğunluk ve dikey çizgiler `preferences`'a yazılır; adapter yoksa oturumluk ve arayüz "kaydedildi" demez; localStorage erişilemezse hata vermez.
 
 **Notlar (uygulama):** `useRequest` (talep/pending/snapshot/abort), `useListTable` (TanStack sorted/filtered/paginated row model'leri, sunucuda `manual*`), `usePreferences`; durum sınıfı son talebin `reason`'ından (`errorKind`: error/stale). Header klavyesi: ilk satırda `↑` başlığa, `←/→` komşu başlık, `↓` satıra (08 §3). Tek sayfada footer "of N" ve "Count total" göstermez. Kısayollar `window` kapsamlı: aynı sayfada iki tablo varsa ikisi de yanıt verir.

@@ -8,6 +8,8 @@ Bu klasör, T1–T13 tasarımlarının geliştiriciye (Claude Code dahil) teslim
 
 Çelişki olursa sıra: `02-design-tokens.md` > 03–09 ve `api-draft.ts` > `DESIGN-BRIEF.md` > bu belgeler > tasarım dosyası.
 
+**Ölçek (D41):** Bu belgelerdeki px ölçüleri ve tasarım dosyası 13 px yazı / 16 ikon / 32 kontrol / 8 aralık temel ölçeğindedir. Uygulamada bunlar `02-design-tokens.md` › Ölçek token'larına eşlenir (ör. 32 → `--dt-control-h`, 28 → `--dt-control-h-sm`, 13 px → `--dt-ui-fs`); paket bir kademe büyük çizer.
+
 ## Tasarım dosyası
 
 Link: https://claude.ai/artifact/AughfWtSj8V1c9SDcRfzki (özel; ekip için Share menüsünden paylaşılmalı)

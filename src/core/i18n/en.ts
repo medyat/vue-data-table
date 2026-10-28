@@ -185,7 +185,6 @@ export const en: Record<string, string> = {
   "header.pinLeft": "Pin left",
   "header.pinRight": "Pin right",
   "header.unpin": "Unpin",
-  "header.fit": "Fit to content",
   "header.moveLeft": "Move left",
   "header.moveRight": "Move right",
   "header.hide": "Hide column",

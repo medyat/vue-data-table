@@ -16,7 +16,7 @@ Davranış: brief §6. Tasarım: **T1–T9** sayfaları. Örnek ekran “Product
 
 | Öğe | Ölçü ve görünüş |
 |---|---|
-| Görünüm seçici | 32 px ghost, dolgu `0 8px`, yarıçap 7, ad 13 / 600; düzenlenmişse 6 px `--dt-accent` nokta + “Edited” 12 / 500 `--dt-text-2`; sonra `CaretDown` 14 `--dt-text-3` |
+| Görünüm seçici | 32 px, select kutusu gibi: 1 px `--dt-line-2` kenar, `--dt-surface` zemin, `--dt-shadow-sm` (tasarımdaki ghost'tan sapma, 2026-10-28; telefonda ghost kalır), dolgu `0 8px 0 10px`, yarıçap 7, ad 13 / 600; düzenlenmişse 6 px `--dt-accent` nokta + “Edited” 12 / 500 `--dt-text-2`; sonra `CaretDown` 14 `--dt-text-3` |
 | Arama | 240 × 32 input, dolgu `0 34px`, `--dt-shadow-sm`; placeholder “Search orders…”; boşken sağda `/` kbd, değer varken 22 px temizle |
 | Filter | 32 px; filtre yokken ikincil (`0 12px 0 10px`), varken aktif filtre stili + sayaç rozeti |
 | Display | 32 px ikincil, `SlidersHorizontal` + “Display” |
@@ -95,11 +95,11 @@ Yükseklik `--dt-head-h`, `--dt-surface-2`, üst ve alt 1 px `--dt-line`, metin 
 | Pinned | etiketten sonra `PushPin` 12 `--dt-text-3`; kenar gölgesi yalnızca kaydırılmışken |
 | Uzun etiket | `…`, tam metin tooltip'te |
 | Açıklama (`description`) | tooltip iki satır: ad + açıklama (`--dt-tip-bg`, 12 / 500, satır 16, dolgu 5 × 8); header'da ikon yok. Tasarım dosyasında çizilmedi, 05'e göre (D33) |
-| Resize | sütunun sağ kenarında 2 px `--dt-accent` tutamaç + canlı rozet (“184 px”, `--dt-tip-bg`, 20 px, 11 / 500); en az 80 px; çift tık içeriğe sığdırır |
+| Resize | sütunun sağ kenarında 2 px `--dt-accent` tutamaç + canlı rozet (“184 px”, `--dt-tip-bg`, 20 px, 11 / 500); en az 80 px; içeriğe sığdırma yok (D42) |
 
 ### 5.2 Sütun menüsü (248)
 
-Başlık etiketi sütun tipi (“Person”). Sort ascending · Sort descending · Clear sort (sıralama yokken `--dt-text-3`) · ayırıcı · Filter by this column… · ayırıcı · Pin left · Pin right · Fit to content · Move left `⌥⇧←` · Move right `⌥⇧→` · ayırıcı · Hide column.
+Başlık etiketi sütun tipi (“Person”). Sort ascending · Sort descending · Clear sort (sıralama yokken `--dt-text-3`) · ayırıcı · Filter by this column… · ayırıcı · Pin left · Pin right · Move left `⌥⇧←` · Move right `⌥⇧→` · ayırıcı · Hide column.
 
 ### 5.3 Display › Columns (320)
 

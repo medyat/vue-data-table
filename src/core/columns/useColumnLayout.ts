@@ -59,6 +59,8 @@ export interface ColumnLayoutOptions<Row extends object> {
   layout?: MaybeRefOrGetter<Partial<ColumnLayout> | undefined>
   /** DataSheet (07 §3): sola sabit son sütun (birincil ad) px değil minmax ile esner; ofseti kimseye gerekmez. */
   flexLastStart?: boolean
+  /** Varsayılan genişliklerin çarpanı (02 · Ölçek): hücre yazısı 13 px'ten büyükse sütunlar da o oranda genişler. Elle verilen genişlik etkilenmez. */
+  scale?: MaybeRefOrGetter<number>
 }
 
 const trackCss = (t: Track): string => (typeof t === 'number' ? `${t}px` : `minmax(${t.min}px, ${t.fr}fr)`)
@@ -71,7 +73,17 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
   const defById = computed(() => new Map(defs.value.map((d) => [d.id as string, d])))
   const rowKey = computed(() => toValue(options.rowKey) ?? 'id')
   const layout = computed(() => toValue(options.layout))
-  const minOf = (d: ColumnDef<Row>): number => Math.min(d.minWidth ?? MIN_COLUMN_WIDTH, trackMin(defaultTrack(d)))
+  const trackFor = (d: ColumnDef<Row>): Track => {
+    const t = defaultTrack(d)
+    const k = toValue(options.scale) ?? 1
+    return typeof t === 'number' ? Math.round(t * k) : { ...t, min: Math.round(t.min * k) }
+  }
+  const minOf = (d: ColumnDef<Row>): number => Math.min(d.minWidth ?? MIN_COLUMN_WIDTH, trackMin(trackFor(d)))
+  /** Kaydedilen / uygulanan genişlik sütunun min–max aralığında (05 · Resize: min 80). */
+  const clampWidth = (id: string, px: number): number => {
+    const def = defById.value.get(id)
+    return Math.min(def?.maxWidth ?? Infinity, Math.max(def ? minOf(def) : MIN_COLUMN_WIDTH, Math.round(px)))
+  }
 
   // TanStack sütunları: her zaman açık id + accessorFn (accessorKey asla: nokta → alt çizgi çakışması, 01).
   const tanstackColumns = computed<Array<TanstackColumnDef<Features, Row, unknown>>>(() =>
@@ -80,7 +92,7 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
       return {
         id,
         accessorFn: d.accessor ?? ((row: Row) => readPath(row, id)),
-        size: trackMin(defaultTrack(d)),
+        size: trackMin(trackFor(d)),
         // Açık `width` 80'in altındaysa (ör. 56 px aksiyon sütunu) o geçerli.
         minSize: minOf(d),
         maxSize: d.maxWidth,
@@ -100,7 +112,7 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
       visibility[id] = d.alwaysVisible || d.primary || (l?.visible ? l.visible.includes(id) : !d.hidden)
     }
     const sizing: Record<string, number> = {}
-    for (const [id, w] of Object.entries(l?.widths ?? {})) if (defById.value.has(id)) sizing[id] = w
+    for (const [id, w] of Object.entries(l?.widths ?? {})) if (defById.value.has(id)) sizing[id] = clampWidth(id, w)
     return {
       columnPinning: { start, end },
       columnVisibility: visibility,
@@ -153,8 +165,9 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
 
   /** Sütunun gerçek track'i: sabit ve resize edilmiş sütunlar px, diğerleri tip varsayılanı (minmax olabilir). */
   const trackOf = (col: Column<Features, Row, unknown>, pinned: boolean): Track => {
-    const resized = table.atoms.columnSizing.get()[col.id]
-    return pinned ? col.getSize() : resized !== undefined ? resized : defaultTrack(defById.value.get(col.id)!)
+    // Ham columnSizing sürüklerken min/max'ı aşabilir; getSize() kırpar (min 80, 05 · Resize).
+    const resized = table.atoms.columnSizing.get()[col.id] !== undefined
+    return pinned || resized ? col.getSize() : trackFor(defById.value.get(col.id)!)
   }
 
   /** grid-template-columns: sabit px, orta track'ler, bölge sonunda `auto` dolgu (05 · Resize). */
@@ -241,7 +254,9 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
         .getOrderColumnsFn()(table.getAllLeafColumns())
         .map((c) => c.id),
       visible: table.getVisibleLeafColumns().map((c) => c.id),
-      widths: { ...table.atoms.columnSizing.get() },
+      widths: Object.fromEntries(
+        Object.entries(table.atoms.columnSizing.get()).map(([id, w]) => [id, clampWidth(id, w)]),
+      ),
       pinned: { left: [...p.start], right: [...p.end] },
     }
   })
@@ -280,12 +295,7 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     resizing,
     rowId: (row: Row) => String(readPath(row, rowKey.value)),
     widthOf: (id: string): number => table.getColumn(id)?.getSize() ?? 0,
-    setWidth: (id: string, px: number) => {
-      const def = defById.value.get(id)
-      const min = def ? minOf(def) : MIN_COLUMN_WIDTH
-      const clamped = Math.min(def?.maxWidth ?? Infinity, Math.max(min, Math.round(px)))
-      table.setColumnSizing((s) => ({ ...s, [id]: clamped }))
-    },
+    setWidth: (id: string, px: number) => table.setColumnSizing((s) => ({ ...s, [id]: clampWidth(id, px) })),
     resetWidth: (id: string) => table.getColumn(id)?.resetSize(),
     pin: (id: string, side: PinSide) => table.getColumn(id)?.pin(side ?? false),
     setVisible: (id: string, visible: boolean) => table.getColumn(id)?.toggleVisibility(visible),

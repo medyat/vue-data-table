@@ -4,10 +4,10 @@
 .dt-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
   flex: none;
-  min-height: 52px;
-  padding: 10px 12px;
+  min-height: calc(var(--dt-control-h) + 2 * var(--dt-space-lg));
+  padding: var(--dt-space-lg);
   border-bottom: 1px solid var(--dt-line);
 }
 .dt-toolbar-spacer {
@@ -19,7 +19,7 @@
   background: var(--dt-line);
 }
 .dt-search {
-  width: 240px;
+  width: calc(240 * var(--dt-ui-fs) / 13);
 }
 .dt-toolbar.is-phone .dt-search {
   flex: 1;
@@ -30,14 +30,14 @@
 .dt-strip {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
   flex: none;
-  height: 36px;
+  height: var(--dt-control-h-lg);
   padding: 0 12px;
   border-bottom: 1px solid var(--dt-a-line);
   background: var(--dt-a-bg);
   color: var(--dt-a-fg);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
 }
 .dt-strip > svg {
   color: var(--dt-a-dot);
@@ -72,7 +72,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  max-width: 440px;
+  max-width: calc(440 * var(--dt-ui-fs) / 13);
   padding-bottom: 64px;
   text-align: center;
 }
@@ -92,23 +92,23 @@
   color: var(--dt-r-fg);
 }
 .dt-state-title {
-  font-size: 15px;
+  font-size: var(--dt-ui-fs-lg);
   font-weight: 600;
 }
 .dt-state-line {
   margin: 0;
   color: var(--dt-text-2);
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
 }
 .dt-state-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--dt-space);
   margin-top: 12px;
 }
 .dt-state-id {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   margin-top: 8px;
 }
 .dt-state-code {
@@ -124,19 +124,19 @@
   justify-content: space-between;
   gap: 12px;
   flex: none;
-  min-height: 48px;
-  padding: 8px 12px;
+  min-height: calc(var(--dt-control-h-sm) + 2 * var(--dt-space-lg));
+  padding: var(--dt-space-lg);
   border-top: 1px solid var(--dt-line);
   background: var(--dt-surface-2);
   color: var(--dt-text-2);
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
   font-variant-numeric: tabular-nums;
 }
 .dt-footer-left,
 .dt-footer-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
   min-width: 0;
   white-space: nowrap;
 }
@@ -153,7 +153,7 @@
   }
   .dt-footer-prev,
   .dt-footer-next {
-    width: 28px;
+    width: var(--dt-control-h-sm);
     padding: 0;
     justify-content: center;
   }
@@ -184,7 +184,7 @@
 .dt-footer-live {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   color: var(--dt-g-fg);
 }
 .dt-live-dot {
@@ -197,7 +197,7 @@
 .dt-footer-size {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
 }
 .dt-select {
   position: relative;
@@ -205,14 +205,14 @@
   align-items: center;
 }
 .dt-select select {
-  height: 28px;
+  height: var(--dt-control-h-sm);
   padding: 0 24px 0 10px;
   border: 1px solid var(--dt-line-2);
   border-radius: var(--dt-radius-item);
   background: var(--dt-surface);
   color: var(--dt-text);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dt-ui-fs-sm);
   box-shadow: var(--dt-shadow-sm);
   appearance: none;
   cursor: pointer;
@@ -239,11 +239,11 @@
 
 /* Display popover (308) ve drill-in'ler (320). */
 .dt-display {
-  width: 308px;
+  width: calc(308 * var(--dt-ui-fs) / 13);
 }
 .dt-display.is-columns,
 .dt-display.is-sort {
-  width: 320px;
+  width: calc(320 * var(--dt-ui-fs) / 13);
 }
 .dt-display-density {
   width: calc(100% - 8px);
@@ -252,17 +252,17 @@
 .dt-pop-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
+  gap: var(--dt-space);
+  height: var(--dt-control-h-lg);
   padding: 0 4px;
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
 }
 .dt-pop-head strong {
   font-weight: 600;
 }
 .dt-pop-find {
-  width: calc(100% - 8px);
-  margin: 0 4px 4px;
+  width: 100%;
+  margin-bottom: var(--dt-pop-pad);
 }
 .dt-pop-find input {
   box-shadow: none;
@@ -274,7 +274,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 32px;
+  height: var(--dt-control-h);
   padding: 0 4px 0 8px;
   border-radius: var(--dt-radius-item);
 }
@@ -290,7 +290,7 @@
 }
 /* D33: açıklama satırı (05 §5). */
 .dt-col-desc {
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   line-height: 16px;
   color: var(--dt-text-3);
 }
@@ -309,8 +309,8 @@
   margin-right: 6px;
 }
 .dt-sort-row {
-  height: 36px;
-  gap: 8px;
+  height: var(--dt-control-h-lg);
+  gap: var(--dt-space);
 }
 .dt-sort-row .dt-head-sort-index {
   display: inline-flex;
@@ -320,7 +320,7 @@
   height: 14px;
   border-radius: var(--dt-radius-xs);
   background: var(--dt-surface-3);
-  font-size: 11px;
+  font-size: var(--dt-ui-fs-3xs);
   font-weight: 600;
 }
 
@@ -372,7 +372,7 @@
 }
 .dt-bulk-count {
   padding: 0 8px;
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
@@ -385,15 +385,15 @@
 .dt-bulk-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
+  gap: var(--dt-space-sm);
+  height: var(--dt-control-h);
   padding: 0 12px 0 10px;
   border: 0;
   border-radius: var(--dt-radius-inner);
   background: transparent;
   color: var(--dt-bulk-fg);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
   font-weight: 500;
   cursor: pointer;
 }
@@ -413,7 +413,7 @@
 }
 .dt-bulk-btn.dt-bulk-more,
 .dt-bulk-btn.dt-bulk-icon {
-  width: 32px;
+  width: var(--dt-control-h);
   padding: 0;
   justify-content: center;
 }
@@ -421,12 +421,12 @@
   color: var(--dt-bulk-fg-2);
 }
 .dt-bulk-menu {
-  min-width: 248px;
+  min-width: calc(248 * var(--dt-ui-fs) / 13);
 }
 /* Toolbar varyantı (T5-04): seçim varken toolbar'ın yerine; yükseklik aynı, altındakiler kımıldamaz. */
 .dt-bulk.is-toolbar {
   flex: none;
-  gap: 8px;
+  gap: var(--dt-space);
   min-height: 52px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--dt-line);
@@ -448,14 +448,14 @@
   bottom: 64px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
   height: 40px;
   padding: 0 14px 0 12px;
   border-radius: var(--dt-radius-card);
   background: var(--dt-bulk-bg);
   color: var(--dt-bulk-fg);
   box-shadow: var(--dt-shadow-float);
-  font-size: 13px;
+  font-size: var(--dt-ui-fs);
   font-weight: 600;
   transform: translateX(-50%);
   white-space: nowrap;

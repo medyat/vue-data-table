@@ -394,7 +394,7 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     await page.locator('.dt-sheet-views .dt-seg-item[value="changed"]').click()
     await expect(page.locator('.dt-row')).toHaveCount(2)
     await page.locator('.dt-sheet-views .dt-seg-item[value="all"]').click()
-    await expect(page.locator('.dt-row')).toHaveCount(32)
+    await expect(page.locator('[role="grid"]')).toHaveAttribute('aria-rowcount', '32') // sanal: DOM'daki satır sayısı viewport'a bağlı
 
     // context menu on a loaded row: Open product link present; Insert row below
     await cell(page, 2, 'name').click({ button: 'right' })
@@ -443,6 +443,7 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     await expect(page.locator('.dt-status-saved')).toContainText('rows saved', { timeout: 10000 })
     await expect(page.locator('.dt-sheet-changes')).toContainText('No changes')
     await expect(page.locator('.dt-status')).not.toContainText('new row')
+    await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = el.scrollHeight)) // son satırlar sanal pencerede
     await expect(cell(page, 30, 'sku')).not.toContainText('Update')
     await expect(cell(page, 31, 'sku')).not.toContainText('New')
     // server error path: cost > 100000 (istemci kuralı için liste fiyatı daha yüksek) → partly saved banner + copy errors

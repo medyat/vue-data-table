@@ -90,14 +90,14 @@
 .dt-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--dt-space-sm);
   max-width: 100%;
   height: var(--dt-badge-h);
   padding: 0 8px;
   border-radius: var(--dt-radius-pill);
   background: var(--dt-tone-bg);
   color: var(--dt-tone-fg);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   font-weight: 500;
   line-height: 1;
   vertical-align: middle;
@@ -135,20 +135,20 @@
   border-radius: var(--dt-radius-sm);
   background: var(--dt-surface-3);
   color: var(--dt-text-2);
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   font-weight: 500;
   line-height: 1;
 }
 .dt-more-pill {
   height: 20px;
   border-radius: var(--dt-radius-pill);
-  font-size: 11.5px;
+  font-size: var(--dt-ui-fs-2xs);
 }
 
 .dt-user {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--dt-space);
   max-width: 100%;
   vertical-align: middle;
 }
@@ -194,7 +194,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--dt-space);
   width: 100%;
 }
 .dt-bar-track {
@@ -260,8 +260,8 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: var(--dt-control-h-xs);
+  height: var(--dt-control-h-xs);
   padding: 0;
   border: 0;
   border-radius: var(--dt-radius-sm);
@@ -285,7 +285,7 @@
   background: var(--dt-surface-3);
   color: var(--dt-text-2);
   font-family: var(--dt-font-mono);
-  font-size: 11px;
+  font-size: var(--dt-ui-fs-3xs);
   font-weight: 500;
   line-height: 1;
   vertical-align: middle;
@@ -294,7 +294,7 @@
 .dt-secondary {
   display: block;
   margin-top: 1px;
-  font-size: 12px;
+  font-size: var(--dt-ui-fs-xs);
   line-height: 1.25;
   color: var(--dt-text-3);
   overflow: hidden;

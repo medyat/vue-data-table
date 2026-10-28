@@ -141,7 +141,9 @@ describe('satır menüsü ve row-open', () => {
     expect(btn.attributes('tabindex')).toBeUndefined() // doğal Tab durağı (D38)
     expect(rowAt(w, done).findAll('.dt-row-inline')).toHaveLength(1)
     expect(rowAt(w, running).find('.dt-row-inline').exists()).toBe(false)
-    expect((w.get('.dt-grid').element as HTMLElement).style.getPropertyValue('--dt-menu-w')).toBe('80px')
+    expect((w.get('.dt-grid').element as HTMLElement).style.getPropertyValue('--dt-menu-w')).toBe(
+      'calc(16px + 2 * var(--dt-control-h-sm) + 1 * var(--dt-space))',
+    ) // 1 inline + ⋯
     await btn.trigger('click')
     expect(edit).toHaveBeenCalledWith(rows[done])
     await openMenu(w, done)

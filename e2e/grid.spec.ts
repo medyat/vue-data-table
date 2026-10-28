@@ -16,9 +16,9 @@ test.describe('T1 · liste ızgarası', () => {
 
   test("sanal satırlar: görünür + overscan DOM'da, kaydırınca pencere kayar", async ({ page }) => {
     const rendered = await page.locator('.dt-row').count()
-    expect(rendered).toBeGreaterThan(20)
+    expect(rendered).toBeGreaterThan(15)
     expect(rendered).toBeLessThan(60) // 500 satırın hepsi değil
-    await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = 20_000))
+    await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = el.scrollHeight)) // en alt
     await expect(page.locator('.dt-row[data-index="1"]')).toHaveCount(0)
     await expect(page.locator('.dt-row[data-index="490"]')).toHaveCount(1)
   })
@@ -92,47 +92,19 @@ test.describe('T1 · liste ızgarası', () => {
     const cols = await page.locator('.dt-grid').evaluate((el) => el.style.getPropertyValue('--cols'))
     expect(cols).toMatch(/\d+px/)
   })
-})
 
-test('çift tık: içeriğe sığdır, tekrar edince sabit kalır', async ({ page }) => {
-  await settings(page)
-  await page.goto('/t1?size=500')
-  await expect(page.locator('.dt-row[data-index="0"]')).toBeVisible()
-  const width = () =>
-    page.locator('.dt-head-cell[data-col="customer"]').evaluate((el) => el.getBoundingClientRect().width)
-  const handle = page.locator('.dt-head-cell[data-col="customer"] .dt-resize')
-  // Önce daralt (içerik kesilsin), sonra TEK çift tıkla sığdır.
-  const box = (await handle.boundingBox())!
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-  await page.mouse.down()
-  await page.mouse.move(box.x - 120, box.y + box.height / 2, { steps: 4 })
-  await page.mouse.up()
-  const narrowed = await width()
-  const truncated = await page
-    .locator('.dt-row [data-col="customer"] .dt-cell-content')
-    .evaluateAll((els) => els.some((e) => e.scrollWidth > e.clientWidth))
-  expect(truncated).toBe(true)
-  await handle.dblclick()
-  const fitted = await width()
-  expect(fitted).toBeGreaterThan(narrowed)
-  const longest = await page.locator('.dt-row [data-col="customer"] .dt-cell-content').evaluateAll((els) =>
-    Math.max(
-      ...els.map((e) => {
-        const el = e as HTMLElement
-        el.style.width = 'max-content'
-        el.style.maxWidth = 'none'
-        const w = el.getBoundingClientRect().width
-        el.style.width = ''
-        el.style.maxWidth = ''
-        return w
-      }),
-    ),
-  )
-  expect(fitted).toBeGreaterThan(longest)
-  expect(fitted).toBeLessThan(longest + 80)
-  await handle.dblclick()
-  await handle.dblclick()
-  expect(Math.round(await width())).toBe(Math.round(fitted))
+  test('resize: sürükleme min 80 px altına inmez; rozet de 80 gösterir, bırakınca sıçrama yok', async ({ page }) => {
+    const head = page.locator('.dt-head-cell[data-col="customer"]')
+    const handle = head.locator('.dt-resize')
+    const box = (await handle.boundingBox())!
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(box.x - 300, box.y + box.height / 2, { steps: 6 })
+    expect(Math.round(await head.evaluate((el) => el.getBoundingClientRect().width))).toBe(80)
+    await expect(page.locator('.dt-resize-badge')).toHaveText('80 px')
+    await page.mouse.up()
+    expect(Math.round(await head.evaluate((el) => el.getBoundingClientRect().width))).toBe(80)
+  })
 })
 
 test("yoğunluk: Comfortable'da ikinci satır, Compact'ta 32 px satır", async ({ page }) => {
@@ -144,7 +116,7 @@ test("yoğunluk: Comfortable'da ikinci satır, Compact'ta 32 px satır", async (
   await page.goto('/t1?size=500')
   await expect(page.locator('.dt-row[data-index="0"] .dt-secondary')).toBeVisible()
   const h52 = await page.locator('.dt-row[data-index="0"]').evaluate((el) => el.getBoundingClientRect().height)
-  expect(Math.round(h52)).toBe(53)
+  expect(Math.round(h52)).toBe(57) // 56 + kenarlık (D41)
   await page.getByRole('button', { name: 'Display' }).click()
   await page.getByRole('button', { name: 'Compact' }).click()
   await page.keyboard.press('Escape')
@@ -156,18 +128,20 @@ test("yoğunluk: Comfortable'da ikinci satır, Compact'ta 32 px satır", async (
     .toBe(33)
 })
 
-test('T8: uzun header kesikken tek çift tık sığdırır (header ölçümü)', async ({ page }) => {
+test('içeriğe sığdır yok (D42): çift tık genişliği değiştirmez, sütun menüsünde Fit to content yok', async ({
+  page,
+}) => {
   await settings(page)
-  await page.goto('/t8')
-  await expect(page.locator('.dt-row').first()).toBeVisible()
-  const head = page.locator('.dt-head-cell[data-col="boolD"]').first()
-  const text = head.locator('.dt-head-text')
-  expect(await text.evaluate((e) => e.scrollWidth > e.clientWidth + 1)).toBe(true) // "boolean · destructive" kesik
+  await page.goto('/t1?size=500')
+  const head = page.locator('.dt-head-cell[data-col="customer"]')
+  await expect(page.locator('.dt-row[data-index="0"]')).toBeVisible()
+  const before = await head.evaluate((el) => el.getBoundingClientRect().width)
   await head.locator('.dt-resize').dblclick()
-  expect(await text.evaluate((e) => e.scrollWidth > e.clientWidth + 1)).toBe(false)
-  const w1 = await head.evaluate((el) => el.getBoundingClientRect().width)
-  await head.locator('.dt-resize').dblclick()
-  expect(Math.round(await head.evaluate((el) => el.getBoundingClientRect().width))).toBe(Math.round(w1))
+  expect(await head.evaluate((el) => el.getBoundingClientRect().width)).toBe(before)
+  await head.hover()
+  await head.locator('.dt-head-menu').click()
+  await expect(page.getByRole('menuitem', { name: 'Move left' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Fit to content' })).toHaveCount(0)
 })
 
 test('T8: 23 tip light ve dark görsel referansı', async ({ page }) => {
