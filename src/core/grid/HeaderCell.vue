@@ -118,6 +118,15 @@ const onMenuCloseAutoFocus = (e: Event) => {
     @contextmenu.prevent="menuOpen = true"
   >
     <button
+      v-if="filtered"
+      type="button"
+      class="dt-head-icon dt-head-filtered"
+      :aria-label="i18n.t('header.filterBy')"
+      @click="emit('filter', column)"
+    >
+      <PhFunnel :size="14" weight="fill" aria-hidden="true" />
+    </button>
+    <button
       type="button"
       class="dt-head-label"
       :class="{ 'is-static': !canSort }"
@@ -140,15 +149,6 @@ const onMenuCloseAutoFocus = (e: Event) => {
       <PhPushPin v-if="column.pinned" :size="12" class="dt-head-pin" aria-hidden="true" />
     </button>
     <span v-if="def.description" :id="descId" class="dt-sr-only">{{ def.description }}</span>
-    <button
-      v-if="filtered"
-      type="button"
-      class="dt-head-icon dt-head-filtered"
-      :aria-label="i18n.t('header.filterBy')"
-      @click="emit('filter', column)"
-    >
-      <PhFunnel :size="14" weight="fill" aria-hidden="true" />
-    </button>
     <DropdownMenuRoot v-model:open="menuOpen">
       <DropdownMenuTrigger as-child>
         <button

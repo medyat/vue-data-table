@@ -11,8 +11,11 @@
 - Popover içeriği kenarlara eşit uzaklıkta: column picker, görünüm menüsü ve Columns panelindeki arama kutuları ile filtre editörü gövdesi her yönde `--dt-pop-pad` (önceden üstte 4, yanlarda 8 px).
 - Sütun sürüklenerek minimum genişliğin (80 px) altına inemez; önceden sürüklerken daralıp ilk tıklamada 80'e sıçrıyordu. Görünüme kaydedilen ve görünümden okunan genişlik de sütunun min–max aralığına kırpılır.
 - **İçeriğe sığdırma kaldırıldı (D42).** Resize tutamacında çift tık ve sütun menüsündeki Fit to content yok; genişlik sürükleyerek ayarlanır. `header.fit` i18n anahtarı kaldırıldı.
-- Header ⋯ düğmesi her sütunda sağ kenara yaslı; sayısal sütunlarda da en sağda (önceden en solda), etiket ⋯'nın soluna yaslanır.
-- Görünüm seçici select kutusu gibi çizilir: input kenarlığı ve gölgesi (önceden ghost). Telefonda değişmedi.
+- Display düğmesi her genişlikte yalnızca ikon (DataTable ve DataSheet); adı tooltip'te ve `aria-label`'da.
+- **Toolbar grupları (D43).** Görünüm seçici başında ikon kutusuyla ghost (select kutusu görünümü geri alındı); arama + Filter grubu toolbar'ın tam ortasında; arama + Filter ve Display + ⋯ birleşik düğme grubu. Telefon düzeni değişmedi.
+- Kaydırma hapı (Rows 41–56) kaydırma alanının köşesinden sağdan ve alttan eşit uzaklıkta; görünür kaydırma çubukları (Windows, macOS "her zaman göster") hesaba katılır; yazı dikeyde ortalı.
+- Satıra sağ tık artık satır ⋯ menüsünü açmaz; tarayıcının kendi menüsü açılır.
+- Header (D44): filtre işareti etiketin solunda; ⋯ her sütunda sağ uçta ve yalnızca hover, klavye odağı veya menü açıkken yer kaplar (önceden hep yer ayırıyordu; sayısal sütunlarda en soldaydı). Dokunmatikte hep görünür.
 - **Ölçek büyüdü ve token'a bağlandı (D41).** Arayüz yazısı 13 → 14 px, ikonlar 16 → 18, kontroller 32 → 36, aralıklar 8 → 10, popover dolgusu 4 → 6; Comfortable satırı 52 → 56, Standard 40 → 44 (hücre yazısı 13 → 14). Toolbar, filtre satırı ve footer dolgusu dört yönde eşit. Varsayılan sütun genişlikleri hücre yazısıyla orantılı büyür. Yeni token'lar: `--dt-ui-fs`, `--dt-icon`, `--dt-control-h`, `--dt-checkbox`, `--dt-space`, `--dt-pop-pad`, `--dt-item-x` ve türevleri (02 · Ölçek); uygulama bunları ezerek paketi büyütüp küçültebilir. DataSheet'in ortak parçaları (buton, menü, popover, dialog) da büyür; Compact satır yoğunluğu değişmez.
 
 ## 1.0.0 — 2026-10-28

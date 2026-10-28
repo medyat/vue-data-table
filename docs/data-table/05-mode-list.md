@@ -24,7 +24,7 @@ Varsayılanlar: Standard yoğunluk, 100 satır/sayfa, simple pagination (D7), di
 │  Footer             min 48 px                                        │
 └──────────────────────────────────────────────────────────────────────┘
    BulkBar  — yüzer, altta ortalı, alt kenardan 64 px
-   ScrollPosition — yüzer, sağdan 22 px, alttan 62 px
+   ScrollPosition — yüzer, kaydırma alanının iç köşesinden (çubuklar hariç) sağdan ve alttan eşit `--dt-space-lg`
 ```
 
 - **Yükseklik sözleşmesi:** uygulama, DataTable'ın ebeveynine belirli bir yükseklik verir (ör. `height: calc(100dvh - var(--app-header-h))` veya flex çocuğu `min-height: 0`). Paket bunu bulamazsa (yükseklik 0 veya içerikle büyüyorsa) geliştirme modunda konsola uyarı yazar.
@@ -47,7 +47,7 @@ Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. **Yalnızca yapıland�
 | 6 | More `⋯` | Öğe varsa: **Refresh** `R` (sunucu modunda veya `@request` dinleyicisi varsa), **Export** / **Import…** / **Print** (ilgili olay dinleniyorsa), **Auto-refresh** (`autoRefresh` verilmişse) |
 | 7 | `#toolbar-end="{ compact }"` | Uygulamanın birincil aksiyonu vb. **En fazla bir** birincil buton; mürekkep (`--dt-ink`), asla accent mavi değil. `compact` daralmada ikon moduna geçmek için |
 
-Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 8 px, 6 ile 7 arasında `vsep` (1×20 px, `--dt-line`). Tazelik bilgisi (“Updated just now ↻”, “Live”) **footer**'dadır (§8).
+Sıra: `[1] … [2 3] … [5 6] │ [7]` (D43). [2 3] toolbar'ın tam ortasında (iki yan eşit pay); 7'nin önünde `vsep` (1×20 px, `--dt-line`); 2–3 ve 5–6 birleşik düğme grubu (ortak kenarlık, araya boşluk yok). Görünüm seçici ghost, başında ikon kutusu. Filtre satırı (4) toolbar'dan çizgiyle ayrılır. Telefonda gruplar ve ayırıcı yok (§11). Tazelik bilgisi (“Updated just now ↻”, “Live”) **footer**'dadır (§8).
 
 | `toolbar` | Sonuç |
 |---|---|
@@ -112,14 +112,14 @@ Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 
 | Durum | Görünüm / davranış |
 |---|---|
 | Default | 12 px, 500, `--dt-text-2`, `--dt-surface-2` zemin. Sütunlar arası %40 yükseklikte 1 px ayraç. |
-| Hover | Sıralama oku ve `⋯` belirir; etiket butonu `--dt-surface-3`. |
+| Hover | Sıralama oku belirir; etiket butonu `--dt-surface-3`. `⋯` yalnızca hover, klavye odağı veya menü açıkken sağ uçta yer açar (etiket zemini ile arasında hep 4 px); diğer zamanlarda genişliği 0'dır, etiket o alanı kullanır (D44). Dokunmatikte hep görünür. |
 | Sorted asc / desc | Etiket `--dt-text`, ok görünür; desc'te 180° döner (150 ms). |
 | Multi-sort | Öncelik rozetleri `1`, `2` (14 px kare, `--dt-surface-3`). |
-| Filtered | Etiketin yanında `--dt-accent-text` filtre işareti; tıklanınca o çip açılır. |
+| Filtered | Etiketin solunda `--dt-accent-text` filtre işareti (D44); tıklanınca o çip açılır. |
 | Pinned | Etiketin yanında 12 px raptiye; kenar gölgesi **yalnızca** içerik o yöne kaydırılmışken. |
 | Long label | Kesilir, tam ad tooltip'te. |
 | Description | `description` varsa tooltip iki satırdır: ad + açıklama (etiket kesilmese de); ekran okuyucuya `aria-describedby` ile verilir. Header'da ek ikon yok (D33). |
-| Sayısal | Sağa hizalı; ok etiketin solunda, `⋯` en sağda (etiket `⋯`'nın soluna yaslanır). |
+| Sayısal | Sağa hizalı; ok etiketin solunda, `⋯` en sağda; hover'da `⋯` yer açınca etiket o kadar sola kayar (D44). |
 | Resize | Kenarda hover'da 2 px `--dt-accent` tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; genişlikler tek `--cols` değişkenine Vue dışından yazılır. İçeriğe sığdırma yok: ne çift tık ne menü öğesi (D42). Sabit sütunlar px, orta sütunlar `minmax(min, fr)`, resize sonrası px; bölge sonunda `auto` dolgu. |
 | Sıra | Header menüsü › **Move left / Move right**; klavye `⌥⇧←` / `⌥⇧→`. Sürükleme yok (D22). Sabit sütunlar kendi bölgeleri içinde taşınır. |
 

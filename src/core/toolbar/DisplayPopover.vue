@@ -66,7 +66,7 @@ const sortSummary = computed(() => {
         type="button"
         class="dt-btn has-icon"
         :class="{ 'dt-btn-icon': iconOnly }"
-        :aria-label="iconOnly ? i18n.t('toolbar.display') : undefined"
+        :aria-label="i18n.t('toolbar.display')"
         :data-dt-tip="iconOnly ? i18n.t('toolbar.display') : undefined"
       >
         <PhSlidersHorizontal :size="16" aria-hidden="true" />

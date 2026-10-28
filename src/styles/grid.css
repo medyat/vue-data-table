@@ -171,12 +171,32 @@
   font-weight: 500;
   color: var(--dt-text-2);
 }
-/* ⋯ her zaman sağ kenarda: sola hizalı başlıkta ⋯ boşluğu alır, sağa hizalıda etiket (ve filtre ikonu) ⋯'nın soluna yaslanır. */
+/* D44: filtre işareti etiketin solunda. ⋯ yalnızca hover / odak / menü açıkken sağ uçta yer açar (genişlik 0 → ikon;
+   Tab sırasında kalır); sağa hizalı başlıkta etiket o kadar sola kayar. Dokunmatikte hep açık. */
+.dt-head-cell .dt-head-menu {
+  width: 0;
+  overflow: hidden;
+}
 .dt-head-cell:not(.is-right) .dt-head-menu {
   margin-left: auto;
 }
-.dt-head-cell.is-right .dt-head-label {
-  margin-left: auto;
+.dt-head-cell:is(:hover, :focus-within, .is-menu-open) .dt-head-menu {
+  width: var(--dt-control-h-2xs);
+}
+/* ⋯ görünürken etiket zemini ile ⋯ arasında 4 px (hücre gap 2 + 2; etiketin varsayılan −4 px sağ boşluğu yerine). */
+.dt-head-cell:is(:hover, :focus-within, .is-menu-open) .dt-head-label {
+  margin-right: 2px;
+}
+@media (pointer: coarse) {
+  .dt-head-cell .dt-head-menu {
+    width: var(--dt-control-h-2xs);
+  }
+  .dt-head-cell .dt-head-label {
+    margin-right: 2px;
+  }
+  .dt-head-menu {
+    opacity: 1;
+  }
 }
 .dt-head-sep {
   position: absolute;
@@ -265,6 +285,7 @@
   color: var(--dt-text);
 }
 .dt-head-filtered {
+  margin-right: 2px; /* etiketin -4 px kenar boşluğu üstüne binmesin */
   color: var(--dt-accent-text);
 }
 .dt-head-menu {
@@ -502,8 +523,10 @@
 }
 .dt-scroll-pill {
   position: absolute;
-  right: 16px;
-  bottom: 12px;
+  right: calc(var(--dt-space-lg) + var(--dt-bar-w, 0px));
+  bottom: calc(var(--dt-space-lg) + var(--dt-bar-h, 0px));
+  display: flex;
+  align-items: center;
   height: var(--dt-control-h-xs);
   padding: 0 10px;
   border-radius: var(--dt-radius-pill);
@@ -511,7 +534,7 @@
   color: var(--dt-tip-fg);
   font-size: var(--dt-ui-fs-xs);
   font-weight: 500;
-  line-height: 24px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   box-shadow: var(--dt-shadow-tip);
   opacity: 0;

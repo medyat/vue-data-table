@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Görünüm seçici + menüsü (04 §7, handoff 03 §4.1, T3-01/02/03): üstte kaydetme bölümü (yalnızca düzenlenmişse, D27),
 // Find a view…, System / My views bölümleri (D30: paylaşım yok), satır ⋯ menüsü, altta New view. Kısayol `V` DataTable'da.
-import { PhCaretDown, PhCheck, PhDotsThree, PhMagnifyingGlass, PhPlus } from '@phosphor-icons/vue'
+import { PhCaretDown, PhCheck, PhDotsThree, PhMagnifyingGlass, PhPlus, PhStack } from '@phosphor-icons/vue'
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -93,7 +93,8 @@ const pick = (id: unknown) => {
     align="start"
   >
     <template #trigger>
-      <button type="button" class="dt-btn has-icon dt-view-trigger" :aria-label="label">
+      <button type="button" class="dt-btn dt-btn-ghost has-icon dt-view-trigger" :aria-label="label">
+        <span class="dt-view-icon" aria-hidden="true"><PhStack :size="16" /></span>
         <span class="dt-view-name">{{ active?.name ?? i18n.t('views.title') }}</span>
         <template v-if="edited">
           <span class="dt-view-dot" aria-hidden="true" />

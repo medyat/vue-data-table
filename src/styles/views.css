@@ -1,14 +1,25 @@
 /* Görünümler (04 §7, handoff 03 §2 ve §4): toolbar seçicisi, görünüm menüsü (316), satır ⋯ menüsü (200), dialog özeti. */
 
-/* Seçici: 32 px ghost, ad 13/600; düzenlenmişse 6 px accent nokta + “Edited” 12/500 text-2; CaretDown 14 text-3. */
-/* Tetikleyici select kutusu gibi: input kenarlığı ve gölgesi, sağda chevron. */
-.dt-view-trigger {
+/* Seçici (D43): ghost; solda ikon kutusu (her yönde 4 px içeride), ad 600; düzenlenmişse accent nokta + “Edited”; CaretDown.
+   Arkasında toolbar ayırıcısı. */
+.dt-btn.has-icon.dt-view-trigger {
   height: var(--dt-control-h);
-  padding: 0 8px 0 10px;
+  padding: 0 8px 0 calc((var(--dt-control-h) - var(--dt-control-h-xs)) / 2 - 1px); /* 1 px: ghost'un saydam kenarlığı */
   gap: var(--dt-space-sm);
   color: var(--dt-text);
   font-size: var(--dt-ui-fs);
-  box-shadow: var(--dt-shadow-sm);
+}
+.dt-view-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--dt-control-h-xs);
+  height: var(--dt-control-h-xs);
+  margin-right: 2px;
+  border-radius: var(--dt-radius-item);
+  background: var(--dt-surface-3);
+  color: var(--dt-text-2);
 }
 .dt-view-name {
   font-weight: 600;

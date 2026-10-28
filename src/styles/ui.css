@@ -73,6 +73,30 @@
   border-radius: var(--dt-radius-item);
   font-size: var(--dt-ui-fs-sm);
 }
+/* Birleşik düğme grubu (D43): kenarlıklar üst üste biner, iç köşeler düz; odaktaki öğe üstte. */
+.dt-btn-group {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.dt-btn-group > * + * {
+  margin-left: -1px;
+}
+.dt-btn-group > :not(:first-child),
+.dt-btn-group > :not(:first-child) input {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.dt-btn-group > :not(:last-child),
+.dt-btn-group > :not(:last-child) input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.dt-btn-group > :focus-visible,
+.dt-btn-group > :focus-within {
+  position: relative;
+  z-index: 1;
+}
 .dt-btn-icon {
   width: var(--dt-control-h);
   padding: 0;

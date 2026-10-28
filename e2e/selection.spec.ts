@@ -71,7 +71,7 @@ test.describe('T1 · seçim ve bulk bar', () => {
     await expect(bulk(page)).toHaveCount(0)
   })
 
-  test('satır menüsü: ⋯ → Open ↵ / Open in new tab / Copy; pasif aksiyon gerekçeli; sağ tık açar; Copy toast', async ({
+  test('satır menüsü: ⋯ → Open ↵ / Open in new tab / Copy; pasif aksiyon gerekçeli; sağ tık açmaz; Copy toast', async ({
     page,
   }) => {
     await row(page, 0).hover()
@@ -82,11 +82,13 @@ test.describe('T1 · seçim ve bulk bar', () => {
     await expect(menu.getByRole('menuitem', { name: /Cancel order…/ })).toHaveClass(/is-destructive/)
     await menu.getByRole('menuitem', { name: /Copy Order no\./ }).click()
     await expect(page.locator('.dt-toast')).toContainText('Copied')
-    // Sağ tık: düz hücrede satır menüsü; linkte tarayıcının menüsü (menü açılmaz).
+    // Sağ tık satır menüsünü açmaz (tarayıcının menüsü kalır); pasif aksiyon ⋯'dan.
     const running = page
       .locator('.dt-row', { has: page.locator('[data-col="status"]', { hasText: 'In progress' }) })
       .first()
     await running.locator('[data-col="customer"]').click({ button: 'right' })
+    await expect(page.getByRole('menu')).toHaveCount(0)
+    await running.locator('.dt-row-more').click()
     const item = page.getByRole('menuitem', { name: /Release/ })
     await expect(item).toContainText('Already running')
     await expect(item).toHaveAttribute('data-disabled', '')

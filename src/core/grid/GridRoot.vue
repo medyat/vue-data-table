@@ -147,6 +147,9 @@ const barH = ref(0)
 const readBarH = () => {
   const el = scrollEl.value
   barH.value = el ? Math.max(0, el.offsetHeight - el.clientHeight) : 0
+  // Yer kaplayan kaydırma çubukları (Windows, macOS "her zaman"): kaydırma hapı çubukların iç köşesine göre durur.
+  root.value?.style.setProperty('--dt-bar-w', `${el ? Math.max(0, el.offsetWidth - el.clientWidth) : 0}px`)
+  root.value?.style.setProperty('--dt-bar-h', `${barH.value}px`)
 }
 const readRowHeight = () => {
   const v = root.value ? parseFloat(getComputedStyle(root.value).getPropertyValue('--dt-row-h')) : NaN

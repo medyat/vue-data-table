@@ -4,7 +4,7 @@
 // Görünümler: sistem görünümleri `orderViews`, kişisel görünümler plugin'deki localStorage adapter'ında (T3: hazır görünümler).
 // Seçim + bulk bar (T5), satır menüsü ve expand (T6): aksiyonlar yalnızca konsola yazar (iş mantığı uygulamanın, D20).
 // Sunucu senaryosu başlıktaki seçimle ya da URL ile: ?delay=800 ?fail=1 ?failAfter=1 ?size=500; ?bar=toolbar seçim çubuğu toolbar'da.
-import { PhCalendarBlank, PhPencilSimple, PhPlay, PhPlus, PhUser } from '@phosphor-icons/vue'
+import { PhCalendarBlank, PhPencilSimple, PhPlay, PhUser } from '@phosphor-icons/vue'
 import {
   DataTable,
   type BulkAction,
@@ -232,17 +232,6 @@ async function onCount({ query, signal }: CountRequest) {
             <a href="#">Open routing →</a>
           </div>
         </div>
-      </template>
-      <template #toolbar-end="{ compact }">
-        <button
-          type="button"
-          class="dt-btn dt-btn-primary has-icon"
-          :class="{ 'dt-btn-icon': compact }"
-          aria-label="New order"
-        >
-          <PhPlus :size="compact ? 18 : 16" aria-hidden="true" />
-          <span v-if="!compact">New order</span>
-        </button>
       </template>
     </DataTable>
   </div>

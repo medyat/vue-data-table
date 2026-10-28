@@ -332,7 +332,7 @@ Kaynak doküman: 05, 04.
 │  Footer             min 48 px                                        │
 └──────────────────────────────────────────────────────────────────────┘
    BulkBar  — yüzer, altta ortalı, alt kenardan 64 px
-   ScrollPosition — yüzer, sağdan 22 px, alttan 62 px
+   ScrollPosition — yüzer, kaydırma alanının iç köşesinden (çubuklar hariç) sağdan ve alttan eşit `--dt-space-lg`
 ```
 
 - Kart: `--dt-surface`, 1 px `--dt-line`, 12 px yarıçap, `--dt-shadow-sm`. Sayfa kaymaz; gövde `overscroll-behavior: contain`.
@@ -348,7 +348,7 @@ Kaynak doküman: 05, 04.
 
 ### 6.3 Toolbar [Karar]
 
-Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. **Yalnızca yapılandırılmış yuvalar görünür**; hazır ayar yoktur.
+Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. D43: görünüm seçici (ikon kutusu + ad) · ortada [arama · Filter] birleşik grup · sağda [Display · ⋯] birleşik grup; çip satırı toolbar'dan çizgiyle ayrılır. **Yalnızca yapılandırılmış yuvalar görünür**; hazır ayar yoktur.
 
 | # | Yuva | Görünme koşulu | Davranış |
 |---|---|---|---|
@@ -476,7 +476,7 @@ Aynı satır, üç derinlik:
 
 - **Satır gövdesi varsayılan olarak hiçbir şey yapmaz** (`row-click: 'none'`): metin seçilip kopyalanabilir. Uygulama `row-click` ile open/expand'den birini bağlayabilir; her durumda etkileşimli hedefe tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; seçim asla tıklamayla yapılmaz.
 - **Satır durumları:** Default `--dt-surface` · Hover `--dt-row-hover` · Selected.
-- **Satır aksiyonları** (sağa sabit, içeriğe göre 44 / 66 px): yalnızca **⋯** (her zaman görünür; D28). Sağ tık da menüyü açar. Satır menüsü (268 px): Open `↵` · Open in new tab · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
+- **Satır aksiyonları** (sağa sabit, içeriğe göre 44 / 66 px): yalnızca **⋯** (her zaman görünür; D28). Satırda sağ tık tarayıcının menüsünü açar, satır menüsünü değil. Satır menüsü (268 px): Open `↵` · Open in new tab · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
 - **Expand:** chevron 20 px birincil hücrede ID'nin solunda; açıkken 90° döner. Alt satır tam genişlik, `--dt-surface-2`, sol kenarı seçim sütununun sağından; içinde uygulamanın içeriği — örnek: mini tablo (8 px yarıçap, kendi header'ı, 34 px satırlar) + özet satırı (“4 operations · Line 2 routing” + “Open routing”). **Veriyi uygulamanın içeriği çeker;** yükleniyor/hata görünümü de onun (paket “Loading…” göstermez). Birden çok satır açık olabilir; sorgu/sayfa değişince kapanır; sanal listede zıplama olmaz.
 
 ### 6.13 Sayfalama ve footer [Karar D7]

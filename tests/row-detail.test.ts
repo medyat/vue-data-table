@@ -165,7 +165,7 @@ describe('satır menüsü ve row-open', () => {
     expect(rowAt(w2, done).find('.dt-row-more-space').exists()).toBe(true)
     expect(rowAt(w2, running).find('.dt-row-more').exists()).toBe(false)
   })
-  it('Copy panoya yazar ve "Copied" toast; sağ tık düz hücrede menüyü açar, linkte açmaz', async () => {
+  it('Copy panoya yazar ve "Copied" toast; sağ tık satır menüsünü açmaz, tarayıcı menüsü kalır', async () => {
     const writeText = vi.fn()
     Object.assign(navigator, { clipboard: { writeText } })
     const w = await mountTable()
@@ -174,13 +174,14 @@ describe('satır menüsü ve row-open', () => {
     await flush()
     expect(writeText).toHaveBeenCalledWith('WO-101')
     expect(w.get('.dt-toast').text()).toBe('Copied')
-    await rowAt(w, 2).get('[data-col="status"]').trigger('contextmenu')
-    await flush()
-    expect(menuItems().length).toBeGreaterThan(0)
-    expect(rowAt(w, 2).get('.dt-row-more').attributes('data-state')).toBe('open')
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await flush()
+    const plain = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+    rowAt(w, 2).get('[data-col="status"]').element.dispatchEvent(plain)
+    await flush()
+    expect(plain.defaultPrevented).toBe(false) // tarayıcının menüsü
+    expect(rowAt(w, 2).get('.dt-row-more').attributes('data-state')).toBe('closed')
     const link = rowAt(w, 3).get('a.dt-link')
     await link.trigger('contextmenu')
     await flush()

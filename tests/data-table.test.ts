@@ -299,10 +299,7 @@ describe('toolbar, tercihler, kısayollar', () => {
     })
     await flush()
     expect(w2.get('.dt').attributes('data-density')).toBe('compact')
-    await w2
-      .findAll('.dt-toolbar button')
-      .find((b) => b.text() === 'Display')!
-      .trigger('click')
+    await w2.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
     await flush()
     const pop = document.querySelector('.dt-display')!
     expect(pop.textContent).toContain('Saved for you only')
@@ -566,6 +563,21 @@ describe('görünümler (04 §7)', () => {
     await trigger(w).trigger('click')
     await flush()
   }
+  it('toolbar düzeni (D43): görünüm ikonu, ayırıcı yok; arama · Filter bir grup; Display (etiketli) · ⋯ bir grup', async () => {
+    const w = await mountViews({ props: { onExport: () => {} } }) // ⋯ menüsü Export ile görünür
+    const bar = w.get('.dt-toolbar')
+    expect(trigger(w).find('.dt-view-icon').exists()).toBe(true)
+    expect(trigger(w).classes()).toContain('dt-btn-ghost')
+    expect(bar.find('.dt-view-trigger + .dt-toolbar-sep').exists()).toBe(false)
+    const groups = bar.findAll('.dt-btn-group')
+    expect(groups).toHaveLength(2)
+    expect(groups[0]!.find('.dt-search').exists()).toBe(true)
+    expect(groups[0]!.find('.dt-filter-trigger').exists()).toBe(true)
+    const display = groups[1]!.get('button[aria-label="Display"]')
+    expect(display.text()).toBe('Display')
+    expect(groups[1]!.find('button[aria-label="More actions"]').exists()).toBe(true)
+    w.unmount()
+  })
   const row = (name: string) =>
     [...menu()!.querySelectorAll<HTMLElement>('.dt-view-row')].find((r) => r.textContent?.includes(name))
   const pickView = async (w: W, name: string) => {
@@ -750,10 +762,7 @@ describe('görünümler (04 §7)', () => {
     const w = await mountViews({
       props: { columns: columns.map((c) => (c.id === 'value' ? { ...c, description: 'Net of discounts' } : c)) },
     })
-    await w
-      .findAll('.dt-toolbar button')
-      .find((b) => b.text() === 'Display')!
-      .trigger('click')
+    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
     await flush()
     const pop = document.querySelector<HTMLElement>('.dt-display')!
     ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes('Columns'))!.click()
@@ -775,10 +784,7 @@ describe('görünümler (04 §7)', () => {
     const w = await mountViews({ props: { views } })
     const ids = () => w.findAll('[role="columnheader"][data-col]').map((h) => h.attributes('data-col'))
     expect(ids()).toEqual(['number', 'status', 'product.name']) // primary hep görünür; zzz yok
-    await w
-      .findAll('.dt-toolbar button')
-      .find((b) => b.text() === 'Display')!
-      .trigger('click')
+    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
     await flush()
     const pop = document.querySelector<HTMLElement>('.dt-display')!
     ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes('Columns'))!.click()

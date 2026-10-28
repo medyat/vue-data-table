@@ -177,6 +177,20 @@ describe('roller ve yapı', () => {
   })
 })
 
+describe('kaydırma hapı', () => {
+  it('yer kaplayan kaydırma çubuklarının genişliği kökte --dt-bar-w / --dt-bar-h (hap çubukların iç köşesine göre durur)', async () => {
+    const w = await mountTable()
+    const scroll = w.get('.dt-scroll').element as HTMLElement
+    Object.defineProperty(scroll, 'clientWidth', { configurable: true, value: 985 }) // offsetWidth 1000 → dikey çubuk 15
+    Object.defineProperty(scroll, 'clientHeight', { configurable: true, value: 585 }) // offsetHeight 600 → yatay çubuk 15
+    await w.get('.dt-scroll').trigger('scroll')
+    const style = (w.get('.dt-grid').element as HTMLElement).style
+    expect(style.getPropertyValue('--dt-bar-w')).toBe('15px')
+    expect(style.getPropertyValue('--dt-bar-h')).toBe('15px')
+    w.unmount()
+  })
+})
+
 describe('guard ve klavye', () => {
   it('hücredeki düğmeye tık satır tıklamasını tetiklemez; düz hücreye tık tetikler', async () => {
     const w = await mountTable()

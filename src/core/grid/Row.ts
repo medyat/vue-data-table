@@ -8,7 +8,6 @@ import CellActions from '../cells/CellActions.vue'
 import { cellFillStyle, renderCellContent, type RenderEnv } from '../cells/renderCell'
 import { alignOf, isNumericType } from '../cells/specs'
 import type { LayoutColumn } from '../columns/useColumnLayout'
-import { isInteractive } from '../interaction/isInteractive'
 import { inlineActionsOf } from './inlineActions'
 import RowMenu from './RowMenu.vue'
 
@@ -204,12 +203,6 @@ export default defineComponent({
           }),
         ],
       )
-    /** Sağ tık satır menüsünü açar; link/düğme üstünde tarayıcının menüsü kalır (D6). */
-    const onContextmenu = (e: MouseEvent) => {
-      if (!el || isInteractive(e.target, el)) return
-      e.preventDefault()
-      emit('menu-open', true)
-    }
 
     return () =>
       h(
@@ -231,7 +224,6 @@ export default defineComponent({
           'data-dt-tip': props.error.length ? errorTip() : undefined,
           'data-index': props.index,
           style: props.style,
-          onContextmenu: props.menu ? onContextmenu : undefined,
         },
         [
           props.selectable ? selectCell() : null,

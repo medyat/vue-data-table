@@ -21,10 +21,14 @@
   height: 44px;
   max-width: 55%;
   padding: 0 8px;
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
   font-size: 14px;
+}
+.dt-toolbar.is-phone .dt-view-icon {
+  display: none;
+}
+/* Gruplar telefonda çözülür: düğmeler toolbar'ın doğrudan öğesi gibi CSS order'a girer (D43). */
+.dt-toolbar.is-phone .dt-btn-group {
+  display: contents;
 }
 .dt-toolbar.is-phone .dt-view-name {
   overflow: hidden;

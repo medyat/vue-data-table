@@ -12,14 +12,14 @@ Davranış: brief §6. Tasarım: **T1–T9** sayfaları. Örnek ekran “Product
 
 ## 2. Toolbar
 
-52 px, dolgu `10px 12px`, boşluk 8. Sıra: `[görünüm] [arama] [Filter] … [Display] [⋯] │ [birincil]`.
+Ölçüler 02 · Ölçek token'larıyla (D41). Sıra (D43, 2026-10-28; tasarım dosyasından sapma): `[görünüm] … [arama · Filter] … [Display · ⋯] │ [birincil]`; arama · Filter grubu toolbar'ın **tam ortasında** (iki yan eşit pay alan üç sütunlu ızgara). Köşeli parantezdeki öğeler **birleşik düğme grubu**dur (`.dt-btn-group`): kenarlıklar üst üste biner, iç köşeler düz, araya boşluk girmez.
 
 | Öğe | Ölçü ve görünüş |
 |---|---|
-| Görünüm seçici | 32 px, select kutusu gibi: 1 px `--dt-line-2` kenar, `--dt-surface` zemin, `--dt-shadow-sm` (tasarımdaki ghost'tan sapma, 2026-10-28; telefonda ghost kalır), dolgu `0 8px 0 10px`, yarıçap 7, ad 13 / 600; düzenlenmişse 6 px `--dt-accent` nokta + “Edited” 12 / 500 `--dt-text-2`; sonra `CaretDown` 14 `--dt-text-3` |
-| Arama | 240 × 32 input, dolgu `0 34px`, `--dt-shadow-sm`; placeholder “Search orders…”; boşken sağda `/` kbd, değer varken 22 px temizle |
+| Görünüm seçici | ghost, solda `--dt-control-h-xs` ikon kutusu (`Stack` 16, `--dt-surface-3` zemin, yarıçap `--dt-radius-item`; düğme içinde her yönde eşit boşluk; telefonda yok); ad 13 / 600; düzenlenmişse 6 px `--dt-accent` nokta + “Edited” 12 / 500 `--dt-text-2`; sonra `CaretDown` 14 `--dt-text-3` |
+| Arama | Filter ile bir grup; 240 × 32 input, dolgu `0 34px`, `--dt-shadow-sm`; placeholder “Search orders…”; boşken sağda `/` kbd, değer varken 22 px temizle |
 | Filter | 32 px; filtre yokken ikincil (`0 12px 0 10px`), varken aktif filtre stili + sayaç rozeti |
-| Display | 32 px ikincil, `SlidersHorizontal` + “Display” |
+| Display | ⋯ ile bir grup; 32 px ikincil, `SlidersHorizontal` + “Display” |
 | ⋯ | 32 × 32 ikincil ikon düğme |
 | Ayırıcı | 1 × 20 `--dt-line` |
 | Birincil (`#toolbar-end`) | 32 px mürekkep, `Plus` + “New order” |
@@ -32,7 +32,7 @@ Davranış: brief §6. Tasarım: **T1–T9** sayfaları. Örnek ekran “Product
 
 ### 3.1 Filtre satırı
 
-Yalnızca çip varken. En az 44 px, dolgu `8px 12px`, boşluk 6, üstte 1 px `--dt-line`. Çipler ([02 §5](02-ortak-bilesenler.md)) → **Add filter** (ghost 28, `Plus` 14) → sağ uçta **Clear all** (ghost 28, ilk satırın sonuna sabit).
+Yalnızca çip varken. Toolbar'dan 1 px `--dt-line` ile ayrılır; dolgu dört yönde `--dt-space-lg`, altta 1 px `--dt-line`. Çipler ([02 §5](02-ortak-bilesenler.md)) → **Add filter** (ghost 28, `Plus` 14) → sağ uçta **Clear all** (ghost 28, ilk satırın sonuna sabit).
 
 Taşma: **D29 (2026-10-21) ile tek satır** — sığmayan çipler yatay kayar (çubuk gizli), sağ kenarda 40 px solma; Add filter ve Clear all kayan alanın dışında, sağda sabit (çipler sığarken Add filter son çipin yanındadır). T2-07'deki `+N more` popover'ı uygulanmaz.
 
@@ -149,7 +149,7 @@ Sabit bloklar satırın zeminini taşır (hover/seçili aynı renk).
 | Due date | `Oct 21`; gecikmiş: `--dt-r-fg` “Oct 20 · 1d late” |
 | Value | sağa yaslı `412,500.00` + `TRY` (`--dt-currency-fs` / 500 / `--dt-text-3`), taban çizgisine hizalı |
 
-Kaydırma hapı: gövde kayarken sağdan 22, alttan 62 px; 24 px, dolgu `0 10px`, yarıçap 999, `--dt-tip-bg`, 12 / 500, “Rows 41–56”; 900 ms sonra 150 ms'de solar.
+Kaydırma hapı: gövde kayarken kaydırma alanının iç köşesinden sağdan ve alttan eşit `--dt-space-lg` (yer kaplayan kaydırma çubukları hariç tutulur; tasarımda kart kenarından 22 / 62); `--dt-control-h-xs`, yazı dikeyde ortalı, dolgu `0 10px`, yarıçap 999, `--dt-tip-bg`, 12 / 500, “Rows 41–56”; 900 ms sonra 150 ms'de solar.
 
 ## 7. Seçim ve toplu işlem (T5)
 

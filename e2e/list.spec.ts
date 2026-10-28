@@ -55,21 +55,121 @@ test.describe('T1 · sunucu modu', () => {
     await expect(page.locator('.dt-scroll-pill')).not.toHaveClass(/is-visible/, { timeout: 2000 })
   })
 
+  test("toolbar (D43): arama · Filter grubu toolbar'ın tam ortasında; dar ekranda da", async ({ page }) => {
+    const offset = () =>
+      page.evaluate(() => {
+        const t = document.querySelector('.dt-toolbar')!.getBoundingClientRect()
+        const g = document.querySelector('.dt-toolbar .dt-btn-group')!.getBoundingClientRect()
+        return Math.abs(g.left + g.width / 2 - (t.left + t.width / 2))
+      })
+    expect(await offset()).toBeLessThanOrEqual(1)
+    await page.setViewportSize({ width: 800, height: 700 })
+    await expect(page.locator('.dt-toolbar')).toHaveClass(/is-narrow/)
+    expect(await offset()).toBeLessThanOrEqual(1)
+  })
+
+  test("filtre satırı toolbar'dan çizgiyle ayrılır; çipin üstü ve altı eşit boşluk", async ({ page }) => {
+    await page.locator('.dt-filter-trigger').first().click()
+    await page.getByRole('option', { name: /^Status/ }).click()
+    await page.locator('.dt-chip-pop .dt-option').first().click()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.dt-filter-row')).toBeVisible()
+    expect(await page.locator('.dt-toolbar').evaluate((el) => getComputedStyle(el).borderBottomWidth)).toBe('1px')
+    const m = await page.locator('.dt-filter-row').evaluate((row) => {
+      const r = row.getBoundingClientRect()
+      const c = row.querySelector('.dt-chip')!.getBoundingClientRect()
+      return { top: Math.round(c.top - r.top), bottom: Math.round(r.bottom - 1 - c.bottom) } // 1: alt çizgi
+    })
+    expect(m.top).toBe(m.bottom)
+  })
+
+  test('header (D44): filtre işareti etiketin solunda; ⋯ hover/odakta yer açar, sayısalda etiket sola kayar', async ({
+    page,
+  }) => {
+    await page.locator('.dt-filter-trigger').first().click()
+    await page.getByRole('option', { name: /^Status/ }).click()
+    await page.locator('.dt-chip-pop .dt-option').first().click()
+    await page.keyboard.press('Escape')
+    await page.mouse.move(5, 5)
+    const status = page.locator('.dt-head-cell[data-col="status"]')
+    await expect(status.locator('.dt-head-filtered')).toBeVisible()
+    const box = (cell: typeof status) =>
+      cell.evaluate((c) => {
+        const r = (s: string) => c.querySelector(s)!.getBoundingClientRect()
+        const pad = parseFloat(getComputedStyle(c).paddingRight)
+        const menu = r('.dt-head-menu')
+        return {
+          labelLeft: r('.dt-head-label').left,
+          labelRight: r('.dt-head-label').right,
+          filterRight: c.querySelector('.dt-head-filtered')?.getBoundingClientRect().right ?? null,
+          menuW: Math.round(menu.width),
+          menuToEdge: Math.round(c.getBoundingClientRect().right - pad - menu.right),
+          labelToMenu: Math.round(menu.left - r('.dt-head-label').right),
+        }
+      })
+    const idle = await box(status)
+    expect(idle.filterRight!).toBeLessThanOrEqual(idle.labelLeft)
+    expect(idle.menuW).toBe(0) // yer kaplamaz
+    await status.hover()
+    const hover = await box(status)
+    expect(hover.menuW).toBeGreaterThan(0)
+    expect(hover.menuToEdge).toBe(0)
+    expect(hover.labelToMenu).toBeGreaterThanOrEqual(4) // etiket zemini ile ⋯ arasında hep boşluk
+
+    const produced = page.locator('.dt-head-cell[data-col="produced"]')
+    const before = await box(produced)
+    await produced.hover()
+    const after = await box(produced)
+    expect(before.menuW).toBe(0)
+    expect(after.labelToMenu).toBe(4) // sayısal: etiket zemini ile ⋯ arası 4 px
+    expect(after.menuW).toBeGreaterThan(0)
+    expect(after.menuToEdge).toBe(0)
+
+    await page.mouse.move(5, 5)
+    await produced.locator('.dt-head-menu').focus() // klavye: odakta görünür
+    expect((await box(produced)).menuW).toBeGreaterThan(0)
+  })
+
+  test('kaydırma hapı: içerik kenarından sağ ve alt boşluk eşit, yazı dikeyde ortalı', async ({ page }) => {
+    const scroll = page.locator('.dt-scroll')
+    await scroll.evaluate((el) => (el.scrollTop = 800))
+    await expect(page.locator('.dt-scroll-pill')).toHaveClass(/is-visible/)
+    const m = await scroll.evaluate((el) => {
+      const r = el.getBoundingClientRect()
+      const pill = document.querySelector('.dt-scroll-pill')!
+      const p = pill.getBoundingClientRect()
+      const range = document.createRange()
+      range.selectNodeContents(pill)
+      const t = range.getBoundingClientRect()
+      return {
+        right: Math.round(r.left + el.clientWidth - p.right),
+        bottom: Math.round(r.top + el.clientHeight - p.bottom),
+        textTop: Math.round(t.top - p.top),
+        textBottom: Math.round(p.bottom - t.bottom),
+      }
+    })
+    expect(m.right).toBe(m.bottom)
+    expect(Math.abs(m.textTop - m.textBottom)).toBeLessThanOrEqual(1)
+  })
+
   test('sütun menüsü: Pin right, Move left, Hide; Display › Columns ile geri gelir', async ({ page }) => {
     const status = page.locator('.dt-head-cell[data-col="status"]')
-    await status.hover()
+    await status.hover() // ⋯ yalnızca hover'da yer kaplar (D44)
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Pin right' }).click()
     await expect(status).toHaveClass(/is-pinned-end/)
+    await status.hover()
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Unpin' }).click()
     await expect(status).not.toHaveClass(/is-pinned-end/)
+    await status.hover()
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Move left' }).click()
     const ids = await page
       .locator('[role="columnheader"][data-col]')
       .evaluateAll((els) => els.map((e) => e.getAttribute('data-col')))
     expect(ids.indexOf('status')).toBeLessThan(ids.indexOf('customer'))
+    await status.hover()
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Hide column' }).click()
     await expect(page.locator('[role="columnheader"][data-col]')).toHaveCount(7)
@@ -104,9 +204,7 @@ test.describe('T1 · sunucu modu', () => {
     await expect(footer(page)).toContainText('Rows 1–100')
   })
 
-  test('toolbar daralması: 800 px → ikonlar; 500 px → telefon: Display ⋯ alt sayfasında, birincil ikon', async ({
-    page,
-  }) => {
+  test('toolbar daralması: 800 px → ikonlar; 500 px → telefon: Display ⋯ alt sayfasında', async ({ page }) => {
     await page.setViewportSize({ width: 800, height: 700 })
     await expect(page.locator('.dt-toolbar')).toHaveClass(/is-narrow/)
     await expect(page.getByRole('button', { name: 'Display' })).not.toContainText('Display')
@@ -114,7 +212,6 @@ test.describe('T1 · sunucu modu', () => {
     await expect(page.locator('.dt-search input')).toBeFocused()
     await page.setViewportSize({ width: 500, height: 700 })
     await expect(page.locator('.dt-toolbar')).toHaveClass(/is-phone/)
-    await expect(page.getByRole('button', { name: 'New order' })).not.toContainText('New order')
     await page.getByRole('button', { name: 'More actions' }).click()
     await expect(page.locator('.dt-bsheet')).toContainText('Display')
     await expect(page.locator('.dt-bsheet .dt-bsheet-row').filter({ hasText: 'Density' })).toBeVisible()

@@ -13,6 +13,26 @@
 .dt-toolbar-spacer {
   flex: 1;
 }
+/* D43: masaüstünde arama · Filter grubu tam ortada; iki yan eşit pay alır, sağ yan sağa yaslı. */
+.dt-toolbar.is-zoned:not(.is-phone) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.dt-toolbar.is-zoned:not(.is-phone) > .dt-toolbar-spacer {
+  display: none;
+}
+.dt-toolbar-side {
+  display: flex;
+  align-items: center;
+  gap: var(--dt-space);
+  min-width: 0;
+}
+.dt-toolbar-side.is-end {
+  justify-content: flex-end;
+}
+.dt-toolbar.is-phone .dt-toolbar-side {
+  display: contents;
+}
 .dt-toolbar-sep {
   width: 1px;
   height: 20px;
