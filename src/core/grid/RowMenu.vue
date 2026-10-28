@@ -56,13 +56,7 @@ const onOpen = (e: MouseEvent) => {
   <span v-if="!hasItems" class="dt-row-more-space" aria-hidden="true" />
   <DropdownMenuRoot v-else :open="open" @update:open="(o) => emit('update:open', o)">
     <DropdownMenuTrigger as-child>
-      <button
-        type="button"
-        class="dt-row-more"
-        tabindex="-1"
-        :aria-label="i18n.t('row.actionsAria', { id: label })"
-        @keydown.enter.space.stop
-      >
+      <button type="button" class="dt-row-more" :aria-label="i18n.t('row.actionsAria', { id: label })">
         <PhDotsThree :size="16" weight="bold" aria-hidden="true" />
       </button>
     </DropdownMenuTrigger>

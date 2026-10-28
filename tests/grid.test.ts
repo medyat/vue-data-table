@@ -62,9 +62,9 @@ const mountTable = async (extra: Record<string, unknown> = {}) => {
 }
 
 describe('roller ve yapı', () => {
-  it('grid, header, satır ve hücre rolleri; aria-rowindex sayfa ofsetiyle', async () => {
+  it('table, header, satır ve hücre rolleri (D38); aria-rowindex sayfa ofsetiyle', async () => {
     const w = await mountTable()
-    const grid = w.get('[role="grid"]')
+    const grid = w.get('[role="table"]')
     expect(grid.attributes('aria-label')).toBe('orders')
     expect(grid.attributes('aria-colcount')).toBe('7') // 6 sütun + ⋯ sütunu (birincil sütun var)
     expect(grid.attributes('aria-rowcount')).toBe('40') // istemci modunda toplam bilinir
@@ -72,7 +72,7 @@ describe('roller ve yapı', () => {
     const firstRow = w.get('.dt-row[data-index="0"]')
     expect(firstRow.attributes('role')).toBe('row')
     expect(firstRow.attributes('aria-rowindex')).toBe('2')
-    expect(firstRow.findAll('[role="gridcell"][data-col]')).toHaveLength(6)
+    expect(firstRow.findAll('[role="cell"][data-col]')).toHaveLength(6)
     // Sanal liste: 40 satırın hepsi değil, görünür + overscan.
     const rendered = w.findAll('.dt-row:not(.dt-row-skeleton)').length
     expect(rendered).toBeGreaterThan(10)
@@ -87,7 +87,6 @@ describe('roller ve yapı', () => {
     expect(primary.classes()).toContain('is-pinned-start')
     expect(primary.attributes('style')).toContain('left: var(--dt-off-number)')
     expect(primary.get('a.dt-link').attributes('href')).toBe('/orders/1')
-    expect(primary.get('a.dt-link').attributes('tabindex')).toBe('-1')
     const value = row.get('[data-col="value"]')
     expect(value.classes()).toEqual(expect.arrayContaining(['is-right', 'is-numeric']))
     expect(value.text()).toBe('1,000.00TRY')
@@ -95,10 +94,9 @@ describe('roller ve yapı', () => {
     w.unmount()
     vi.useRealTimers()
   })
-  it('ikinci satır yalnızca Comfortable; hücredeki özel düğme Tab durağı değil', async () => {
+  it('ikinci satır yalnızca Comfortable', async () => {
     const std = await mountTable()
     expect(std.find('.dt-secondary').exists()).toBe(false)
-    expect(std.get('button.approve').attributes('tabindex')).toBe('-1')
     std.unmount()
     const cmf = await mountTable({ density: 'comfortable' })
     expect(cmf.get('.dt-row[data-index="0"] .dt-secondary').text()).toBe('GP-0')
@@ -106,7 +104,7 @@ describe('roller ve yapı', () => {
   })
   it('loading + satır yok → 12 iskelet satır, aria-busy', async () => {
     const w = await mountTable({ rows: [], loading: true })
-    expect(w.get('[role="grid"]').attributes('aria-busy')).toBe('true')
+    expect(w.get('[role="table"]').attributes('aria-busy')).toBe('true')
     expect(w.findAll('.dt-row-skeleton')).toHaveLength(12)
     expect(w.findAll('.dt-sk').length).toBeGreaterThan(0)
     w.unmount()
@@ -191,27 +189,21 @@ describe('guard ve klavye', () => {
     expect((w.emitted('row-click')![0]![0] as { row: Order }).row).toBe(rows[0])
     w.unmount()
   })
-  it("ilk satır tek Tab durağı; ↓ sonraki satıra, → ilk widget'a, Esc satıra; widget içinde ızgara tuşları kapalı", async () => {
+  it("satır klavyesi yok (D38): satır Tab durağı değil, widget'lar doğal Tab sırasında, ok tuşları satır gezmez", async () => {
     const w = await mountTable()
     const row0 = w.get('.dt-row[data-index="0"]')
-    expect(row0.attributes('tabindex')).toBe('0')
-    expect(w.get('.dt-row[data-index="1"]').attributes('tabindex')).toBe('-1')
-    ;(row0.element as HTMLElement).focus()
-    await row0.trigger('keydown', { key: 'ArrowDown' })
+    expect(row0.attributes('tabindex')).toBeUndefined()
+    expect(row0.attributes('aria-selected')).toBeUndefined()
+    // Ortak hücre render'ı (renderCell, CellActions) -1 verir; listede satır bunu kaldırır.
+    for (const el of row0.findAll('a[href], button')) expect(el.attributes('tabindex')).toBeUndefined()
+    expect(row0.find('button.approve').exists()).toBe(true)
+    const link = row0.get('a.dt-link')
+    ;(link.element as HTMLElement).focus()
+    await link.trigger('keydown', { key: 'ArrowDown' })
     await flush()
-    const row1 = w.get('.dt-row[data-index="1"]')
-    expect(document.activeElement).toBe(row1.element)
-    expect(row1.attributes('tabindex')).toBe('0')
-    expect(row1.classes()).toContain('is-focus')
-    await row1.trigger('keydown', { key: 'ArrowRight' })
-    expect(document.activeElement).toBe(row1.get('a.dt-link').element)
-    await row1.get('a.dt-link').trigger('keydown', { key: 'ArrowDown' })
-    expect(document.activeElement).toBe(row1.get('a.dt-link').element) // ızgara tuşu widget içinde çalışmaz
-    await row1.get('a.dt-link').trigger('keydown', { key: 'Escape' })
-    expect(document.activeElement).toBe(row1.element)
-    await row1.trigger('keydown', { key: 'Enter' })
-    expect((w.emitted('row-open')![0]![0] as { row: Order; href: string }).row).toBe(rows[1])
-    expect((w.emitted('row-open')![0]![0] as { href: string }).href).toBe('/orders/2')
+    expect(document.activeElement).toBe(link.element)
+    expect(w.find('.dt-row.is-focus').exists()).toBe(false)
+    expect(w.emitted('row-open')).toBeUndefined()
     w.unmount()
   })
 })

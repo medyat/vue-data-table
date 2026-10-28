@@ -6,10 +6,10 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 
 | Bileşen | Kök | Satır | Hücre | Header |
 |---|---|---|---|---|
-| DataTable | `role="grid"` + `aria-label` (ör. “Production orders”), `aria-rowcount` (bilinmiyorsa `-1`), `aria-colcount` | `role="row"`, `aria-rowindex` (header = 1, ilk veri satırı = 2 + sayfa ofseti), `aria-selected` (seçim açıksa), `aria-expanded` (detayı varsa), `aria-describedby` (`rowError` varsa, hata ikonuna; ikon `role="img"` + mesaj) | `role="gridcell"` | `role="columnheader"`, `aria-sort` (`ascending`/`descending`; sıralı değilse öznitelik yok); `description` varsa etiket düğmesinde `aria-describedby` → görsel olarak gizli açıklama |
+| DataTable | `role="table"` (D40) + `aria-label` (ör. “Production orders”), `aria-rowcount` (bilinmiyorsa `-1`), `aria-colcount` | `role="row"`, `aria-rowindex` (header = 1, ilk veri satırı = 2 + sayfa ofseti), `aria-describedby` (`rowError` varsa, hata ikonuna; ikon `role="img"` + mesaj); seçim checkbox'tan, açıklık chevron'un `aria-expanded`'ından okunur | `role="cell"` | `role="columnheader"`, `aria-sort` (`ascending`/`descending`; sıralı değilse öznitelik yok); `description` varsa etiket düğmesinde `aria-describedby` → görsel olarak gizli açıklama |
 | DataSheet | `role="grid"`, `aria-rowcount` = parti büyüklüğü, `aria-multiselectable="true"` | `role="row"`, `aria-rowindex` | `role="gridcell"`, `aria-colindex`, `aria-selected` (aralıktaysa), `aria-readonly`, `aria-invalid` + `aria-describedby` (hata) | `role="columnheader"`, `aria-sort`, zorunluysa `aria-required` açıklaması; `description` varsa `aria-describedby` (DataTable ile aynı) |
 
-- Alt satır (expand): `role="row"` içinde tek `role="gridcell"` (`aria-colspan` = sütun sayısı); expand butonunda `aria-controls` → alt satır id'si.
+- Alt satır (expand): `role="row"` içinde tek hücre (DataTable `cell`) (`aria-colspan` = sütun sayısı); expand butonunda `aria-controls` → alt satır id'si.
 - Gutter (sheet): `role="rowheader"`.
 - Seçim checkbox'ı: `aria-label="Select WO-26-0418"`; header checkbox `aria-label="Select all rows on this page"`, kısmi seçimde `aria-checked="mixed"`.
 - Sabit sütunlar ve sanallaştırma DOM sırasını bozmaz: hücreler her satırda görsel sırada.
@@ -17,20 +17,19 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 
 ## 2. Odak modeli
 
-### DataTable — satır odaklı
+### DataTable — doğal Tab sırası (D40)
 
-- Izgara **tek tab durağıdır** (roving tabindex). Tab ile girilince son odaklanan satıra (ilk seferde ilk satıra) gelir.
-- Odaklı satır: 2 px `--dt-accent` çerçeve (05 §4). Odak görünürlüğü fareyle tıklamada da korunur (`:focus-visible` yerine kendi `is-focus` sınıfı, klavye ile gelindiyse).
-- `→` satırdayken: genişletilebilir ve kapalıysa açar; değilse odağı satırın **ilk widget'ına** (birincil link) taşır. Widget'lar arası `←`/`→` (APG: next/previous widget); ilkinde `←` satıra döner; `Esc` her zaman satıra. Satırdayken `←` açık satırı kapatır.
-- Hücre içindeki widget'lar (link, buton, `actions`, `cell` içeriği, input, ⋯ hücresindeki inline satır aksiyonları) her zaman `tabindex="-1"` taşır; `Tab` ızgaradan çıkar. Odak bir widget içindeyken ızgara tuşları (`↑↓`, `Space`, `Enter`, `X`, tek harfliler) devre dışıdır; input/combobox kendi tuşlarını alır; widget odaklıyken `Enter`/`Space` onu çalıştırır (native), satır kısayolunu tetiklemez.
+- Satır klavyesi yoktur: satır odaklanmaz, odak çerçevesi çizilmez, ok tuşları satır gezmez. Kök `role="table"`, satırlar `row`, hücreler `cell`; seçim checkbox'tan okunur (satırda `aria-selected` yok).
+- Satırdaki widget'lar (seçim checkbox'ı, expand chevron'u, birincil link, `actions`, `cell` içeriği, inline satır aksiyonları, ⋯) ve başlık düğmeleri (etiket, filtre işareti, ⋯) **doğal Tab sırasındadır**; Enter/Space onları native çalıştırır. Ortak hücre render'ları DataSheet için `tabindex="-1"` verir; liste satırı bunu kaldırır.
+- Odak göstergesi widget'ın kendi `:focus-visible` halkasıdır (02 · odak halkası kalıbı).
 - Hover'da beliren aksiyonlar (`actions`) `:focus-within`'de de görünür; yalnızca hover'a bağlı işlev yoktur.
-- Sanallaştırma: odaklı satır (ya da detayında odak varsa o satır) her zaman render edilir (virtualizer `rangeExtractor` odak indeksini ekler); kaydırma odağı kaybettirmez. Sayfa/sorgu değişiminde odak önce `role="grid"` köküne alınır, veri gelince aynı anahtar → aynı indeks → ilk satır sırasıyla geri verilir.
-- Tab ızgaradan çıkar: footer → bulk bar. `F6` bölgeler arası atlar: toolbar → filtre satırı → ızgara → footer → bulk bar.
+- Sanallaştırma: odak bir satırdaki widget'tayken o satır her zaman render edilir (virtualizer `rangeExtractor`); kaydırma odağı kaybettirmez. Tarayıcının odak kaydırması sticky header ve yatay çubuğun altına girmesin diye kaydırma kabında ölçülen header/çubuk yüksekliği kadar `scroll-padding` vardır.
+- `F6` bölgeler arası atlar: toolbar → filtre satırı → ızgara → footer → bulk bar.
 
 ### DataSheet — hücre odaklı
 
 - **Roving tabindex:** aktif hücre DOM odağını tutar (TanStack `cell.getTabIndex()`: aktif 0, diğerleri −1); `aria-activedescendant` kullanılmaz (ARIA 1.2 referansın DOM'da olmasını ister, sanal listede garanti edilemez). Aktif satır `rangeExtractor` ile DOM'da tutulur; ok tuşu hedef hücreyi `scrollToIndex` ile getirip odaklar.
-- Hücredeki widget'a düzenlenemez hücrede `Enter`, her hücrede `→` ile girilir; `Esc` hücreye döner. Widget içindeyken ızgara tuşları devre dışıdır (DataTable ile aynı kural).
+- Hücredeki widget'a düzenlenemez hücrede `Enter`, her hücrede `→` ile girilir; `Esc` hücreye döner. Widget içindeyken ızgara tuşları devre dışıdır.
 - Düzenleme açılınca odak editör input'una geçer; Enter/Tab onaylar, Esc iptal eder, odak hücreye döner. Blur ile onaylama yoktur; portallı içerik (combobox listesi, popover) açıkken `Esc` önce onu kapatır, odak tetikleyiciye döner (07 §5). İstisna: yerleşik `multiselect` editöründe `Esc` seçimleri kaydedip çıkar.
 - Formula bar input'u ayrı tab durağıdır (`aria-label="Value of List price for PS-045-C"`).
 
@@ -58,23 +57,15 @@ Tek harfli kısayollar yalnızca odak bir metin alanında değilken çalışır.
 | `V` | Görünüm menüsü | Sayfa |
 | `R` | Refresh | Sayfa |
 | `⌘S` | Görünüm düzenlenmişse Save changes (My view) / Save as my view… (System) | Sayfa |
-| `↑` `↓` | Satırlar arası | Izgara |
-| `Home` / `End` | İlk / son yüklü satır | Izgara |
-| `PageUp` / `PageDown` | Bir ekran | Izgara |
-| `→` / `←` | Aç / kapa, hücrelere gir / çık | Izgara |
-| `X` | Satırı seç / bırak | Izgara |
-| `⇧↑` `⇧↓` | Seçimi genişlet | Izgara |
-| `⌘A` | Sayfadaki tüm satırları seç | Izgara |
-| `↵` | Kaydı aç (`row-open`) | Izgara |
-| `→` sonra `⌘↵` / `⇧↵` | Linke odaklan, yeni sekmede / pencerede aç (tarayıcı davranışı; paket kısayol bağlamaz) | Izgara |
-| `⇧F10` veya Menü tuşu | Satır menüsü | Izgara |
+| `Tab` / `⇧Tab` | Satırdaki widget'lar ve başlık düğmeleri arasında (doğal sıra; birincil linkte `↵` kaydı açar, `⌘↵` yeni sekme — tarayıcı davranışı) | Izgara |
+| `↵` / `Space` | Odaktaki widget'ı çalıştırır (checkbox seçer, chevron açar, ⋯ menüyü açar) | Izgara |
 | `Esc` | Sırayla: popover → seçim | Her yerde |
 | `Alt←` / `Alt→` | Önceki / sonraki sayfa | Sayfa |
 | `F6` | Bölgeler arası | Sayfa |
 
-Header'a varış: ilk satırda `↑` ilk başlığa odaklanır; başlıklar arası `←`/`→`, `↓` odaklı satıra döner. Header'da: `↵`/`Space` sıralar, `⇧↵` ikincil sıralama ekler, `⇧F10` sütun menüsü, `⇧←`/`⇧→` (header odaklıyken) sütun genişliğini 16 px değiştirir, `⌥⇧←`/`⌥⇧→` sütunu taşır (odak taşınan başlıkta kalır). `Alt←`/`Alt→` her zaman sayfa değiştirir.
+Header: başlık düğmeleri Tab durağıdır; `↵`/`Space` sıralar, `⇧↵` ikincil sıralama ekler, `⇧F10` sütun menüsü, `⇧←`/`⇧→` sütun genişliğini 16 px değiştirir, `⌥⇧←`/`⌥⇧→` sütunu taşır (odak taşınan başlıkta kalır). Düz `←`/`→` başlıklar arası gezinmez (D40). `Alt←`/`Alt→` her zaman sayfa değiştirir.
 
-Uygulama tek harfli kısayolları `shortcuts={ false }` ile kapatabilir (tarayıcı eklentisi/uygulama çakışmaları için); ok tuşları ve Esc her zaman çalışır.
+Uygulama tek harfli kısayolları `shortcuts={ false }` ile kapatabilir (tarayıcı eklentisi/uygulama çakışmaları için); `Alt←/→` ve Esc her zaman çalışır.
 
 ## 4. Klavye — sheet modu
 

@@ -120,7 +120,7 @@ Faz başlamadan: ilgili açık soruları (README › Açık sorular) ürün sahi
 - [x] Bulk bar düzeni kaydırmaz; en fazla 3 aksiyon + ⋯; `run(rows)` beklenmez, hata yutulmaz; "Select all matching" yok.
 - [x] Expand: chevron yalnızca `canExpand`'ta; detay yalnızca görünür aralıkta render edilir; yükseklik önbelleği remount'ta zıplatmaz; `query`/`page` sonrası açıklar kapanır ve `virtualizer.measure()` çağrılır.
 - [x] Önizleme paneli, Preview düğmesi ve `Space` kısayolu yok (D28); satır aksiyon sütunu yalnızca ⋯ (56 px); menüdeki Open hedef satır DOM'da olmasa da `href(row)` ile çalışır.
-- [x] Odaklı satır sayfa değişiminde aynı anahtar → aynı indeks → ilk satır sırasıyla geri gelir.
+- [x] ~~Odaklı satır sayfa değişiminde aynı anahtar → aynı indeks → ilk satır sırasıyla geri gelir.~~ D40 ile satır odağı kalktı.
 - [x] 08 §3'teki tüm kısayollar; metin alanındayken tek harfliler devre dışı.
 - [x] **1.0 sürüm kontrolü:** 05'in tamamı karşılanıyor (§11 telefon düzeni Faz 7c ile); T1 ve T13 tasarımları playground'da birebir.
 

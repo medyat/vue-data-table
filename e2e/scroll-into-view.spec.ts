@@ -47,18 +47,19 @@ test("DataSheet: ↓ ile inerken hücre alt kenarın, ↑ ile çıkarken header'
   expect(b.bottom).toBeLessThanOrEqual(b.visibleBottom + 0.5)
 })
 
-test("DataTable: ↓ ile inerken satır alt kenarın, ↑ ile çıkarken header'ın altına girmez", async ({ page }) => {
+test("DataTable: Tab ile inerken widget alt kenarın, ⇧Tab ile çıkarken header'ın altına girmez (scroll-padding)", async ({
+  page,
+}) => {
   await settings(page, 'standard')
   await page.goto('/t1')
-  const first = page.locator('.dt-row[data-index="0"]')
-  await expect(first).toBeVisible()
-  await first.locator('[data-col="customer"]').click()
-  await press(page, 'ArrowDown', 40)
+  const link = page.locator('.dt-row[data-index="0"] a.dt-link').first()
+  await expect(link).toBeVisible()
+  await link.focus()
+  await press(page, 'Tab', 80)
   let b = await bounds(page, '.dt-list .dt-grid')
-  expect(b.tag).toContain('dt-row')
   expect(b.bottom).toBeLessThanOrEqual(b.visibleBottom + 0.5)
   expect(b.top).toBeGreaterThanOrEqual(b.headBottom - 0.5)
-  await press(page, 'ArrowUp', 25)
+  await press(page, 'Shift+Tab', 40)
   b = await bounds(page, '.dt-list .dt-grid')
   expect(b.top).toBeGreaterThanOrEqual(b.headBottom - 0.5)
   expect(b.bottom).toBeLessThanOrEqual(b.visibleBottom + 0.5)

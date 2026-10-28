@@ -93,16 +93,6 @@
   opacity: 0.45;
   cursor: default;
 }
-/* Klavye odağı: 2 px accent iç çerçeve, 3 px yarıçap (05 §4); fareyle gelen odakta çizilmez (08 §2). */
-.dt-row.is-focus::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 2px var(--dt-accent);
-  z-index: 2;
-}
 
 /* Hücre: zemini satırdan alır (sabit hücreler opak kalsın diye zorunlu, 01). */
 .dt-cell,
@@ -339,7 +329,6 @@
 }
 .dt-row:hover .dt-cell-actions,
 .dt-cell:focus-within .dt-cell-actions,
-.dt-row.is-focus .dt-cell-actions,
 .dt-cell-actions.is-always {
   opacity: 1;
   pointer-events: auto;
@@ -373,8 +362,8 @@
   color: var(--dt-r-fg);
 }
 
-/* Odak halkası kalıbı (02): widget'lar ve header düğmeleri. */
-.dt-grid.is-keyboard
+/* Odak halkası kalıbı (02): widget'lar ve header düğmeleri; DataSheet kendi aktif hücre çerçevesini kullanır. */
+.dt-grid:not(.dt-sheet-grid)
   :is(.dt-cell-action, .dt-head-label, .dt-head-icon, .dt-link, .dt-text-expand, button, a[href]):focus-visible {
   outline: none;
   box-shadow:

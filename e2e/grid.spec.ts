@@ -19,17 +19,16 @@ test.describe('T1 · liste ızgarası', () => {
     expect(rendered).toBeGreaterThan(20)
     expect(rendered).toBeLessThan(60) // 500 satırın hepsi değil
     await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = 20_000))
-    // 0. satır roving odak taşıdığı için DOM'da kalır (08 §2); 1. satır kaybolur.
     await expect(page.locator('.dt-row[data-index="1"]')).toHaveCount(0)
     await expect(page.locator('.dt-row[data-index="490"]')).toHaveCount(1)
   })
 
-  test("odaklı satır kaydırmada DOM'da kalır", async ({ page }) => {
-    const row0 = page.locator('.dt-row[data-index="0"]')
-    await row0.focus()
+  test("odak içindeki satır kaydırmada DOM'da kalır", async ({ page }) => {
+    const link = page.locator('.dt-row[data-index="0"] a.dt-link').first()
+    await link.focus()
     await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = 20_000))
-    await expect(row0).toHaveCount(1)
-    await expect(row0).toBeFocused()
+    await expect(link).toHaveCount(1)
+    await expect(link).toBeFocused()
   })
 
   test('guard: hücre düğmesine tık satır tıklamasını tetiklemez', async ({ page }) => {
@@ -44,41 +43,23 @@ test.describe('T1 · liste ızgarası', () => {
     const copy = row.locator('.dt-cell-action[aria-label="Copy name"]')
     await expect(copy).toBeVisible()
     await copy.click()
-    // Tık düğmede kaldı: satır odağı çerçeve çizmez (fare), seçim/açma yok.
-    await expect(row).not.toHaveClass(/is-focus/)
-    await expect(page.locator('.dt-cell-action[aria-label="Copy name"]').first()).toHaveAttribute('tabindex', '-1')
+    // Hücre aksiyonları doğal Tab durağı (D38).
+    await expect(page.locator('.dt-cell-action[aria-label="Copy name"]').first()).not.toHaveAttribute('tabindex', /.*/)
   })
 
-  test("klavye: Tab tek durak, oklar satır, → widget, Esc satır; input içinde oklar input'ta", async ({ page }) => {
-    await page.keyboard.press('Tab') // tarayıcı adres çubuğundan ilk Tab durağına
+  test("klavye (D38): satır Tab durağı değil; Tab satırın widget'larında doğal sırada; oklar satır gezmez", async ({
+    page,
+  }) => {
     const first = page.locator('.dt-row[data-index="0"]')
-    for (let i = 0; i < 40 && !(await first.evaluate((el) => el === document.activeElement)); i++)
-      await page.keyboard.press('Tab')
-    await expect(first).toBeFocused()
-    await expect(first).toHaveClass(/is-focus/)
+    await expect(first).not.toHaveAttribute('tabindex', /.*/)
+    const link = first.locator('a.dt-link').first()
+    await link.focus()
     await page.keyboard.press('ArrowDown')
-    const second = page.locator('.dt-row[data-index="1"]')
-    await expect(second).toBeFocused()
-    // T1'de expand açık: kapalı satırda ilk → detayı açar, ikincisi ilk widget'a (birincil link) geçer (08 §2).
-    await page.keyboard.press('ArrowRight')
-    await expect(second.locator('.dt-expand')).toHaveAttribute('aria-expanded', 'true')
-    await expect(second).toBeFocused()
-    await page.keyboard.press('ArrowRight')
-    await expect(second.locator('a.dt-link').first()).toBeFocused()
-    await page.keyboard.press('ArrowRight')
-    await expect(second.locator('.dt-cell-action').first()).toBeFocused()
-    await expect(second.locator('.dt-cell-actions').first()).toBeVisible()
-    await page.keyboard.press('ArrowLeft')
-    await expect(second.locator('a.dt-link').first()).toBeFocused()
-    await page.keyboard.press('Escape')
-    await expect(second).toBeFocused()
-    await page.keyboard.press('End')
-    await expect(page.locator('.dt-row[data-index="499"]')).toBeFocused()
-    await page.keyboard.press('Home')
-    await expect(first).toBeFocused()
-    // Tab ızgaradan çıkar: widget'lar Tab durağı değil.
+    await expect(link).toBeFocused()
     await page.keyboard.press('Tab')
-    await expect(page.locator('.dt-row:focus, .dt-row a:focus, .dt-row button:focus')).toHaveCount(0)
+    const next = await page.evaluate(() => document.activeElement?.closest('.dt-row')?.getAttribute('data-index'))
+    expect(next).toBe('0') // aynı satırın sonraki widget'ı (hücre aksiyonu / ⋯)
+    await expect(page.locator('.dt-row.is-focus')).toHaveCount(0)
   })
 
   test('sabit sütun gölgesi yalnızca o yöne kaydırılmışken', async ({ page }) => {

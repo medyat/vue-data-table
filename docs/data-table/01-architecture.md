@@ -56,7 +56,7 @@ src/
     format/                 # Intl önbelleği, eksi işareti, göreli zaman, liste biçimi
     editors/                # tipe göre değer girişi (filtre çipi ve sheet editörü ortak)
     grid/                   # GridRoot (sanal gövde, sticky header, sabit sütun gölgesi), HeaderCell, Row (+hücreler), SkeletonRow, useDelegatedTooltip
-    interaction/            # isInteractive guard (isPlainRowClick), useRovingRows (satır odaklı roving tabindex, widget giriş/çıkış)
+    interaction/            # isInteractive guard (isPlainRowClick)
     filters/                # FilterBar, FilterChip, ColumnPicker, OperatorMenu
     views/                  # ViewMenu, SaveViewDialog, useViews, useEditedState
     toolbar/                # Toolbar yuvaları, DisplayPopover, MoreMenu
@@ -106,7 +106,7 @@ ESLint sınırları: `core/*` yalnızca `core/*` import eder; `list/`, `document
 │  ├─ MoreMenu (Refresh sunucu modunda; Export/Import/Print dinleyici varsa; Auto-refresh ayarlıysa)
 │  └─ [#toolbar-end]
 ├─ FilterBar (yalnızca filtre varken) → FilterChip × n, Add filter, Clear all
-├─ GridRoot (role="grid", satır odaklı, sanal gövde)
+├─ GridRoot (role="table", satır klavyesi yok — D40, sanal gövde)
 │  ├─ HeaderRow → HeaderCell × n (sort, menü, resize)
 │  └─ Row × n → Cell × n (+ SubRow, satır aksiyonları)
 ├─ Footer → Pagination (simple)

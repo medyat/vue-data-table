@@ -721,11 +721,12 @@ const copyErrorId = () => void navigator.clipboard?.writeText(errorInfo.value.id
 const onKey = (e: KeyboardEvent) => {
   if (e.defaultPrevented) return
   const target = e.target instanceof Element ? e.target : null
+  // Seçim checkbox'ları Tab durağı (D38): odakları kısayolları ve Esc'i kapatmaz.
+  const typing = !!target && isTextInput(target) && !(target instanceof HTMLInputElement && target.type === 'checkbox')
   // Esc sırayla: açık popover/menü/dialog (odak içindedir) → seçim (05 §6); metin alanında aramanın Esc'i.
   if (e.key === 'Escape') {
     const inLayer = !!target?.closest('[role="menu"], [role="dialog"], [role="alertdialog"], [role="listbox"], .dt-pop')
-    if (!e.defaultPrevented && !inLayer && selectedRows.value.length && !(target && isTextInput(target)))
-      clearSelection()
+    if (!e.defaultPrevented && !inLayer && selectedRows.value.length && !typing) clearSelection()
     return
   }
   if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
@@ -744,7 +745,7 @@ const onKey = (e: KeyboardEvent) => {
     else openSaveAs()
     return
   }
-  if (!props.shortcuts || e.ctrlKey || e.metaKey || e.altKey || (target && isTextInput(target))) return
+  if (!props.shortcuts || e.ctrlKey || e.metaKey || e.altKey || typing) return
   if (e.key === '/' && hasSearch.value) {
     e.preventDefault()
     toolbarRef.value?.focusSearch()

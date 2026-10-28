@@ -8,7 +8,7 @@ import CellActions from '../cells/CellActions.vue'
 import { cellFillStyle, renderCellContent, type RenderEnv } from '../cells/renderCell'
 import { alignOf, isNumericType } from '../cells/specs'
 import type { LayoutColumn } from '../columns/useColumnLayout'
-import { INTERACTIVE_SELECTOR, isInteractive } from '../interaction/isInteractive'
+import { isInteractive } from '../interaction/isInteractive'
 import { inlineActionsOf } from './inlineActions'
 import RowMenu from './RowMenu.vue'
 
@@ -21,8 +21,6 @@ export default defineComponent({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessor/cell parametreleri karşıt değişken; satır tipi üstten gelir
     columns: { type: Array as PropType<Array<LayoutColumn<any>>>, required: true },
     env: { type: Object as PropType<RenderEnv>, required: true },
-    focused: { type: Boolean, default: false },
-    keyboardFocus: { type: Boolean, default: false },
     /** Comfortable: `secondary` görünür (02 · Yoğunluk). */
     secondaryVisible: { type: Boolean, default: false },
     /** Birincil hücre metni: aria etiketleri ve Copy. */
@@ -51,13 +49,13 @@ export default defineComponent({
   emits: ['select', 'expand', 'menu-open', 'open', 'copy'],
   setup(props, { emit }) {
     let el: HTMLElement | null = null
-    // Hücre içi widget'lar Tab durağı değildir (08 §2): uygulamanın `cell` içeriği dahil, her güncellemede tabindex=-1.
-    const demote = () => {
+    // Hücre içi widget'lar doğal Tab durağıdır (08 §2, D38). Ortak hücre render'ları DataSheet için tabindex=-1 verir; listede kalkar.
+    const promote = () => {
       if (!el) return
-      for (const w of el.querySelectorAll<HTMLElement>(INTERACTIVE_SELECTOR)) if (w.tabIndex !== -1) w.tabIndex = -1
+      for (const w of el.querySelectorAll<HTMLElement>('[tabindex="-1"]')) w.removeAttribute('tabindex')
     }
-    onMounted(demote)
-    onUpdated(demote)
+    onMounted(promote)
+    onUpdated(promote)
     const t = (key: string, params?: Record<string, string>) => props.env.i18n.t(key, params)
 
     /** Satır hatası ikonu (05 §4, D35): ⋯ hücresinde; ⋯ yoksa ilk görünür hücrede (sabit genişlikli birincil id'yi kesmesin). */
@@ -80,15 +78,11 @@ export default defineComponent({
           {
             type: 'button',
             class: 'dt-row-inline',
-            tabindex: -1,
             disabled: !!d,
             'aria-label': a.label,
             'aria-describedby': descId,
             'data-dt-tip': reason ?? (a.description ? `${a.label} — ${a.description}` : a.label),
             onClick: () => void a.run(toRaw(props.row)),
-            onKeydown: (e: KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-            },
           },
           [h(a.icon!, { size: 16, 'aria-hidden': 'true' })],
         ),
@@ -103,7 +97,7 @@ export default defineComponent({
       const align = alignOf(def)
       let content = renderCellContent(def, props.row, value, props.env)
       const href = def.primary && def.type !== 'id' && def.type !== 'ajax' ? def.href?.(props.row) : undefined
-      if (href) content = h('a', { class: 'dt-link dt-primary-link', href, tabindex: -1 }, [content])
+      if (href) content = h('a', { class: 'dt-link dt-primary-link', href }, [content])
       const actions = def.actions
       const main = h('span', { class: 'dt-cell-content' }, [content])
       const secondary =
@@ -121,7 +115,6 @@ export default defineComponent({
                   {
                     type: 'button',
                     class: ['dt-expand', { 'is-open': props.expanded }],
-                    tabindex: -1,
                     'aria-expanded': props.expanded ? 'true' : 'false',
                     'aria-controls': props.subrowId,
                     'aria-label': t('expand.showAria', { id: props.label }),
@@ -160,7 +153,7 @@ export default defineComponent({
                 : null),
             ...cellFillStyle(def, value),
           },
-          role: 'gridcell',
+          role: 'cell',
           'data-col': col.id,
         },
         children,
@@ -174,14 +167,13 @@ export default defineComponent({
         {
           class: ['dt-cell', 'dt-cell-select', 'is-pinned-start', { 'is-pin-edge': props.selectEdge }],
           style: { left: '0px' },
-          role: 'gridcell',
+          role: 'cell',
         },
         [
           h('input', {
             type: 'checkbox',
             class: 'dt-checkbox dt-select-box',
             checked: props.selected,
-            tabindex: -1,
             'aria-label': t('row.selectAria', { id: props.label }),
             // Native toggle engellenmez: Chrome iptal edilen tıklamayı Vue'nun patch'inden sonra geri alırdı; durum üstten eşlenir.
             onClick: (e: MouseEvent) => emit('select', !props.selected, e.shiftKey),
@@ -194,7 +186,7 @@ export default defineComponent({
         {
           class: ['dt-cell', 'dt-cell-menu', 'is-pinned-end', { 'is-pin-edge': props.menuEdge }],
           style: { right: '0px' },
-          role: 'gridcell',
+          role: 'cell',
         },
         [
           props.error.length ? errorIcon() : null,
@@ -227,7 +219,6 @@ export default defineComponent({
           class: [
             'dt-row',
             {
-              'is-focus': props.focused && props.keyboardFocus,
               'is-selected': props.selected,
               'is-expanded': props.expanded,
               'is-error': props.error.length > 0,
@@ -238,8 +229,6 @@ export default defineComponent({
           'aria-describedby': props.error.length ? errorId() : undefined,
           // Satırın tamamı tooltip anchor'ı: hatalı satırda nereye gelinirse gelinsin mesaj görünür (05 §4).
           'data-dt-tip': props.error.length ? errorTip() : undefined,
-          'aria-selected': props.selectable ? (props.selected ? 'true' : 'false') : undefined,
-          tabindex: props.focused ? 0 : -1,
           'data-index': props.index,
           style: props.style,
           onContextmenu: props.menu ? onContextmenu : undefined,

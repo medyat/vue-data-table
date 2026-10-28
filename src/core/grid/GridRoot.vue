@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Izgara kökü (05 §2–4, §6–8, §10; 08 §1–3; brief §5.5): tek kayan alan, sticky header, sabit sütunlar + koşullu kenar gölgesi,
-// sanal satırlar (@tanstack/vue-virtual; öğe = satır + açık detay, ölçülen yükseklik), satır odaklı klavye, header klavyesi ve
-// sütun menüsü, seçim sütunu (40 px) ve ⋯ sütunu (44 px; hatalı satır varken 66), satır menüsü, kaydırma hapı. Veri çekmez, sütun düzenini dışarıdan
+// sanal satırlar (@tanstack/vue-virtual; öğe = satır + açık detay, ölçülen yükseklik), header klavyesi ve sütun menüsü (D38: satır
+// klavyesi yok, widget'lar doğal Tab sırasında), seçim sütunu (40 px) ve ⋯ sütunu (44 px; hatalı satır varken 66), satır menüsü, kaydırma hapı. Veri çekmez, sütun düzenini dışarıdan
 // (useColumnLayout) alır; seçim/expand durumunu üstten alır ve niyet olarak yayar.
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, useId, watch, watchEffect } from 'vue'
@@ -17,7 +17,6 @@ import { TYPE_SPECS } from '../cells/specs'
 import type { ColumnLayoutApi, LayoutColumn } from '../columns/useColumnLayout'
 import { getFormat } from '../format'
 import { isPlainRowClick } from '../interaction/isInteractive'
-import { useRovingRows } from '../interaction/useRovingRows'
 import { useDataTableContext } from '../plugin'
 import HeaderCell from './HeaderCell.vue'
 import type { HeaderAction } from './headerActions'
@@ -166,14 +165,9 @@ const env = computed<RenderEnv>(() => ({
 }))
 const labels = props.labels ?? new RemoteLabels()
 
-const headerLabels = () => [...(root.value?.querySelectorAll<HTMLElement>('.dt-head-label') ?? [])]
 /** Sütunun header ve gövde hücreleri (id'de nokta olabilir: CSS.escape yerine dataset karşılaştırması). */
 const cellsOf = (id: string) =>
   [...(root.value?.querySelectorAll<HTMLElement>('[data-col]') ?? [])].filter((c) => c.dataset.col === id)
-const focusHeader = (i: number) => {
-  const els = headerLabels()
-  els[Math.max(0, Math.min(els.length - 1, i))]?.focus()
-}
 
 const rowIdAt = (i: number) => layout.rowId(props.rows[i]!)
 const isSelected = (i: number) => !!props.selection?.[rowIdAt(i)]
@@ -188,74 +182,20 @@ const errorOf = (row: AnyRow): string[] => {
   const e = props.rowError?.(row)
   return (Array.isArray(e) ? e : [e]).filter((m): m is string => !!m)
 }
-const rowEl = (i: number) => root.value?.querySelector<HTMLElement>(`.dt-row[data-index="${i}"]`) ?? null
+// Odak bir satırdaki widget'tayken o satır DOM'da kalır (08 §2): kaydırma odağı kaybettirmez.
+const focusedIndex = ref(-1)
+const onFocusin = (e: FocusEvent) => {
+  const row = (e.target as HTMLElement).closest<HTMLElement>('.dt-row[data-index]')
+  focusedIndex.value = row ? Number(row.dataset.index) : -1
+}
 
-const roving = useRovingRows({
-  count: () => props.rows.length,
-  rowEl,
-  scrollToIndex: (i) => virtualizer.value.scrollToIndex(i, { align: 'auto' }),
-  pageSize: () => Math.max(1, Math.floor((scrollEl.value?.clientHeight ?? 0) / (rowHeight.value + 1)) - 1),
-  // ↵: birincil linke gerçek tık (tarayıcı gider, `row-open` dinleyicisi durdurabilir); link yoksa açılacak şey yok.
-  onEnter: (i) => rowEl(i)?.querySelector<HTMLElement>('.dt-cell.is-primary a.dt-link')?.click(),
-  // → kapalı detayı açar, açıksa/yoksa widget'lara girer; ← açık detayı kapatır (08 §2).
-  onRight: (i) => {
-    const row = props.rows[i]
-    if (!row || !canExpandRow(row) || isExpanded(row)) return false
-    emit('toggle-expand', layout.rowId(row), true)
-    return true
-  },
-  onLeft: (i) => {
-    const row = props.rows[i]
-    if (!row || !isExpanded(row)) return false
-    emit('toggle-expand', layout.rowId(row), false)
-    return true
-  },
-  onTop: () => focusHeader(0),
-})
-
-// Seçim klavyesi (05 §6, 08 §3): X seçer/bırakır, ⇧↑/↓ aralığı genişletir, ⌘A sayfadakiler; ⇧F10 / Menü tuşu satır menüsü.
+// Checkbox ⇧ aralığının çapası (05 §6).
 let anchor = -1
 const idsBetween = (a: number, b: number) => {
   const [from, to] = a < b ? [a, b] : [b, a]
   return props.rows.slice(from, to + 1).map((r) => layout.rowId(r))
 }
 const menuIndex = ref(-1)
-const onKeydown = (e: KeyboardEvent) => {
-  const target = e.target as HTMLElement
-  const row = target.closest<HTMLElement>('[role="row"][data-index]')
-  if (row && target === row) {
-    const i = Number(row.dataset.index)
-    const mod = e.metaKey || e.ctrlKey
-    if (props.selectable) {
-      if ((e.key === 'x' || e.key === 'X') && !mod && !e.altKey) {
-        e.preventDefault()
-        anchor = i
-        emit('select-rows', [rowIdAt(i)], !isSelected(i))
-        return
-      }
-      if ((e.key === 'a' || e.key === 'A') && mod && !e.shiftKey) {
-        e.preventDefault()
-        emit('select-page', true)
-        return
-      }
-      if (e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-        e.preventDefault()
-        if (anchor < 0) anchor = i
-        const to = Math.max(0, Math.min(props.rows.length - 1, e.key === 'ArrowDown' ? i + 1 : i - 1))
-        emit('select-rows', idsBetween(anchor, to), true)
-        roving.focusRow(to)
-        return
-      }
-      if (e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End') anchor = -1
-    }
-    if (props.rowMenu && ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu')) {
-      e.preventDefault()
-      menuIndex.value = i
-      return
-    }
-  }
-  roving.onKeydown(e)
-}
 /** Checkbox: ⇧ ile son tıklanan satırla arasındaki aralık aynı değere (05 §6). */
 const onSelect = (i: number, value: boolean, shift: boolean) => {
   emit('select-rows', shift && anchor >= 0 ? idsBetween(anchor, i) : [rowIdAt(i)], value)
@@ -280,12 +220,12 @@ const virtualizer = useVirtualizer(
     scrollPaddingEnd: barH.value,
     overscan: 10,
     getItemKey: (i: number) => (skeleton.value ? `sk-${i}` : layout.rowId(props.rows[i]!)),
-    // Odaklı satır her zaman DOM'da (08 §2): kaydırma odağı kaybettirmez.
+    // Odaklı satır her zaman DOM'da (08 §2).
     rangeExtractor: (range: { startIndex: number; endIndex: number; overscan: number; count: number }) => {
       const start = Math.max(0, range.startIndex - range.overscan)
       const end = Math.min(range.count - 1, range.endIndex + range.overscan)
       const out: number[] = []
-      const f = roving.focusedIndex.value
+      const f = focusedIndex.value
       if (!skeleton.value && f >= 0 && f < start && f < range.count) out.push(f)
       for (let i = start; i <= end; i++) out.push(i)
       if (!skeleton.value && f > end && f < range.count) out.push(f)
@@ -343,7 +283,6 @@ onBeforeUnmount(() => clearTimeout(pillTimer))
 let downPoint: { x: number; y: number } | null = null
 const onMousedown = (e: MouseEvent) => {
   downPoint = { x: e.clientX, y: e.clientY }
-  roving.onMousedown(e)
 }
 const onClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement
@@ -421,44 +360,22 @@ const onHeaderAction = (col: LayoutColumn<AnyRow>, action: HeaderAction) => {
     }
   }
 }
-const onHeaderNav = (col: LayoutColumn<AnyRow>, to: 'left' | 'right' | 'down') => {
-  if (to === 'down') {
-    roving.focusRow(roving.focusedIndex.value)
-    return
-  }
-  const i = layout.columns.value.findIndex((c) => c.id === col.id)
-  focusHeader(to === 'left' ? i - 1 : i + 1)
-}
-
-// Sayfa/sorgu değişiminde odak: aynı anahtar → aynı indeks → ilk satır (08 §2); ızgaradaysa odak geri verilir.
-// Dizi kimliği değil anahtar dizisi izlenir: seçim değişince satır modeli yeniden hesaplanır ama satırlar aynıdır.
-let lastKeys = props.rows.map((r) => layout.rowId(r))
+// Sayfa/sorgu değişiminde ⇧ aralığının çapası sıfırlanır. Dizi kimliği değil anahtar dizisi izlenir: seçim değişince satır modeli
+// yeniden hesaplanır ama satırlar aynıdır.
 watch(
   () => props.rows.map((r) => layout.rowId(r)).join('\u0000'),
-  () => {
-    const keys = props.rows.map((r) => layout.rowId(r))
-    const hadFocus = !!root.value && root.value.contains(document.activeElement)
-    const prevKey = lastKeys[roving.focusedIndex.value]
-    const same = prevKey === undefined ? -1 : keys.indexOf(prevKey)
-    if (same >= 0) roving.focusedIndex.value = same
-    else roving.clamp()
-    lastKeys = keys
-    anchor = -1
-    if (hadFocus && keys.length) void nextTick(() => roving.focusRow(roving.focusedIndex.value))
-  },
+  () => (anchor = -1),
 )
 // estimateSize değişimi ölçüm önbelleğini yenilemez (virtual-core memo'su count/getItemKey'e bağlı): yoğunluk değişince sıfırla.
 watch(rowHeight, () => virtualizer.value.measure())
 
 defineExpose({
-  focusRow: roving.focusRow,
   scrollToIndex: (i: number) => virtualizer.value.scrollToIndex(i),
   scrollToTop: () => {
     if (scrollEl.value) scrollEl.value.scrollTop = 0
   },
   /** Ölçüm önbelleğini sıfırlar (sorgu/sayfa sonrası açıklar kapanınca, 05 §7). */
   measure: () => virtualizer.value.measure(),
-  rowEl,
 })
 </script>
 
@@ -469,25 +386,28 @@ defineExpose({
     :class="{
       'is-scrolled-start': scrolledStart,
       'is-scrolled-end': scrolledEnd,
-      'is-keyboard': roving.keyboard.value,
       'is-skeleton': skeleton,
       'is-dim': dim,
       'has-vlines': verticalLines,
       'is-phone': phone,
     }"
-    role="grid"
+    role="table"
     :aria-label="label"
     :aria-rowcount="rowCount"
     :aria-colcount="layout.columns.value.length + (selectable ? 1 : 0) + (rowMenu ? 1 : 0)"
     :aria-busy="loading || dim ? 'true' : undefined"
     :data-density="density"
-    @keydown="onKeydown"
     @mousedown="onMousedown"
-    @pointerdown="roving.onPointerdown"
-    @focusin="roving.onFocusin"
+    @focusin="onFocusin"
     @click="onClick"
   >
-    <div ref="scrollEl" class="dt-scroll" @scroll.passive="onScroll">
+    <!-- Tab ile odaklanan widget'ı tarayıcı kaydırır: sticky header ve yatay çubuk payı (08 §2). -->
+    <div
+      ref="scrollEl"
+      class="dt-scroll"
+      :style="{ scrollPaddingTop: `${headH}px`, scrollPaddingBottom: `${barH}px` }"
+      @scroll.passive="onScroll"
+    >
       <div class="dt-head" role="row" aria-rowindex="1">
         <div
           v-if="selectable"
@@ -518,7 +438,6 @@ defineExpose({
           @sort="(c, additive) => emit('sort', c.id, additive)"
           @filter="(c) => emit('header-filter', c.id)"
           @action="onHeaderAction"
-          @nav="onHeaderNav"
           @resize-by="(c, d) => layout.setWidth(c.id, layout.widthOf(c.id) + d)"
           @resize-start="(c, w) => layout.setWidth(c.id, w)"
         />
@@ -536,7 +455,6 @@ defineExpose({
           @sort="(c, additive) => emit('sort', c.id, additive)"
           @filter="(c) => emit('header-filter', c.id)"
           @action="onHeaderAction"
-          @nav="onHeaderNav"
           @resize-by="(c, d) => layout.setWidth(c.id, layout.widthOf(c.id) + d)"
           @resize-start="(c, w) => layout.setWidth(c.id, w)"
         />
@@ -565,8 +483,6 @@ defineExpose({
               :row-index="2 + rowIndexOffset + item.index"
               :columns="layout.columns.value"
               :env="env"
-              :focused="roving.focusedIndex.value === item.index"
-              :keyboard-focus="roving.keyboard.value"
               :secondary-visible="density === 'comfortable'"
               :label="labelOf(rows[item.index])"
               :selectable="selectable"
@@ -597,7 +513,7 @@ defineExpose({
               role="row"
               :aria-rowindex="2 + rowIndexOffset + item.index"
             >
-              <div role="gridcell" :aria-colspan="layout.columns.value.length">
+              <div role="cell" :aria-colspan="layout.columns.value.length">
                 <slot
                   name="expanded"
                   :row="toRaw(rows[item.index])"

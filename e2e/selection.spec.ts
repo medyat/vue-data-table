@@ -24,7 +24,6 @@ test.describe('T1 · seçim ve bulk bar', () => {
   }) => {
     await box(page, 0).click()
     await expect(row(page, 0)).toHaveClass(/is-selected/)
-    await expect(row(page, 0)).toHaveAttribute('aria-selected', 'true')
     await expect(bulk(page)).toContainText('1 selected')
     await box(page, 3).click({ modifiers: ['Shift'] })
     await expect(bulk(page)).toContainText('4 selected')
@@ -43,17 +42,14 @@ test.describe('T1 · seçim ve bulk bar', () => {
     await expect(row(page, 0)).not.toHaveClass(/is-selected/)
   })
 
-  test('klavye: X, ⇧↓ genişletir, ⌘A sayfadakiler, Esc temizler; satır gövdesine tık seçmez', async ({ page }) => {
+  test('satır gövdesine tık seçmez; X / ⇧↓ satır kısayolu yok (D38); Esc temizler', async ({ page }) => {
     await plainCell(page, 0).click()
     await expect(bulk(page)).toHaveCount(0)
     await page.keyboard.press('x')
+    await page.keyboard.press('Shift+ArrowDown')
+    await expect(bulk(page)).toHaveCount(0)
+    await row(page, 0).locator('.dt-select-box').click()
     await expect(bulk(page)).toContainText('1 selected')
-    await page.keyboard.press('Shift+ArrowDown')
-    await page.keyboard.press('Shift+ArrowDown')
-    await expect(bulk(page)).toContainText('3 selected')
-    await expect(row(page, 2)).toBeFocused()
-    await page.keyboard.press('ControlOrMeta+a')
-    await expect(bulk(page)).toContainText('100 selected')
     await page.keyboard.press('Escape')
     await expect(bulk(page)).toHaveCount(0)
   })
@@ -98,7 +94,7 @@ test.describe('T1 · seçim ve bulk bar', () => {
     await expect(page.getByRole('menu')).toHaveCount(0)
   })
 
-  test('expand: chevron alt satırı açar, altındaki satır kayar; ← kapatır, → açar; arama değişince kapanır', async ({
+  test('expand: chevron alt satırı açar, altındaki satır kayar; tekrar tık kapatır; arama değişince kapanır', async ({
     page,
   }) => {
     const top1 = (await row(page, 1).boundingBox())!.y
@@ -109,11 +105,10 @@ test.describe('T1 · seçim ve bulk bar', () => {
     await expect(sub.locator('table th').first()).toHaveText('Op')
     const subH = (await sub.boundingBox())!.height
     expect((await row(page, 1).boundingBox())!.y).toBeGreaterThanOrEqual(top1 + subH - 1)
-    await plainCell(page, 0).click()
-    await page.keyboard.press('ArrowLeft')
+    await row(page, 0).locator('.dt-expand').click()
     await expect(page.locator('.dt-subrow')).toHaveCount(0)
     expect((await row(page, 1).boundingBox())!.y).toBe(top1)
-    await page.keyboard.press('ArrowRight')
+    await row(page, 0).locator('.dt-expand').click()
     await expect(page.locator('.dt-subrow')).toHaveCount(1)
     await page.locator('.dt-search input').fill('vinç')
     await expect(page.locator('.dt-row [data-col="customer"]').first()).toContainText('Vinç')

@@ -1,5 +1,13 @@
 # Sürüm notları
 
+## Yayımlanmamış
+
+### DataTable
+
+- **Satır klavyesi kaldırıldı (D40).** Satır odağı ve çerçevesi, satır okları, satırda `↵` / `→` / `←` / `X` / `⇧↑↓` / `⌘A` / `⇧F10` ve başlıklar arası ok gezinmesi yok. Satırdaki widget'lar ve başlık düğmeleri doğal Tab sırasında; kök `role="table"`, hücreler `cell`, satırda `aria-selected` yok. Sayfa kısayolları ve başlık düğmesindeki sıralama/menü/genişlik/taşıma tuşları değişmedi. DataSheet etkilenmez.
+- Toolbar sırası spesifikasyona döndü: görünüm · arama · Filter solda, Display · ⋯ · birincil aksiyon sağda.
+- Odak seçim checkbox'ındayken `Esc` seçimi temizler ve tek harfli kısayollar çalışır.
+
 ## 1.0.0 — 2026-10-28
 
 İlk sürüm: Faz 0–7 (`docs/data-table/10-roadmap.md`).

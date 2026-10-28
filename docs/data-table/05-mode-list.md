@@ -133,7 +133,6 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 | Default | `--dt-surface` | |
 | Hover | `--dt-row-hover` | Hücre aksiyonları (`actions`, `reveal: 'hover'`) görünür; ⋯ `--dt-text-2` |
 | Selected | `--dt-row-selected` | Hover: `--dt-row-selected-hover` |
-| Klavye odağı | — | Satır üstünde 2 px `--dt-accent` çerçeve (yarıçap 3 px, `::after`) |
 | Dim | opacity .55 | İşlem süren satır (bulk aksiyon çalışırken) |
 | Error | `--dt-r-bg` | `rowError(row)` metin ya da metin listesi dönerse. Zemin Hover ve Selected'ın **üstündedir** (sheet'teki Error önceliği; seçim checkbox'tan okunur). ⋯ hücresinde, ⋯'nın solunda 14 px `WarningCircle` `--dt-r-dot`; sayfada en az bir hatalı satır varken ⋯ sütunu 44'ten 66'ya genişler, ⋯ sağa yaslı kaldığı için hizası değişmez (⋯ hücresi yoksa ikon ilk görünür hücrenin başında; sabit genişlikli birincil id kesilmesin). Mesajlar alt alta tooltip'te: satırın **herhangi bir yerine** gelince imlecin altında, ikona gelince ikonun altında; klavye odağı satıra gelince hemen. Satıra `aria-describedby` → ikon (`role="img"`, adı mesaj). Hata haritası uygulamanındır (D35). |
 
@@ -165,7 +164,7 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 - **Satır gövdesine tıklamak asla seçmez** (D6).
 - Header checkbox = **bu sayfadaki** yüklü satırlar. Kısmi seçimde `indeterminate`.
 - **Seçim sayfa kapsamlıdır (D19):** sayfa, sayfa boyutu, filtre, arama veya sıralama değişince temizlenir; refresh'te korunur, yeni veride olmayan anahtarlar süzülür. Sayfalar arası seçim, “Select all matching”, `excludedKeys` yoktur.
-- Klavye: odaklı satırda `X` seçer/bırakır, `⇧↑/↓` aralık, `⌘A` sayfadaki tüm satırlar.
+- Klavye: checkbox Tab durağıdır, `Space` seçer/bırakır. Satır kısayolu (`X`, `⇧↑/↓`, `⌘A`) yoktur (D40).
 - `selection-change` olayı seçili satırları (`Row[]`) verir; `clearSelection()` handle'dadır.
 - `Esc` seçimi temizler (odak bir popover'da değilse).
 
@@ -305,7 +304,7 @@ Telefonda (< 640 px):
 
 ## 14. Erişilebilirlik (özet — tamamı 08)
 
-- Kök `role="grid"` (satırlar seçilebilir ve odaklanabilir; `aria-selected` yalnızca grid'de geçerli), **satır odaklı** model. `aria-rowcount="-1"` (toplam bilinmiyor; count yapıldıysa gerçek sayı), satırlar `aria-rowindex` (sayfa ofseti dahil).
-- Header `aria-sort`; seçili satır `aria-selected="true"`; expand butonu `aria-expanded` + `aria-controls`.
-- Odak sırası: toolbar → filter bar → header → satırlar (tek tab durağı, içeride oklar) → footer → bulk bar (göründüğünde `F6` ile atlanır).
+- Kök `role="table"`, satır klavyesi yok (D40); widget'lar doğal Tab sırasında. `aria-rowcount="-1"` (toplam bilinmiyor; count yapıldıysa gerçek sayı), satırlar `aria-rowindex` (sayfa ofseti dahil).
+- Header `aria-sort`; seçim checkbox'ta; expand butonu `aria-expanded` + `aria-controls`.
+- Odak sırası: toolbar → filter bar → header düğmeleri → satırlardaki widget'lar (doğal Tab sırası) → footer → bulk bar (göründüğünde `F6` ile atlanır).
 - Durum değişimleri `aria-live="polite"` bölgesinden: “25 rows loaded”, “No results”, “4 selected”; yükleme boyunca kökte `aria-busy="true"`.

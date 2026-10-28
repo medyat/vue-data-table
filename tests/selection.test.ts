@@ -56,20 +56,14 @@ const rowAt = (w: W, i: number) => w.get(`.dt-row[data-index="${i}"]`)
 const boxAt = (w: W, i: number) => rowAt(w, i).get('.dt-cell-select input')
 const selected = (w: W) => (w.emitted('selection-change')?.at(-1)?.[0] as Order[] | undefined) ?? []
 const bulk = (w: W) => w.find('.dt-bulk')
-const key = async (w: W, i: number, init: KeyboardEventInit) => {
-  await rowAt(w, i).trigger('keydown', init)
-  await flush()
-}
 
 describe('seçim', () => {
-  it('checkbox seçer (satır zemini, aria-selected, selection-change); ⇧ aralık; header kısmi → tümü → temiz', async () => {
+  it('checkbox seçer (satır zemini, selection-change); ⇧ aralık; header kısmi → tümü → temiz', async () => {
     const w = await mountTable()
     expect(bulk(w).exists()).toBe(false)
     await boxAt(w, 0).trigger('click')
     await flush()
     expect(rowAt(w, 0).classes()).toContain('is-selected')
-    expect(rowAt(w, 0).attributes('aria-selected')).toBe('true')
-    expect(rowAt(w, 1).attributes('aria-selected')).toBe('false')
     expect(selected(w).map((r) => r.id)).toEqual([1])
     expect(bulk(w).text()).toContain('1 selected')
     await boxAt(w, 3).trigger('click', { shiftKey: true })
@@ -88,7 +82,7 @@ describe('seçim', () => {
     expect(bulk(w).exists()).toBe(false)
     w.unmount()
   })
-  it('klavye: X seçer/bırakır, ⇧↓ genişletir ve odağı taşır, ⌘A sayfadakiler, Esc temizler; satır gövdesine tık seçmez', async () => {
+  it('satır gövdesine tık seçmez; X / ⇧↓ / ⌘A satır kısayolu yok (D38); Esc temizler', async () => {
     const w = await mountTable()
     const cell = rowAt(w, 0).get('[data-col="status"]')
     await cell.trigger('mousedown', { clientX: 5, clientY: 5 })
@@ -96,18 +90,17 @@ describe('seçim', () => {
     await flush()
     expect(w.emitted('row-click')).toHaveLength(1)
     expect(selected(w)).toHaveLength(0)
-    ;(rowAt(w, 0).element as HTMLElement).focus()
-    await key(w, 0, { key: 'x' })
-    expect(selected(w).map((r) => r.id)).toEqual([1])
-    await key(w, 0, { key: 'ArrowDown', shiftKey: true })
-    await key(w, 1, { key: 'ArrowDown', shiftKey: true })
-    expect(selected(w).map((r) => r.id)).toEqual([1, 2, 3])
-    expect(document.activeElement).toBe(rowAt(w, 2).element)
-    await key(w, 2, { key: 'x' })
-    expect(selected(w).map((r) => r.id)).toEqual([1, 2])
-    await key(w, 2, { key: 'a', metaKey: true })
-    expect(selected(w)).toHaveLength(12)
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    for (const init of [{ key: 'x' }, { key: 'ArrowDown', shiftKey: true }, { key: 'a', metaKey: true }]) {
+      await rowAt(w, 0).trigger('keydown', init)
+      await flush()
+    }
+    expect(selected(w)).toHaveLength(0)
+    await boxAt(w, 0).trigger('click')
+    await flush()
+    expect(selected(w)).toHaveLength(1)
+    // Odak checkbox'tayken de (Tab durağı) Esc seçimi temizler.
+    ;(boxAt(w, 0).element as HTMLElement).focus()
+    boxAt(w, 0).element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await flush()
     expect(selected(w)).toHaveLength(0)
     w.unmount()

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Toolbar (05 §3, §11; T1, T13): yalnızca yapılandırılmış yuvalar; daralma kartın genişliğiyle (`size`, DataTable ölçer).
-// ≥1024 etiketli · 640–1023 arama ve Display ikon · <640 telefon: görünüm · boşluk · arama · Filter · ⋯ · ayırıcı · birincil;
+// Sıra: görünüm · arama · Filter … Display · ⋯ │ birincil. ≥1024 etiketli · 640–1023 arama ve Display ikon · <640 telefon:
+// görünüm · boşluk · arama · Filter · ⋯ · ayırıcı · birincil (CSS order);
 // arama açılınca toolbar'ın yerini alır (T13-03), Cancel temizleyip kapatır.
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
 import { computed, ref } from 'vue'
@@ -56,7 +57,6 @@ defineExpose({
     </template>
     <template v-else>
       <slot name="view" />
-      <span class="dt-toolbar-spacer" />
       <template v-if="search !== null">
         <button
           v-if="size !== 'full' && !searchOpen && !search"
@@ -78,6 +78,7 @@ defineExpose({
         />
       </template>
       <slot v-if="hasFilter" name="filter" :icon-only="phone" :phone="phone" />
+      <span class="dt-toolbar-spacer" />
       <slot v-if="hasDisplay && !phone" name="display" :icon-only="size !== 'full'" />
       <slot v-if="hasMore || (hasDisplay && phone)" name="more" :phone="phone" />
       <template v-if="$slots.end">

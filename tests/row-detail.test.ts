@@ -138,7 +138,7 @@ describe('satır menüsü ve row-open', () => {
     const btn = rowAt(w, done).get('.dt-cell-menu .dt-row-inline')
     expect(btn.attributes('aria-label')).toBe('Edit')
     expect(btn.attributes('data-dt-tip')).toBe('Edit — Open in editor')
-    expect(btn.attributes('tabindex')).toBe('-1')
+    expect(btn.attributes('tabindex')).toBeUndefined() // doğal Tab durağı (D38)
     expect(rowAt(w, done).findAll('.dt-row-inline')).toHaveLength(1)
     expect(rowAt(w, running).find('.dt-row-inline').exists()).toBe(false)
     expect((w.get('.dt-grid').element as HTMLElement).style.getPropertyValue('--dt-menu-w')).toBe('80px')
@@ -163,7 +163,7 @@ describe('satır menüsü ve row-open', () => {
     expect(rowAt(w2, done).find('.dt-row-more-space').exists()).toBe(true)
     expect(rowAt(w2, running).find('.dt-row-more').exists()).toBe(false)
   })
-  it('Copy panoya yazar ve "Copied" toast; sağ tık düz hücrede menüyü açar, linkte açmaz; ⇧F10 açar', async () => {
+  it('Copy panoya yazar ve "Copied" toast; sağ tık düz hücrede menüyü açar, linkte açmaz', async () => {
     const writeText = vi.fn()
     Object.assign(navigator, { clipboard: { writeText } })
     const w = await mountTable()
@@ -183,10 +183,7 @@ describe('satır menüsü ve row-open', () => {
     await link.trigger('contextmenu')
     await flush()
     expect(rowAt(w, 3).get('.dt-row-more').attributes('data-state')).toBe('closed')
-    ;(rowAt(w, 3).element as HTMLElement).focus()
-    await rowAt(w, 3).trigger('keydown', { key: 'F10', shiftKey: true })
-    await flush()
-    expect(rowAt(w, 3).get('.dt-row-more').attributes('data-state')).toBe('open')
+    expect(rowAt(w, 3).get('.dt-row-more').attributes('tabindex')).toBeUndefined()
     w.unmount()
   })
   it('row-open: linke düz tık ve ↵ { row, href, event }; ⌘ tık yayılmaz; row-click: none / open / expand', async () => {
@@ -219,7 +216,7 @@ describe('satır menüsü ve row-open', () => {
 })
 
 describe('expand', () => {
-  it('chevron yalnızca canExpand; aria-expanded/controls; slot içeriği ve close(); → açar, ← kapatır; sorgu değişince kapanır', async () => {
+  it('chevron yalnızca canExpand; aria-expanded/controls; slot içeriği ve close(); sorgu değişince kapanır', async () => {
     const w = await mountTable(
       { expand: { canExpand: (r: Order) => r.id !== 2 } },
       {
@@ -236,45 +233,18 @@ describe('expand', () => {
     expect(rowAt(w, 0).get('.dt-expand').attributes('aria-expanded')).toBe('true')
     const sub = w.get('.dt-subrow')
     expect(sub.attributes('id')).toBe(rowAt(w, 0).get('.dt-expand').attributes('aria-controls'))
-    expect(sub.get('[role="gridcell"]').attributes('aria-colspan')).toBe('2')
+    expect(sub.get('[role="cell"]').attributes('aria-colspan')).toBe('2')
     expect(sub.get('.detail').text()).toContain('Detail of WO-100')
     await sub.get('.close').trigger('click')
     await flush()
     expect(w.find('.dt-subrow').exists()).toBe(false)
-    ;(rowAt(w, 2).element as HTMLElement).focus()
-    await rowAt(w, 2).trigger('keydown', { key: 'ArrowRight' })
+    expect(rowAt(w, 2).get('.dt-expand').attributes('tabindex')).toBeUndefined() // doğal Tab durağı (D38)
+    await rowAt(w, 2).get('.dt-expand').trigger('click')
     await flush()
     expect(rowAt(w, 2).get('.dt-expand').attributes('aria-expanded')).toBe('true')
-    expect(document.activeElement).toBe(rowAt(w, 2).element) // açılınca odak satırda kalır
-    await rowAt(w, 2).trigger('keydown', { key: 'ArrowRight' })
-    expect(document.activeElement).toBe(rowAt(w, 2).get('a.dt-link').element) // açıkken → ilk widget'a (birincil link; chevron atlanır)
-    ;(rowAt(w, 2).element as HTMLElement).focus()
-    await rowAt(w, 2).trigger('keydown', { key: 'ArrowLeft' })
-    await flush()
-    expect(rowAt(w, 2).get('.dt-expand').attributes('aria-expanded')).toBe('false')
-    await rowAt(w, 2).trigger('keydown', { key: 'ArrowRight' })
-    await flush()
     await w.get('.dt-head-cell[data-col="status"] .dt-head-label').trigger('click')
     await flush()
     expect(w.findAll('.dt-subrow')).toHaveLength(0)
-    w.unmount()
-  })
-  it('sayfa/sıralama değişiminde odak aynı anahtarlı satıra döner, yoksa aynı indekse', async () => {
-    const w = await mountTable()
-    await rowAt(w, 2).get('[data-col="status"]').trigger('mousedown', { clientX: 5, clientY: 5 })
-    ;(rowAt(w, 2).element as HTMLElement).focus()
-    await flush()
-    expect(rowAt(w, 2).attributes('tabindex')).toBe('0')
-    await w.get('.dt-head-cell[data-col="number"] .dt-head-label').trigger('click') // asc (zaten) → aynı
-    await w.get('.dt-head-cell[data-col="number"] .dt-head-label').trigger('click') // desc: WO-102 artık 5. sırada
-    await flush()
-    const focusedRow = w.findAll('.dt-row').find((r) => r.attributes('tabindex') === '0')!
-    expect(focusedRow.text()).toContain('WO-102')
-    expect(document.activeElement).toBe(focusedRow.element)
-    await w.setProps({ rows: rows.slice(4) }) // anahtar yok → aynı indeks (sınırlanmış)
-    await flush()
-    const again = w.findAll('.dt-row').find((r) => r.attributes('tabindex') === '0')!
-    expect(again.exists()).toBe(true)
     w.unmount()
   })
 })

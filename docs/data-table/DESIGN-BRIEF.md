@@ -91,7 +91,7 @@ Tasarımlarda gerçekçi ERP verisi kullanılır; sayı uydurulmaz, biçimler b�
 | Seçim | Satır, sayfa kapsamlı (D19) | Hücre aralığı |
 | Düzenleme | Yok | Var (tek `editing` hücresi, editörler) |
 | Satır detayı | Expand, open | — |
-| Odak modeli | Satır odaklı | Hücre odaklı |
+| Odak modeli | Doğal Tab sırası, satır klavyesi yok (D40) | Hücre odaklı |
 | Veri | `rows` prop; `mode: client \| `rows` prop | `rows` prop + `loading`; `@save` → `applyResult()` |
 
 **Paket sınırı [Karar D18, D20]:** Paket veri çekmez, kaydetmez, iş mantığı taşımaz. Uygulama satırları verir, sunucu modunda `@request` ile gelen sorguyu kendi HTTP'siyle cevaplar, DataSheet'te `@save` ile gelen değişiklikleri kaydeder ve sonucu `applyResult()` ile bildirir. Toplu aksiyon ve satır aksiyonlarının onayı, toast'ı ve sonrası uygulamanındır. Bu sınır tasarım için şu anlama gelir: paketin arayüzünde “kaydediliyor / hata / başarılı” durumları vardır, ama bunlar uygulamanın verdiği bilgiden türer.
@@ -122,7 +122,7 @@ Sloganlar değil, bileşenlere yansıyan kurallar:
 | Gereksiz dialog/menü yok | Filtre değerleri popover'da ve anında uygulanır; boolean filtre popover bile açmaz; görünüm silme tek onay; toplu aksiyon onayı uygulamanın, paket araya girmez; Manage columns dialog'u yok (D22). |
 | Eğitimsiz temel kullanım | Her boş/hata ekranı ne olduğunu ve ne yapılacağını söyler (“No orders match these 3 filters · Clear all filters”); operatörler kelimeyle (“is greater than”), sembolle değil; hata hücrenin üstünde balonda, kaydetmeden önce. |
 | Profesyonel, sade, modern | Geist yazı tipi, 12 px kart yarıçapı, ince `--dt-line` ayırıcılar, gölge yalnızca yüzen öğelerde, tonlar yumuşak rozet (nokta + etiket). |
-| Yoğun günlük kullanım | Klavyeyle uçtan uca; roving tabindex (tablo tek Tab durağı); 500 satırda 60 fps; sayfa değişince gövde başa kayar ama sayfa kaymaz; refresh satırları yerinde tutar. |
+| Yoğun günlük kullanım | Klavyeyle uçtan uca (liste: doğal Tab sırası, D40; sheet: roving tabindex); 500 satırda 60 fps; sayfa değişince gövde başa kayar ama sayfa kaymaz; refresh satırları yerinde tutar. |
 | Büyük veri | Liste 100 satır/sayfa + sanal satırlar; sheet 10.000 satır, 1.000 × 10 yapıştırma < 300 ms; sayım isteğe bağlı. |
 
 ---
@@ -274,7 +274,7 @@ Sütun tanımları feature'ın `columns.ts` dosyasında yaşar; Vue slot ile hü
 ### 5.4 Hücre içi etkileşim kuralları [Karar D24]
 
 - Hücredeki düğmeye, linke, checkbox'a veya input'a tıklamak **yalnızca o öğeyi** çalıştırır: satır açılmaz, seçim değişmez, DataSheet'te düzenleme başlamaz. Geliştirici bunun için ek bir şey yazmaz; paket tek bir guard ile ayırır.
-- Hücre içi widget'lar `Tab` durağı değildir (`tabindex="-1"`): yüzlerce düğme sekme sırasını şişirmez. Erişim ızgara klavyesiyle: satır/hücre odaklıyken `→` ilk widget'a, `→`/`←` widget'lar arası, `Esc` satıra/hücreye geri. Widget odaklıyken `Enter`/`Space` onu çalıştırır; ızgara kısayolları devre dışıdır, input/combobox kendi ok tuşlarını alır.
+- DataTable'da hücre içi widget'lar doğal `Tab` durağıdır, `Enter`/`Space` onları çalıştırır (D40). DataSheet'te `Tab` durağı değildir (`tabindex="-1"`): hücre odaklıyken `→` ilk widget'a, `→`/`←` widget'lar arası, `Esc` hücreye geri; widget odaklıyken ızgara kısayolları devre dışıdır.
 - Hover'da beliren aksiyonlar klavye odağında da görünür; yalnızca hover'a bağlı işlev yoktur.
 - Hücre içi menü ve popover'lar portal ile açılır; `Esc` önce onları kapatır, odak tetikleyiciye döner (aksiyonlar görünür kalır), ikinci `Esc` hücreye.
 
@@ -475,7 +475,7 @@ Aynı satır, üç derinlik:
 | **Open** | Tam detay sayfası | Birincil link (gerçek `<a>`); satırda `↵`; satır menüsü › Open; `row-click="open"`. Yeni sekme: ⌘/Ctrl veya orta tık (tarayıcı) ya da `→` ile linke odaklanıp `⌘↵` | Terk edilir |
 
 - **Satır gövdesi varsayılan olarak hiçbir şey yapmaz** (`row-click: 'none'`): metin seçilip kopyalanabilir. Uygulama `row-click` ile open/expand'den birini bağlayabilir; her durumda etkileşimli hedefe tıklama, metin seçimiyle biten tıklama, sürükleme ve değiştirici tuşlu tıklama yok sayılır; seçim asla tıklamayla yapılmaz.
-- **Satır durumları:** Default `--dt-surface` · Hover `--dt-row-hover` · Selected · Klavye odağı 2 px accent çerçeve (`::after`, 3 px yarıçap).
+- **Satır durumları:** Default `--dt-surface` · Hover `--dt-row-hover` · Selected.
 - **Satır aksiyonları** (sağa sabit, içeriğe göre 44 / 66 px): yalnızca **⋯** (her zaman görünür; D28). Sağ tık da menüyü açar. Satır menüsü (268 px): Open `↵` · Open in new tab · **Copy order number** (yerleşik; toast “Copied”) · ─ · uygulamanın aksiyonları (pasif olan gerekçesiyle iki satır: “Release — Already running”; yıkıcı en altta kırmızı, sonu `…`).
 - **Expand:** chevron 20 px birincil hücrede ID'nin solunda; açıkken 90° döner. Alt satır tam genişlik, `--dt-surface-2`, sol kenarı seçim sütununun sağından; içinde uygulamanın içeriği — örnek: mini tablo (8 px yarıçap, kendi header'ı, 34 px satırlar) + özet satırı (“4 operations · Line 2 routing” + “Open routing”). **Veriyi uygulamanın içeriği çeker;** yükleniyor/hata görünümü de onun (paket “Loading…” göstermez). Birden çok satır açık olabilir; sorgu/sayfa değişince kapanır; sanal listede zıplama olmaz.
 
@@ -500,16 +500,12 @@ Bölüm 5.6'daki ortak kalıp. DataTable'a özgü: Empty'de uygulamanın birinci
 
 ### 6.15 Klavye haritası [Karar]
 
-Izgara tek Tab durağıdır (roving tabindex); Tab ile girilince son odaklanan satıra. Tek harfli kısayollar odak metin alanında değilken; uygulama bunları kapatabilir, oklar/Enter/Space/Esc her zaman çalışır.
+Satır klavyesi yoktur (D40): satırdaki widget'lar ve başlık düğmeleri doğal Tab sırasındadır, Enter/Space odaktaki widget'ı çalıştırır. Tek harfli kısayollar odak metin alanında değilken; uygulama bunları kapatabilir, `Alt←/→` ve Esc her zaman çalışır.
 
 | Tuş | Eylem |
 |---|---|
 | `/` · `F` · `V` · `R` | Aramaya odaklan · Filter · Görünüm menüsü · Refresh |
-| `↑ ↓` · `Home/End` · `PageUp/Down` | Satırlar arası · ilk/son yüklü satır · bir ekran |
-| `→` / `←` | Açılabilir satırı aç / kapa; değilse ilk widget'a gir / satıra dön; widget'lar arası |
-| `X` · `⇧↑↓` · `⌘A` | Seç/bırak · seçimi genişlet · sayfadakileri seç |
-| `↵` | Kaydı aç |
-| `⇧F10` / Menü | Satır menüsü |
+| `Tab` / `⇧Tab` | Satırdaki widget'lar ve başlık düğmeleri arasında |
 | `Esc` | Sırayla: popover → seçim |
 | `Alt←` / `Alt→` | Önceki / sonraki sayfa |
 | `⌘S` | Görünüm düzenlenmişse Save changes / Save as my view |
@@ -724,7 +720,7 @@ export const orderColumns: ColumnDef<Order>[] = [
 
 ### 9.6 Klavye ve odak [Karar D24]
 
-İki model, ikisi de roving tabindex (tablo tek Tab durağı; `aria-activedescendant` yok): DataTable **satır odaklı** (satır odaklanır, `→` ile hücre içi widget'lara girilir), DataSheet **hücre odaklı** (aktif hücre odaklanır; TanStack `cellSelection`). Hücre içi widget'lar `tabindex="-1"`; odak widget içindeyken ızgara kısayolları kapalı; `Esc` geri döner; portallı menü/popover önce kapanır. Sanal listede odaklı/aktif satır DOM'da tutulur; sayfa değişiminde odak aynı anahtar → aynı indeks → ilk satır sırasıyla geri verilir.
+DataTable'da satır klavyesi yoktur (**D40**): kök `role="table"`, satırdaki widget'lar ve başlık düğmeleri doğal Tab sırasında; odak içindeki satır sanal listede DOM'da tutulur. DataSheet **hücre odaklı**, roving tabindex (`aria-activedescendant` yok; aktif hücre odaklanır; TanStack `cellSelection`); hücre içi widget'lar `tabindex="-1"`; odak widget içindeyken ızgara kısayolları kapalı; `Esc` geri döner; portallı menü/popover önce kapanır; aktif satır DOM'da tutulur.
 
 ### 9.7 Sanallaştırma [Karar]
 
@@ -737,7 +733,7 @@ Uygulamanın `rows` dizisine dokunulmaz. Değişiklikler hücre başına **tasla
 ### 9.9 i18n, erişilebilirlik, performans [Karar]
 
 - Tüm metinler i18n anahtarından (EN varsayılan, TR birinci sınıf; `one/other` çoğullar); uygulama ezebilir; seçenek etiketleri uygulamadan gelir. Biçimler bölüm 4.7.
-- WCAG 2.2 AA; NVDA + Firefox/Chrome, VoiceOver + Safari; roller 08 §1 (DataTable `grid`, DataSheet `grid` + `aria-multiselectable`); tek `aria-live="polite"` bölgesi (“100 rows loaded”, “No results”, “4 selected”, “Sorted by Due date, ascending”, “Pasted 5 rows by 3 columns”), hata `assertive`; yükleme boyunca `aria-busy`; `aria-sort` yalnızca birincil sıralama sütununda; odak göstergesi ≥ 2 px, kontrast ≥ 3:1; renk tek başına anlam taşımaz; dokunma hedefi ≥ 44 px (dokunmatik) / 24 px; `forced-colors` ve `prefers-reduced-motion` desteklenir.
+- WCAG 2.2 AA; NVDA + Firefox/Chrome, VoiceOver + Safari; roller 08 §1 (DataTable `table`, DataSheet `grid` + `aria-multiselectable`); tek `aria-live="polite"` bölgesi (“100 rows loaded”, “No results”, “4 selected”, “Sorted by Due date, ascending”, “Pasted 5 rows by 3 columns”), hata `assertive`; yükleme boyunca `aria-busy`; `aria-sort` yalnızca birincil sıralama sütununda; odak göstergesi ≥ 2 px, kontrast ≥ 3:1; renk tek başına anlam taşımaz; dokunma hedefi ≥ 44 px (dokunmatik) / 24 px; `forced-colors` ve `prefers-reduced-motion` desteklenir.
 - Bütçeler: liste 500 satırda 60 fps; istemci modunda 10.000 satırda filtre + arama + sıralama + sayfalama < 60 ms; sheet 10.000 satırda girdi gecikmesi < 100 ms, hücre düzenleme < 16 ms, 1.000 × 10 yapıştırma < 300 ms, Changed/Errors geçişi < 50 ms; paket gzip ≤ 60 kB (çekirdek + DataTable), sheet ayrı yüklenir.
 
 ### 9.10 Public API özeti
@@ -832,12 +828,12 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 ### T6 · Satır detayı: expand, satır menüsü
 - **Oku:** 6.12, 5.4–5.5, 5.7.
 - **Tasarla:** chevron ve alt satır (uygulama içeriği örneği: mini tablo + özet), satır aksiyonları (yalnızca ⋯, her zaman görünür), satır menüsü (Open, Open in new tab, Copy order number, uygulama aksiyonları, pasif gerekçeli, yıkıcı), “Copied” toast'ı.
-- **Etkileşim:** menü kapanınca (Esc) odağın satıra dönüşü; sağ tık ve ⇧F10 aynı menü.
+- **Etkileşim:** menü kapanınca (Esc) odak ⋯ düğmesine döner; sağ tık aynı menü.
 
 ### T7 · Hücre aksiyonlarının hover davranışı ve doğrudan görünen hücre butonları
 - **Oku:** 5.3–5.4, 5.1.
 - **Tasarla:** (a) “Product name” hücresi: normal, hover (sağda Copy + Open ikonları overlay, metin kuyruğu örtülü, genişlik değişmez), klavye odağı (aynı görünüm + odak halkası), 3 aksiyonda ⋯ menüsü; `reveal: 'always'` varyantı; (b) `cell` ile çizilen her zaman görünür düğmeler (Approve / Reject), ilerleme çubuğu “340 / 500”, özel durum rozeti; üç yoğunlukta.
-- **Kural:** widget'lar Tab durağı değil; `→` ile giriş.
+- **Kural:** listede widget'lar doğal Tab durağı (D40).
 
 ### T8 · Hücre tipleri kataloğu
 - **Oku:** 5.1–5.2, 4.7, 4.3.
@@ -878,7 +874,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 | Expand | Satırın altında açılan detay satırı |
 | Open | Kaydın tam sayfasına gitmek |
 | Birincil sütun | Kaydın adı/numarası; gerçek link; telefonda sabit |
-| Roving tabindex | Tablonun tek Tab durağı olması; oklarla içeride gezinme |
+| Roving tabindex | Tablonun tek Tab durağı olması; oklarla içeride gezinme (yalnızca DataSheet; D40) |
 | Widget | Hücre içindeki etkileşimli öğe (link, düğme, input) |
 | Parti (batch) | DataSheet'teki satırların tamamı |
 | Anahtar sütun (key) | Upsert eşleşmesini belirleyen sütun (SKU); satır kimliğinden ayrı |

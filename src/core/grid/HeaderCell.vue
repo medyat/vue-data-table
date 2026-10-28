@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="Row extends object">
 // Header hücresi (05 §4 · Header, T4): etiket düğmesi, birim, sıralama oku, filtre işareti, raptiye, ⋯ sütun menüsü,
-// resize tutamacı. Klavye (08 §3): ↵/Space sırala, ⇧F10 menü, ←/→ komşu başlık, ⇧←/→ ±16 px, ⌥⇧←/→ taşı, ↓ satıra.
+// resize tutamacı. Klavye (08 §3): ↵/Space sırala, ⇧F10 menü, ⇧←/→ ±16 px, ⌥⇧←/→ taşı.
 import { PhArrowUp, PhDotsThree, PhFunnel, PhPushPin } from '@phosphor-icons/vue'
 import {
   DropdownMenuContent,
@@ -34,7 +34,6 @@ const emit = defineEmits<{
   filter: [column: LayoutColumn<Row>]
   action: [column: LayoutColumn<Row>, action: HeaderAction]
   /** Klavye: komşu başlığa veya odaklı satıra geç. */
-  nav: [column: LayoutColumn<Row>, to: 'left' | 'right' | 'down']
   'resize-by': [column: LayoutColumn<Row>, delta: number]
   /** Sürükleme başlarken çizilen genişlik: model (minmax) ile ekran aynı olsun, sütun zıplamasın. */
   'resize-start': [column: LayoutColumn<Row>, renderedWidth: number]
@@ -72,17 +71,11 @@ const onKeydown = (e: KeyboardEvent) => {
     menuOpen.value = true
     return
   }
-  if (k === 'ArrowLeft' || k === 'ArrowRight') {
+  if ((k === 'ArrowLeft' || k === 'ArrowRight') && e.shiftKey) {
     e.preventDefault()
     const left = k === 'ArrowLeft'
-    if (e.altKey && e.shiftKey) emit('action', props.column, left ? 'move-left' : 'move-right')
-    else if (e.shiftKey) emit('resize-by', props.column, left ? -16 : 16)
-    else emit('nav', props.column, left ? 'left' : 'right')
-    return
-  }
-  if (k === 'ArrowDown') {
-    e.preventDefault()
-    emit('nav', props.column, 'down')
+    if (e.altKey) emit('action', props.column, left ? 'move-left' : 'move-right')
+    else emit('resize-by', props.column, left ? -16 : 16)
   }
 }
 const act = (action: HeaderAction) => emit('action', props.column, action)
@@ -119,7 +112,6 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
       type="button"
       class="dt-head-label"
       :class="{ 'is-static': !canSort }"
-      tabindex="-1"
       :aria-disabled="canSort ? undefined : 'true'"
       :data-dt-tip="tip"
       :aria-describedby="def.description ? descId : undefined"
@@ -143,7 +135,6 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
       v-if="filtered"
       type="button"
       class="dt-head-icon dt-head-filtered"
-      tabindex="-1"
       :aria-label="i18n.t('header.filterBy')"
       @click="emit('filter', column)"
     >
@@ -154,7 +145,6 @@ const act = (action: HeaderAction) => emit('action', props.column, action)
         <button
           type="button"
           class="dt-head-icon dt-head-menu"
-          tabindex="-1"
           :aria-label="i18n.t('header.optionsAria', { column: def.header })"
         >
           <PhDotsThree :size="16" weight="bold" aria-hidden="true" />

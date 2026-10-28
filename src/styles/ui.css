@@ -496,7 +496,6 @@
   .dt-avatar {
     forced-color-adjust: none;
   }
-  .dt-row.is-focus::after,
   .dt-row.is-selected,
   .dt-sheet-grid .dt-cell[data-col].is-active,
   .dt-sheet-grid .dt-cell[data-col].is-editing,

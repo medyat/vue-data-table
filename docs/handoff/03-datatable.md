@@ -132,7 +132,6 @@ Yükseklik `--dt-row-h` + 1 px alt çizgi `--dt-line`; hücre dolgusu `--dt-cell
 | Selected | `--dt-row-selected` | checkbox dolu |
 | Selected + hover | `--dt-row-selected-hover` | |
 | Error (`rowError`) | `--dt-r-bg` (hover ve seçimin üstünde) | ⋯ hücresinde, ⋯'nın solunda 14 px `WarningCircle` `--dt-r-dot`, 8 px ara; sütun 66 px; tooltip satırın her yerinde (imlecin altında) ve ikonda. Tasarım dosyasında çizilmedi, 05'e göre (D35) |
-| Klavye odağı | değişmez | 2 px `--dt-accent` iç çerçeve, yarıçap 3 (`::after`) |
 | Menü açık | hover zemini | ⋯ `--dt-line-2` zemin, `--dt-text` (görünüm satırı ve header ⋯'leriyle aynı; T6-03 ekranında `--dt-surface-3` çizildi, `--dt-line-2` esas alınmalı) |
 
 Sabit bloklar satırın zeminini taşır (hover/seçili aynı renk).
@@ -195,7 +194,7 @@ Kaydırma hapı: gövde kayarken sağdan 22, alttan 62 px; 24 px, dolgu `0 10px`
 | `reveal: 'always'` | düğmeler hep görünür, bir ton soluk |
 | Tıklama | yalnızca o düğme çalışır; satır açılmaz, seçim değişmez |
 
-Klavye: satır odaklıyken `→` ilk düğmeye (düğmede odak halkası), `→` sonrakine, `↵` / `Space` çalıştırır, `Esc` satıra döner. Düğmeler Tab durağı değildir.
+Klavye (D40): düğmeler doğal Tab durağıdır (odak halkası), `↵` / `Space` çalıştırır.
 
 **Uygulamanın çizdiği hücreler** (Lot inspection örneği): adet çubuğu “340 / 500” (çubuk + sayı, birim header'da); özel rozet (ikon + etiket + sayı, yarıçap 6, nokta rozetlerinden ayrı); Approve / Reject (Comfortable 28, diğerleri 24 px küçük ikincil düğmeler, karar verilince “✓ Approved · 09:42” / “✕ Rejected · 08:15”).
 
@@ -237,7 +236,7 @@ T9-12'deki footer durumları: Normal · Counting (“of ⟳ Counting…”) · C
 | Toolbar | `role="toolbar"`; Filter düğmesi `aria-label="Filter, 2 applied"`; görünüm seçici `aria-label="View: Gebze · this week, edited"` |
 | Filtre satırı | `role="region" aria-label="Filters"`; çip gövdesi `aria-label="{column} {op} {value}. Edit value"`, kaldır `Remove {column} filter` |
 | Popover | `role="dialog"` (değer editörleri, column picker, Display), menüler `role="menu"` / `menuitem` / `menuitemradio` |
-| Izgara | `role="grid"`, header `columnheader` + `aria-sort`; tek Tab durağı (roving tabindex) |
+| Izgara | `role="table"`, header `columnheader` + `aria-sort`; satır klavyesi yok, widget'lar doğal Tab sırasında (D40) |
 | Satır checkbox | `aria-label="Select {id}"`; header `Select all rows on this page` |
 | Satır ⋯ | `aria-label="Actions for {id}"`, `aria-haspopup="menu"`, `aria-expanded` |
 | Expand | `aria-label="Show details for {id}"`, `aria-expanded` |

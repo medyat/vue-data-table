@@ -334,13 +334,12 @@ describe('toolbar, tercihler, kısayollar', () => {
     expect(requests(w)).toHaveLength(n + 1)
     w.unmount()
   })
-  it('header klavyesi: ilk satırda ↑ başlığa, ←/→ komşu, ⇧→ 16 px, ⌥⇧→ taşır, ↓ satıra', async () => {
+  it('header klavyesi (D38): başlık Tab durağı, düz ←/→ gezinmez, ⇧→ 16 px, ⌥⇧→ taşır ve odak başlıkta kalır', async () => {
     const w = await mountClient()
-    ;(w.get('.dt-row[data-index="0"]').element as HTMLElement).focus()
-    await w.get('.dt-row[data-index="0"]').trigger('keydown', { key: 'ArrowUp' })
     const label = (id: string) => w.get(`.dt-head-cell[data-col="${id}"] .dt-head-label`)
-    expect(document.activeElement).toBe(label('number').element)
-    await label('number').trigger('keydown', { key: 'ArrowRight' })
+    expect(label('number').attributes('tabindex')).toBeUndefined()
+    ;(label('product.name').element as HTMLElement).focus()
+    await label('product.name').trigger('keydown', { key: 'ArrowRight' })
     expect(document.activeElement).toBe(label('product.name').element)
     const before = w.get('.dt-grid').attributes('style')!
     await label('product.name').trigger('keydown', { key: 'ArrowRight', shiftKey: true })
@@ -350,9 +349,6 @@ describe('toolbar, tercihler, kısayollar', () => {
     const ids = w.findAll('[role="columnheader"][data-col]').map((h) => h.attributes('data-col'))
     expect(ids).toEqual(['number', 'status', 'product.name', 'value', 'dueAt', 'urgent'])
     expect(document.activeElement).toBe(label('product.name').element)
-    await label('product.name').trigger('keydown', { key: 'ArrowDown' })
-    await flush()
-    expect(document.activeElement).toBe(w.get('.dt-row[data-index="0"]').element)
     w.unmount()
   })
 })
