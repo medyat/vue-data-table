@@ -1,8 +1,8 @@
-# `@swors/data-table` — Tasarım ve Sistem Brifingi
+# `@medyat/vue-data-table` — Tasarım ve Sistem Brifingi
 
 **Sürüm:** 2026-10-21 · **Durum:** kodlama öncesi, kararlar kesinleşmiş · **Kaynaklar:** `README.md` (karar günlüğü D1–D25), `01–10`, `api-draft.ts`, `02-design-tokens.md`, `CLAUDE.md`.
 
-Bu doküman, SWORS ERP için geliştirilecek Vue 3 tablo paketinin **tek referansıdır**: ürün bağlamı, bileşenler, davranışlar, görsel sistem, teknik mimari ve tasarım görevleri bir arada. Claude Design'a bir bileşen veya ekran tasarlatılırken bu dosya bağlam olarak verilir; ilgili bölüm tek başına okunsa bile sistemin geri kalanıyla çelişmeyecek kadar bilgi taşır.
+Bu doküman, Medyat'ın ERP ürünü için geliştirilecek Vue 3 tablo paketinin **tek referansıdır**: ürün bağlamı, bileşenler, davranışlar, görsel sistem, teknik mimari ve tasarım görevleri bir arada. Claude Design'a bir bileşen veya ekran tasarlatılırken bu dosya bağlam olarak verilir; ilgili bölüm tek başına okunsa bile sistemin geri kalanıyla çelişmeyecek kadar bilgi taşır.
 
 **İşaretler:**
 
@@ -36,7 +36,7 @@ Bu doküman, SWORS ERP için geliştirilecek Vue 3 tablo paketinin **tek referan
 
 ### 1.1 Ne geliştiriyoruz
 
-SWORS, üretim yapan KOBİ'ler için bir ERP'dir (Laravel + Inertia + Vue 3). Hemen her modülü bir tabloyla başlar: üretim emirleri, ürünler, stok hareketleri, siparişler, müşteriler, faturalar. `@swors/data-table`, bu ekranların tamamında kullanılacak **tek tablo sistemidir**: üç bileşen, ortak bir çekirdek, tek tasarım dili.
+Hedef uygulama, üretim yapan KOBİ'ler için bir ERP'dir (Laravel + Inertia + Vue 3). Hemen her modülü bir tabloyla başlar: üretim emirleri, ürünler, stok hareketleri, siparişler, müşteriler, faturalar. `@medyat/vue-data-table`, bu ekranların tamamında kullanılacak **tek tablo sistemidir**: iki bileşen, ortak bir çekirdek, tek tasarım dili.
 
 | Bileşen | Ekran | Kullanıcı ne yapar |
 |---|---|---|
@@ -59,11 +59,11 @@ Kullanıcıların önemli bir kısmı teknolojiye çok hâkim olmayan, günde sa
 | **Ayşe** | Üretim planlama sorumlusu | Sabah “Gebze tesisi · bu hafta termin” görünümünü açar, geciken emirleri bulur, 20 emri seçip “Release” yapar | Kayıtlı görünüm bir tıkla; geciken satır kırmızı tarih ile görünür; toplu işlem iki adımda |
 | **Zeynep** | Muhasebe | Fatura listesinde tarih aralığı ve durum filtresi; tutar sütunlarını karşılaştırır | Sayılar alt alta hizalı, para birimi karışmaz, filtre çipi ne yaptığını söyler |
 | **Can** | Ürün/stok sorumlusu | 3.000 ürünün liste fiyatını Excel'den yapıştırır, hataları düzeltir, kaydeder | Excel refleksleri çalışır (⌘C/⌘V, ⌘Z, aşağı doldur), hata hücrede, kaydetmeden önce |
-| **Geliştirici** (SWORS ekibi) | Vue/TS | Sütun tanımlarını feature'ın `columns.ts` dosyasında yazar, veriyi kendi API'siyle çeker | Tip güvenli tanım, az yapılandırma, paket I/O yapmaz |
+| **Geliştirici** (ERP ekibi) | Vue/TS | Sütun tanımlarını feature'ın `columns.ts` dosyasında yazar, veriyi kendi API'siyle çeker | Tip güvenli tanım, az yapılandırma, paket I/O yapmaz |
 
 ### 1.4 Örnek veri evreni
 
-Tasarımlarda gerçekçi SWORS verisi kullanılır; sayı uydurulmaz, biçimler bölüm 4.6'daki kurallara uyar.
+Tasarımlarda gerçekçi ERP verisi kullanılır; sayı uydurulmaz, biçimler bölüm 4.6'daki kurallara uyar.
 
 | Varlık | Alanlar (tip) | Örnek satır |
 |---|---|---|
@@ -80,7 +80,7 @@ Tasarımlarda gerçekçi SWORS verisi kullanılır; sayı uydurulmaz, biçimler 
 
 | | DataTable | DataSheet |
 |---|---|---|
-| Giriş noktası | `@swors/data-table` | `@swors/data-table/sheet` (ayrı, tembel yüklenir) |
+| Giriş noktası | `@medyat/vue-data-table` | `@medyat/vue-data-table/sheet` (ayrı, tembel yüklenir) |
 | Yükseklik | Ebeveyni doldurur; yalnızca gövde kayar | Ebeveyni doldurur |
 | Satır modeli | Sanal, sabit yükseklik, 100 satır/sayfa | Sanal, 10.000 satıra kadar |
 | Toolbar | Otomatik yuvalar | Kendi toolbar'ı (Find, Filter, All/Changed/Errors, Undo/Redo, Add row, Import, Export, Display, Save) |
@@ -670,7 +670,7 @@ Bu bölüm geliştiriciye sunulan imkânları ve neden böyle seçildiğini anla
 
 | Konu | Seçim | Neden |
 |---|---|---|
-| Çerçeve | Vue 3.5+, `<script setup lang="ts">`, TypeScript strict | SWORS yığını; generic bileşenler satır tipini (`Order`) sütun tanımından çıkarır |
+| Çerçeve | Vue 3.5+, `<script setup lang="ts">`, TypeScript strict | ERP uygulamasının yığını; generic bileşenler satır tipini (`Order`) sütun tanımından çıkarır |
 | Tablo mantığı | **TanStack Table 9** (headless) | Sütun modeli, sıralama, sayfalama durumu, satır seçimi, expand ve hücre seçimi hazır; UI bize ait. Paket içinde dört dosyada izole; public API'de TanStack tipi yok |
 | Sanal satırlar | **TanStack Virtual** | Liste 100–500 satır/sayfa, sheet 10.000; detay satırı ölçülür ve önbelleklenir |
 | Primitifler | **reka-ui** (shadcn-vue'nun temeli) | Erişilebilir Popover, Combobox, Dialog, DropdownMenu, Tooltip, Calendar; portallı içerikte Escape/odak davranışı doğru. Uygulamanın shadcn bileşenlerine bağımlılık yok |
@@ -785,7 +785,7 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 | Q2 | DataSheet'te sunucuda var olan ama listede olmayan anahtar eklenince (Update satırı) boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet; yalnızca kullanıcının değiştirdiği alanlar gider | Faz 6c |
 | Q3 | Excel içe aktarmada boş hücre mevcut değeri silsin mi? | Hayır, atlanır | Faz 6d |
 | — | DataSheet'te yükleme/taşıma hatasının gösterimi (paket prop'u yok, uygulamanın banner'ı) | Uygulamanın | Faz 6c |
-| — | Yükleme süreleri (150 / 400 / 10.000 ms) gerçek SWORS ekranlarında | Paket sabitleri | Faz 7 |
+| — | Yükleme süreleri (150 / 400 / 10.000 ms) gerçek ERP ekranlarında | Paket sabitleri | Faz 7 |
 
 ### 11.2 Tasarımcıya bırakılanlar [Serbest]
 

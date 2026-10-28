@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDataTableContext } from '@swors/data-table'
+import { useDataTableContext } from '@medyat/vue-data-table'
 import { RouterLink } from 'vue-router'
 import { PAGES } from '../router'
 

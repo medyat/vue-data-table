@@ -10,7 +10,7 @@ import {
   type Progress,
   type SheetChanges,
   type SheetRowResult,
-} from '@swors/data-table/sheet'
+} from '@medyat/vue-data-table/sheet'
 import { Workbook, type CellValue } from 'exceljs'
 import { onMounted, shallowRef, useTemplateRef } from 'vue'
 import { productColumns, type Product } from '../data/products'

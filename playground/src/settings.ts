@@ -1,6 +1,6 @@
 // Playground'un kendi ayarları: tema, yoğunluk, dil. localStorage'da kalır; dil değişince sayfa yenilenir (plugin locale'i kurulumda alır).
 import { reactive, watchEffect } from 'vue'
-import type { Density } from '@swors/data-table'
+import type { Density } from '@medyat/vue-data-table'
 
 export type Theme = 'light' | 'dark-class' | 'dark-attr'
 

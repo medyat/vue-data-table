@@ -4,7 +4,7 @@ Tasarım referansı: `DESIGN-BRIEF.md` §8 ve görev paketleri T11, T12.
 
 ## 1. Genel bakış
 
-Ürün kartları, fiyat listeleri gibi **çok sayıda kaydı tek seferde düzenleme** ekranı (`@swors/data-table/sheet`). Kullanıcılar bugün Excel'de çalışıp dosya yüklemeye alışkın; bu ekran o alışkanlığı tarayıcıya taşır: hücreye yaz, aralık kopyala/yapıştır, aşağı doldur, geri al, Excel dosyası içe aktar. Değişiklikler orijinal satırlara dokunmadan taslakta birikir; **tek Save** yeni ve değişen satırları `@save` olayıyla **uygulamaya teslim eder**; uygulama kendi API'siyle (chunk, yeniden deneme kendi kararı) **anahtar sütuna (SKU) göre upsert** yapar ve sonucu `applyResult()` ile bildirir; hatalar ilgili satır ve hücreye döner. Paket HTTP, chunk ve retry taşımaz (D18).
+Ürün kartları, fiyat listeleri gibi **çok sayıda kaydı tek seferde düzenleme** ekranı (`@medyat/vue-data-table/sheet`). Kullanıcılar bugün Excel'de çalışıp dosya yüklemeye alışkın; bu ekran o alışkanlığı tarayıcıya taşır: hücreye yaz, aralık kopyala/yapıştır, aşağı doldur, geri al, Excel dosyası içe aktar. Değişiklikler orijinal satırlara dokunmadan taslakta birikir; **tek Save** yeni ve değişen satırları `@save` olayıyla **uygulamaya teslim eder**; uygulama kendi API'siyle (chunk, yeniden deneme kendi kararı) **anahtar sütuna (SKU) göre upsert** yapar ve sonucu `applyResult()` ile bildirir; hatalar ilgili satır ve hücreye döner. Paket HTTP, chunk ve retry taşımaz (D18).
 
 Hücre seçimi ve klavye hareketi TanStack Table'ın `cellSelection` özelliğiyle (01); düzenleme, depo, geçmiş, pano ve doldurma paketin — model TanStack'in resmi `spreadsheet` örneğiyle aynıdır.
 
@@ -181,7 +181,7 @@ TanStack `cellSelection`: `cell.getTabIndex()` (roving tabindex; aktif hücre DO
 | Anahtar sunucuda var, listede yok | `Update` (nötr) | O ürün **güncellenir** |
 | Anahtar listede zaten var | Hata: “HC-080-S is already in row 1” | Gönderilmez |
 
-- **Update satırının boş hücreleri sunucudaki kayıttan doldurulur** ve bu değerler “orijinal” sayılır (değişmiş işaretlenmez). Böylece satır, yüklenmiş bir satır gibi davranır ve Save'de yalnızca kullanıcının değiştirdiği alanlar gider — boş bırakılan hücreler mevcut ürünü boşaltmaz. *(Önerilen kural; ürün sahibine teyit ettirin — README › Açık sorular.)*
+- **Update satırının boş hücreleri sunucudaki kayıttan doldurulur** ve bu değerler “orijinal” sayılır (değişmiş işaretlenmez). Böylece satır, yüklenmiş bir satır gibi davranır ve Save'de yalnızca kullanıcının değiştirdiği alanlar gider — boş bırakılan hücreler mevcut ürünü boşaltmaz. (D38)
 - Bir anahtar listede **yalnızca bir kez** olabilir: aynı anahtarı taşıyan **tüm** satırların anahtar hücresi hata alır ve hiçbiri gönderilmez, biri düzeltilene veya listeden çıkarılana kadar.
 
 ### Listeden çıkarma

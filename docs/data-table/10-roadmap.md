@@ -192,12 +192,12 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 ## Faz 7 — Telefon, erişilebilirlik ve yayın cilası
 
 **Tasarım:** T13.
-**Kapsam:** DataTable telefon düzeni (alt sayfalar, Filters sheet, bulk bar konumu, 44 px dokunma alanları), `forced-colors`, NVDA/VoiceOver turu (iki roving tabindex modeli), tüm duyurular (08 §5), yükleme/skeleton sürelerinin gerçek SWORS ekranlarında ayarı, dokümantasyon sitesi (playground'dan), README ve kullanım örnekleri (Vue Router / Inertia `row-open` tarifleri, Laravel kayıt tarifi), sürüm notları.
+**Kapsam:** DataTable telefon düzeni (alt sayfalar, Filters sheet, bulk bar konumu, 44 px dokunma alanları), `forced-colors`, NVDA/VoiceOver turu (iki roving tabindex modeli), tüm duyurular (08 §5), yükleme/skeleton sürelerinin gerçek ERP ekranlarında ayarı, dokümantasyon sitesi (playground'dan), README ve kullanım örnekleri (Vue Router / Inertia `row-open` tarifleri, Laravel kayıt tarifi), sürüm notları.
 
 **Kabul kriterleri**
 - [x] T13 tasarımındaki telefon ekranları birebir (sapmalar: CHANGELOG · Bilinen sınırlar).
 - [x] Hiçbir modda kart görünümü yok (ilke 4).
-- [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, satır menüsü, sheet'te düzenle ve kaydet senaryoları tamamlanır.
+- [ ] NVDA + Firefox ve VoiceOver + Safari ile: filtre ekle, görünüm kaydet, satır seç, bulk aksiyon, satır menüsü, sheet'te düzenle ve kaydet senaryoları tamamlanır. *(1.0'da yapılmadı; 2026-10-28 kararı: 1.0.x'e ertelendi, CHANGELOG · Bilinen sınırlar.)*
 - [x] axe-core taramasında kritik/ciddi ihlal yok (Playwright).
 - [x] `prefers-reduced-motion` ve `forced-colors` kontrolleri.
-- [x] Paket boyutu (gzip): çekirdek + DataTable 63,2 kB (index 30,1 + plugin 9,5 + query 18,1 + TextEditor 4,3 + Layer 1,2; takvim ve telefon alt sayfaları ayrı parça). 60 kB hedefi Faz 7c telefon düzeniyle 3,2 kB aşıldı; 2026-10-22 kararı: kabul, hedef 65 kB. `@swors/data-table/sheet` ayrı yüklenir (33,7 kB).
+- [x] Paket boyutu (gzip): çekirdek + DataTable 63,2 kB (index 30,1 + plugin 9,5 + query 18,1 + TextEditor 4,3 + Layer 1,2; telefon alt sayfaları ayrı parça; takvim kütüphanesi `@internationalized/date` dışarıda, dependency). 60 kB hedefi Faz 7c telefon düzeniyle 3,2 kB aşıldı; 2026-10-22 kararı: kabul, hedef 65 kB. `@medyat/vue-data-table/sheet` ayrı yüklenir (33,7 kB).

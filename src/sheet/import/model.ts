@@ -1,5 +1,5 @@
 // Excel'den içe aktarma — saf fonksiyonlar (07 §13, 01): başlık satırı tespiti ve sütun eşleme dosya biçiminden
-// bağımsızdır (.xlsx ve .csv aynı yol); `@swors/data-table/sheet`'ten dışa verilir ve ayrı test edilir.
+// bağımsızdır (.xlsx ve .csv aynı yol); `@medyat/vue-data-table/sheet`'ten dışa verilir ve ayrı test edilir.
 import { isoDay } from '../../core/filters/model'
 import type { ColumnDef } from '../../types/columns'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // T8 · Cell types: 23 tip, her grupta default / varyant / boş satırları (design/T08-cell-types).
-import { DataTable, type ColumnDef } from '@swors/data-table'
+import { DataTable, type ColumnDef } from '@medyat/vue-data-table'
 import { owners, statusOptions } from '../data/orders'
 import { settings } from '../settings'
 

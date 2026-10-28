@@ -11,8 +11,8 @@ export default defineConfig({
   resolve: {
     // Paket kaynaktan: uygulama nasıl import ediyorsa playground da öyle.
     alias: [
-      { find: '@swors/data-table/sheet', replacement: src('sheet.ts') },
-      { find: '@swors/data-table', replacement: src('index.ts') },
+      { find: '@medyat/vue-data-table/sheet', replacement: src('sheet.ts') },
+      { find: '@medyat/vue-data-table', replacement: src('index.ts') },
     ],
   },
   server: { port: 5174 },

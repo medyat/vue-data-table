@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // T9 · States: sahte talep akışıyla her durum (design/T09-states). URL: ?s=normal|loading|slow|empty|error|stale|pageEmpty
-import { DataTable, type TableError, type TableRequest } from '@swors/data-table'
+import { DataTable, type TableError, type TableRequest } from '@medyat/vue-data-table'
 import { ref } from 'vue'
 import { matches } from '../../../src/core/filters/model'
 import { makeOrders } from '../../server/mock-api'

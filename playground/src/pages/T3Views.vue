@@ -8,7 +8,7 @@ import {
   type Preferences,
   type View,
   type ViewsAdapter,
-} from '@swors/data-table'
+} from '@medyat/vue-data-table'
 import { provide } from 'vue'
 import { makeOrders } from '../../server/mock-api'
 import { orderColumns, orderViews } from '../data/orders'

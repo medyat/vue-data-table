@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import vue from '@vitejs/plugin-vue'
+import dts from 'unplugin-dts/vite'
 import { defineConfig } from 'vitest/config'
 
 const BRIDGE_FILES = ['shadcn-bridge.css', 'shadcn-bridge-hsl.css']
@@ -9,6 +10,8 @@ const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.met
 export default defineConfig({
   plugins: [
     vue(),
+    // Bildirim dosyaları build'in parçası; yan etkili import'lar (CSS) d.ts'e yazılmaz (clearPureImport varsayılanı).
+    dts({ processor: 'vue', tsconfigPath: 'tsconfig.build.json', bundleTypes: true }),
     {
       // Giriş noktaları import etmediği için köprü CSS'leri dist'e ayrıca kopyalanır (02 · shadcn-vue köprüsü).
       name: 'dt-copy-bridge-css',
@@ -24,8 +27,8 @@ export default defineConfig({
       formats: ['es'],
       cssFileName: 'style',
     },
-    rollupOptions: {
-      external: [/^vue$/, /^reka-ui/, /^@tanstack\//, /^@phosphor-icons\//],
+    rolldownOptions: {
+      external: [/^vue$/, /^reka-ui/, /^@tanstack\//, /^@phosphor-icons\//, /^@internationalized\//],
     },
     sourcemap: true,
   },

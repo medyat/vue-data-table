@@ -3,8 +3,8 @@
 // değişiklikleri olduğu gibi kabul eder. Her sütunun `hint`'i formül çubuğunda nasıl düzenleneceğini söyler.
 // Yerleşik editörü olmayan tipler (ajax, user, object, array) `editable: true` olsa da salt okunur kalır; özel `editor` ister.
 // multiselect: yalnızca arama kutusu; liste açık kalır, seçim tik ile aç/kapa.
-import type { ColumnDef } from '@swors/data-table'
-import { DataSheet, type DataSheetHandle, type SheetChanges } from '@swors/data-table/sheet'
+import type { ColumnDef } from '@medyat/vue-data-table'
+import { DataSheet, type DataSheetHandle, type SheetChanges } from '@medyat/vue-data-table/sheet'
 import { shallowRef, useTemplateRef } from 'vue'
 import { owners, statusOptions } from '../data/orders'
 import { categoryOptions } from '../data/products'

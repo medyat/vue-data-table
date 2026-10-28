@@ -1,4 +1,4 @@
-import { createDataTable, createLocalStoragePreferences, createLocalStorageViews } from '@swors/data-table'
+import { createDataTable, createLocalStoragePreferences, createLocalStorageViews } from '@medyat/vue-data-table'
 import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './router'

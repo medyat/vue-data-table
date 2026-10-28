@@ -1,4 +1,4 @@
-// Ayrı giriş noktası: import { DataSheet } from '@swors/data-table/sheet'
+// Ayrı giriş noktası: import { DataSheet } from '@medyat/vue-data-table/sheet'
 import './styles/data-table.css'
 
 export { default as DataSheet } from './sheet/DataSheet.vue'

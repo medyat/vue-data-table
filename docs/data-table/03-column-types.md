@@ -91,7 +91,7 @@ Hücre içindeki `button`/`a` öğeleri normal Vue öğeleridir: geliştirici `s
 ```ts
 // features/orders/columns.ts
 import { h } from 'vue'
-import type { ColumnDef, CellRender } from '@swors/data-table'
+import type { ColumnDef, CellRender } from '@medyat/vue-data-table'
 import { Copy, ArrowSquareOut } from '@phosphor-icons/vue'
 import StatusCell from '@/shared/cells/StatusCell.vue'
 

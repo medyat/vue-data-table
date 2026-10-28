@@ -1,6 +1,6 @@
 // Bulk edit products örneği (T11): sütun tanımları (D21); veri sahte API'den (/api/products). Anahtar sütun SKU.
 // Düzenlenecek sütunlar `editable` ile açılır; doğrulama (`required`, `validate`, `warn`) ve formül çubuğu ipucu (`hint`) burada.
-import type { ColumnDef, OptionDef } from '@swors/data-table'
+import type { ColumnDef, OptionDef } from '@medyat/vue-data-table'
 import type { Product } from '../../server/mock-api.ts'
 
 export type { Product }

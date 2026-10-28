@@ -1,6 +1,6 @@
 // Production orders örneği (T1): sütun tanımları feature'ın columns.ts dosyasında yaşar (D21). Veri sahte API'den.
 import { PhArrowSquareOut, PhCopy } from '@phosphor-icons/vue'
-import type { ColumnDef, OptionDef, UserOption, View } from '@swors/data-table'
+import type { ColumnDef, OptionDef, UserOption, View } from '@medyat/vue-data-table'
 import type { Order } from '../../server/mock-api.ts'
 
 export type { Order }

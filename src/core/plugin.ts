@@ -12,7 +12,7 @@ export interface DataTableContext {
   preferences: PreferencesAdapter | null
 }
 
-export const DATA_TABLE_KEY: InjectionKey<DataTableContext> = Symbol('swors:data-table')
+export const DATA_TABLE_KEY: InjectionKey<DataTableContext> = Symbol('medyat:data-table')
 
 export function createContext(options: DataTableOptions = {}): DataTableContext {
   const i18n = createI18n({ locale: options.locale, messages: options.messages })

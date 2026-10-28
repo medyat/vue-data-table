@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // T7 · Cell actions (hover/odak overlay'i) ve uygulamanın çizdiği hücreler (`cell`), üç yoğunlukta.
 import { PhArrowSquareOut, PhCheck, PhClock, PhCopy, PhMagnifyingGlass, PhWarning, PhX } from '@phosphor-icons/vue'
-import { DataTable, type ColumnDef } from '@swors/data-table'
+import { DataTable, type ColumnDef } from '@medyat/vue-data-table'
 import { h, ref } from 'vue'
 import { settings } from '../settings'
 

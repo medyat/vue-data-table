@@ -6,8 +6,8 @@
  * (03, 04, 05, 07) güncelleyin.
  *
  * İki bileşen, tek çekirdek:
- *   <DataTable>      liste ekranı         (import { DataTable } from '@swors/data-table')
- *   <DataSheet>      toplu düzenleme      (import { DataSheet } from '@swors/data-table/sheet')
+ *   <DataTable>      liste ekranı         (import { DataTable } from '@medyat/vue-data-table')
+ *   <DataSheet>      toplu düzenleme      (import { DataSheet } from '@medyat/vue-data-table/sheet')
  *
  * Public API'de TanStack tipi yoktur; TanStack Table yalnızca paket içinde
  * (01 · TanStack sınırı) kullanılır.
@@ -523,7 +523,7 @@ export interface ParsedWorkbook {
   }>
 }
 
-/** 07 §13: başlık satırı tespiti (`detectHeaderRow`) ve sütun eşleme (`matchColumns`) ayrı, saf fonksiyonlardır; `@swors/data-table/sheet`'ten dışa verilir ve ayrı test edilir. */
+/** 07 §13: başlık satırı tespiti (`detectHeaderRow`) ve sütun eşleme (`matchColumns`) ayrı, saf fonksiyonlardır; `@medyat/vue-data-table/sheet`'ten dışa verilir ve ayrı test edilir. */
 export declare function detectHeaderRow(rows: unknown[][]): number
 /** Dönen eşlemede yalnızca tek ve kesin eşleşenler vardır; eşleşmeyen ya da birden fazla alana uyan sütun haritada yoktur (seçici boş kalır). */
 export declare function matchColumns(headers: string[], columns: Array<Pick<ColumnDef<any>, 'id' | 'header' | 'importAliases'>>): Record<number, string>

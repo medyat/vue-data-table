@@ -6,8 +6,8 @@ Ortak bir çekirdek üzerinde üç bileşen. Uygulama (ör. Laravel + Inertia/Vu
 
 | Bileşen | Giriş | İş |
 |---|---|---|
-| `DataTable` | `@swors/data-table` | Liste ekranı: toolbar, filtre, görünümler, sıralama, sayfalama, seçim, satır detayı; `mode: 'client' \| 'server'` |
-| `DataSheet` | `@swors/data-table/sheet` | Toplu düzenleme: hücre seçimi, düzenleme, pano, doldurma, geri al, içe aktarma, kayıt teslimi |
+| `DataTable` | `@medyat/vue-data-table` | Liste ekranı: toolbar, filtre, görünümler, sıralama, sayfalama, seçim, satır detayı; `mode: 'client' \| 'server'` |
+| `DataSheet` | `@medyat/vue-data-table/sheet` | Toplu düzenleme: hücre seçimi, düzenleme, pano, doldurma, geri al, içe aktarma, kayıt teslimi |
 
 Üçü ayrı bileşendir çünkü `defineProps<A | B>()` union'ı düzleştirip tüm prop'ları zorunlu yapar (compiler-sfc ile doğrulandı); ayrı sözleşmeler daha sade ve tip güvenlidir (D17). Çekirdek "iki kuralı" ile büyür: bir parça en az iki bileşende kullanılıyorsa `core/`'a girer; çekirdekte mod bayrağı yoktur.
 
@@ -49,7 +49,7 @@ Keyboard binding için `@tanstack/vue-hotkeys` kullanılmaz (1.0 öncesi); tuş 
 ```
 src/
   index.ts                  # DataTable, createDataTable, tipler
-  sheet.ts                  # DataSheet (ayrı giriş: @swors/data-table/sheet)
+  sheet.ts                  # DataSheet (ayrı giriş: @medyat/vue-data-table/sheet)
   core/
     columns/                # useColumnLayout (TanStack), genişlik hesabı, --cols
     cells/                  # 23 tip: specs (hizalama, genişlik, skeleton), format, renderCell, remoteLabels, CellActions

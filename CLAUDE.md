@@ -1,6 +1,6 @@
 # CLAUDE.md — Data Table paketi
 
-Bu repo, Vue 3 için `@swors/data-table` paketini geliştirir: ortak bir çekirdek üzerinde **iki bileşen** — `DataTable` (liste), `DataSheet` (toplu düzenleme, ayrı giriş noktası). Ürün kararları ve spesifikasyon `docs/data-table/` altındadır; tasarım referansı `docs/data-table/DESIGN-BRIEF.md`, Claude Design'dan gelen tasarımlar `design/` altına konur.
+Bu repo, Vue 3 için `@medyat/vue-data-table` paketini geliştirir: ortak bir çekirdek üzerinde **iki bileşen** — `DataTable` (liste), `DataSheet` (toplu düzenleme, ayrı giriş noktası). Ürün kararları ve spesifikasyon `docs/data-table/` altındadır; tasarım referansı `docs/data-table/DESIGN-BRIEF.md`, Claude Design'dan gelen tasarımlar `design/` altına konur.
 
 ## Her işe başlamadan önce
 
@@ -19,7 +19,7 @@ Bu repo, Vue 3 için `@swors/data-table` paketini geliştirir: ortak bir çekird
 - İkonlar: `@phosphor-icons/vue` (regular).
 - Stil: paketle birlikte derlenmiş CSS + `--dt-*` CSS değişkenleri. Ayrıntılar: `02-design-tokens.md`.
 - Test: Vitest + @vue/test-utils (birim/bileşen), Playwright (etkileşim: klavye, pano, sanal kaydırma, portallı editörler).
-- Paketleme: Vite library mode, ESM + tipler (`vue-tsc`), `vue` ve `reka-ui` peer dependency; `./sheet` ayrı giriş noktası.
+- Paketleme: Vite library mode, ESM + tipler (`unplugin-dts`, vue-tsc tabanlı; giriş başına tek d.ts, `bundleTypes`; yan etkili import’lar d.ts’e girmez), `vue` ve `reka-ui` peer dependency; `./sheet` ayrı giriş noktası.
 
 ## Kurallar
 

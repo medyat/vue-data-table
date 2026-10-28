@@ -1,4 +1,4 @@
-# @swors/data-table · Tasarım teslim belgeleri
+# @medyat/vue-data-table · Tasarım teslim belgeleri
 
 Bu klasör, T1–T13 tasarımlarının geliştiriciye (Claude Code dahil) teslimidir. **Davranışın kaynağı spesifikasyon dokümanlarıdır** (`docs/data-table/` 03–09 ve `api-draft.ts`; özeti `DESIGN-BRIEF.md`); bu belgeler onları tekrar etmez. Burada olan:
 

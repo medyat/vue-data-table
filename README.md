@@ -1,4 +1,4 @@
-# @swors/data-table
+# @medyat/vue-data-table
 
 Vue 3 için `DataTable` (liste) ve `DataSheet` (toplu düzenleme): ortak çekirdek, iki bileşen, iki giriş noktası. Paket veri çekmez ve kaydetmez (D18): olay yayar (`@request`, `@count`, `@save`, `@export`), uygulama HTTP'yi yapar ve sonucu geri verir.
 
@@ -7,13 +7,13 @@ Spesifikasyon `docs/data-table/` (karar günlüğü `README.md`, bileşenler `05
 ## Kurulum
 
 ```bash
-pnpm add @swors/data-table reka-ui vue
+pnpm add @medyat/vue-data-table reka-ui vue
 ```
 
 ```ts
 // main.ts
-import { createDataTable, createLocalStoragePreferences, createLocalStorageViews } from '@swors/data-table'
-import '@swors/data-table/style.css'
+import { createDataTable, createLocalStoragePreferences, createLocalStorageViews } from '@medyat/vue-data-table'
+import '@medyat/vue-data-table/style.css'
 
 app.use(
   createDataTable({
@@ -24,7 +24,7 @@ app.use(
 )
 ```
 
-shadcn-vue temasını devralmak için ek olarak `@swors/data-table/shadcn-bridge.css` (veya HSL tabanlı tema için `shadcn-bridge-hsl.css`) yüklenir.
+shadcn-vue temasını devralmak için ek olarak `@medyat/vue-data-table/shadcn-bridge.css` (veya HSL tabanlı tema için `shadcn-bridge-hsl.css`) yüklenir.
 
 ## DataTable (liste)
 
@@ -32,7 +32,7 @@ Sütun tanımları feature'ın kendi dosyasında yaşar (D21); hücre özelleşt
 
 ```vue
 <script setup lang="ts">
-import { DataTable, type ColumnDef, type TableRequest } from '@swors/data-table'
+import { DataTable, type ColumnDef, type TableRequest } from '@medyat/vue-data-table'
 
 const columns: Array<ColumnDef<Order>> = [
   { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left', href: (r) => `/orders/${r.id}` },
@@ -98,11 +98,11 @@ const onRowOpen = ({ href, event }) => {
 
 ## DataSheet (toplu düzenleme)
 
-Ayrı giriş noktası: `@swors/data-table/sheet`. Sütunlar varsayılan salt okunurdur; `editable`, `required`, `validate`, `warn`, `hint`, `importAliases` ile açılır. Değişiklikler taslakta birikir, tek **Save** yeni + değişen satırları `@save` ile teslim eder; uygulama anahtara göre upsert yapar ve `applyResult()` ile sonucu bildirir (D11). Asla silmez (D12).
+Ayrı giriş noktası: `@medyat/vue-data-table/sheet`. Sütunlar varsayılan salt okunurdur; `editable`, `required`, `validate`, `warn`, `hint`, `importAliases` ile açılır. Değişiklikler taslakta birikir, tek **Save** yeni + değişen satırları `@save` ile teslim eder; uygulama anahtara göre upsert yapar ve `applyResult()` ile sonucu bildirir (D11). Asla silmez (D12).
 
 ```vue
 <script setup lang="ts">
-import { DataSheet, type DataSheetHandle, type SheetChanges } from '@swors/data-table/sheet'
+import { DataSheet, type DataSheetHandle, type SheetChanges } from '@medyat/vue-data-table/sheet'
 
 const sheet = useTemplateRef<DataSheetHandle>('sheet')
 const saving = ref<boolean | { done: number; total: number }>(false)
@@ -174,3 +174,7 @@ Node 22+ ve pnpm (corepack ile): `corepack enable` bir kez, sonra `pnpm install`
 | `pnpm check`                        | gen:docs + typecheck + lint + format:check + test                                                   |
 
 Token ve metin değişikliği dokümanda yapılır, sonra `pnpm gen:docs`; testler dokümanla kodun ayrışmasını yakalar. Sürüm notları `CHANGELOG.md`.
+
+## Lisans
+
+MIT · © 2026 Medyat

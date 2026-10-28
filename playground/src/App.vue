@@ -6,7 +6,7 @@ import { setLocale, settings } from './settings'
 
 <template>
   <header class="pg-bar">
-    <RouterLink to="/" class="pg-brand">@swors/data-table</RouterLink>
+    <RouterLink to="/" class="pg-brand">@medyat/vue-data-table</RouterLink>
     <nav class="pg-nav">
       <RouterLink v-for="p in PAGES" :key="p.id" :to="`/${p.id}`">{{ p.id.toUpperCase() }}</RouterLink>
     </nav>

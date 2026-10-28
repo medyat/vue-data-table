@@ -14,8 +14,8 @@
     "jsx": "preserve",
     "types": ["vite/client", "node"],
     "paths": {
-      "@swors/data-table": ["./src/index.ts"],
-      "@swors/data-table/sheet": ["./src/sheet.ts"]
+      "@medyat/vue-data-table": ["./src/index.ts"],
+      "@medyat/vue-data-table/sheet": ["./src/sheet.ts"]
     }
   },
   "include": ["src", "tests", "scripts", "playground", "e2e", "vite.config.ts", "playwright.config.ts"]

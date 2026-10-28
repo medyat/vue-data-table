@@ -13,7 +13,7 @@ import {
   type RowClickMode,
   type TableError,
   type TableRequest,
-} from '@swors/data-table'
+} from '@medyat/vue-data-table'
 import { ref, useTemplateRef } from 'vue'
 import { orderColumns, orderViews, type Order } from '../data/orders'
 

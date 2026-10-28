@@ -1,6 +1,6 @@
 # Data Table — Geliştirme Spesifikasyonu
 
-Bu klasör, **Data Table** sisteminin Vue 3 paketi (`@swors/data-table`) olarak geliştirilmesi için hazırlanmış spesifikasyondur. Claude Code ile geliştirme yaparken her aşamada önce ilgili dokümanı okuyun; tasarım referansı `DESIGN-BRIEF.md`'dir. Dokümanla tasarım görseli çelişirse **doküman** geçerlidir.
+Bu klasör, **Data Table** sisteminin Vue 3 paketi (`@medyat/vue-data-table`) olarak geliştirilmesi için hazırlanmış spesifikasyondur. Claude Code ile geliştirme yaparken her aşamada önce ilgili dokümanı okuyun; tasarım referansı `DESIGN-BRIEF.md`'dir. Dokümanla tasarım görseli çelişirse **doküman** geçerlidir.
 
 > **Tasarım kaynağı:** ilk canvas tasarımı (20 board) kararlarla çeliştiği için 2026-10-21'de kaldırıldı. T1–T13 tasarımları aynı gün Claude Design ile [DESIGN-BRIEF.md](DESIGN-BRIEF.md)'deki görev paketlerinden üretildi; teslim belgeleri (ölçüler, durumlar, tasarım kararları) `docs/handoff/` altındadır, tasarım dosyasının linki orada. Dışa aktarılmış görseller (1× PNG, light/dark) `design/` altındadır (git'e girmez, yerelde tutulur); dizin `design/README.md`. Token'ların tek kaynağı `02-design-tokens.md`'dir.
 
@@ -12,8 +12,8 @@ Ortak bir çekirdek (`core/`) üzerinde **üç bileşen**. Üçü de aynı hücr
 
 | Bileşen | Giriş noktası | Nerede | Özet |
 |---|---|---|---|
-| `DataTable` | `@swors/data-table` | Siparişler, ürünler, müşteriler… modülün ana ekranı | Sayfa yüksekliğini doldurur; sanal satırlar; filtre, görünümler, sayfalama, sayfa kapsamlı seçim, toplu aksiyon, satır detayı. İstemci ya da sunucu modu |
-| `DataSheet` | `@swors/data-table/sheet` | Ürün kartları, fiyat listeleri (≤ 10.000 satır) | Excel benzeri ızgara; hücre içi düzenleme, yapıştırma, doldurma, geri al, içe aktarma; değişiklikler `@save` ile uygulamaya teslim edilir |
+| `DataTable` | `@medyat/vue-data-table` | Siparişler, ürünler, müşteriler… modülün ana ekranı | Sayfa yüksekliğini doldurur; sanal satırlar; filtre, görünümler, sayfalama, sayfa kapsamlı seçim, toplu aksiyon, satır detayı. İstemci ya da sunucu modu |
+| `DataSheet` | `@medyat/vue-data-table/sheet` | Ürün kartları, fiyat listeleri (≤ 10.000 satır) | Excel benzeri ızgara; hücre içi düzenleme, yapıştırma, doldurma, geri al, içe aktarma; değişiklikler `@save` ile uygulamaya teslim edilir |
 
 **Paket veri çekmez, kaydetmez.** Uygulama `rows` verir; sunucu modunda `@request` ile sorguyu alır ve kendi HTTP'siyle cevaplar; DataSheet'te `@save` ile değişiklikleri alır ve `applyResult()` ile sonucu bildirir. Paket içinde HTTP, önbellek, otomatik yeniden deneme veya iş mantığı yoktur.
 
@@ -85,16 +85,19 @@ Bu kararlar ürün sahibiyle (Hüseyin) birlikte alındı. Geliştirme sırasın
 | D35 | **Liste satır hatası uygulamanın haritasından okunur: `rowError(row)`.** Paket hata saklamaz, temizlemez; metin/metin listesi dönen satır `--dt-r-bg` zemin (seçim ve hover'ın üstünde) + ⋯ hücresinde kırmızı uyarı ikonu (sayfada hatalı satır varken ⋯ sütunu 44 → 66 px; ⋯ sağa yaslı, hizası değişmez) + satırın tamamında tooltip + `aria-describedby`. Hücre bazlı hata, footer özeti, satır altı mesaj şeridi ve `busy`/`updated` tonları yoktur. | Toplu aksiyonun kısmi hatası satırda görünmeli (önceki sürümde `setErrors`); haritanın uygulamada olması “ne zaman silinir” sorusunu uygulamaya bırakır, D18 ile tutarlı. Sheet'in hata diliyle aynı token'lar. (2026-10-27) |
 | D36 | **Inline satır aksiyonu ve aksiyon açıklaması.** `RowAction.inline` (+ `icon`) ⋯'nın solunda 28 px ikon düğmesi olarak çizilir; `when(row)` ile satıra göre; en fazla 2; çizildiği satırın menüsünde yer almaz (klavye `→` ile düğmeye ulaşır); menü boşalırsa ⋯ çizilmez. `RowAction.description` / `BulkAction.description` menüde ikinci satır (gerekçe ezer), düğmede tooltip. `BulkAction.when(rows)` bar ve menüden gizler. ⋯ sütunu içeriğe göre genişler. D28'in “yalnızca ⋯” kuralı bu kadar yumuşadı; satır aksiyon sütunu hâlâ önizleme ve link taşımaz. | Kullanıcı ihtiyacı: duruma göre satırda hızlı ikon (ör. Done'da Edit); aynı aksiyonun iki yerde görünmesi gereksiz. (2026-10-27) |
 | D37 | **`tags` sütun tipi yoktur.** Serbest etiket listesi için ayrı tip tanımlanmaz; sabit seçenekli çoklu değer `multiselect`'tir. İhtiyaç doğarsa `multiselect`'e “yeni değer yazılabilir” seçeneği ya da ayrı tip olarak eklenir. | Bugünkü uygulamada karşılığı yok (tek serbest etiket alanı düz metin); `multiselect`'ten tek farkı seçeneklerin önceden bilinmemesi; kullanılmayan tipi taşımak yerine ihtiyaç olunca eklemek. (2026-10-28) |
+| D38 | **Update satırının boş hücreleri sunucudaki kayıttan doldurulur** ve orijinal sayılır (değişmiş işaretlenmez); Save'de yalnızca kullanıcının değiştirdiği alanlar gider, boş bırakılan hücre mevcut değeri silmez (07 §9). Alternatif (boş hücre `null` gider, değeri siler) reddedildi. | Q2 kapanışı. D11 (update'te yalnızca değişen alanlar), D12 (silme yok) ve Q3 (boş Excel hücresi silmez) ile tutarlı; kullanıcı görmediği bir değeri yanlışlıkla silemez. (2026-10-28) |
+| D39 | **İçe aktarmada boş Excel hücresi mevcut değeri silmez**, atlanır; yalnızca dolu hücreler yazılır (07 §13). Alternatif (boş hücre `null` yazar) reddedildi. | Q3 kapanışı. D12 (silme yok) ve D38 ile aynı ilke: kullanıcı dosyada görmediği bir değeri yanlışlıkla silemez; boş sütun "dokunma" demektir. (2026-10-28) |
 | D29 | **Filtre satırı tek satırdır.** Çipler sarılmaz, `+N more` popover'ı ve Show all / Show fewer yoktur; sığmayan çipler yatay kayar, sağ kenarda solma, Clear all sağda sabit. | D2 çip sayısını sütun sayısıyla sınırlar; iki satır + ölçüm + gizli çip listesi bu sınırlı durum için karmaşıktı. (Uygulama, 2026-10-21) |
 
 ## Açık sorular (ilgili aşamaya başlamadan önce ürün sahibine sorun)
 
-| # | Soru | Dokümanda varsayılan | Aşama |
-|---|---|---|---|
-| Q2 | DataSheet'te listede olmayan ama sunucuda var olan bir anahtar eklenince (Update satırı), boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet: doldurulur, yalnızca kullanıcının değiştirdiği alanlar gönderilir (07 §9). Alternatif: boş hücreler `null` gönderilir ve mevcut değeri siler. **Faz 6c bu varsayılanla uygulandı (22 Ekim 2026); ürün sahibi teyidi bekliyor.** | Faz 6c |
-| Q3 | Excel içe aktarmada boş hücre mevcut değeri silsin mi? | Hayır: atlanır (07 §13). **Faz 6d bu varsayılanla uygulandı (22 Ekim 2026).** | Faz 6d |
+Açık soru kalmadı (2026-10-28). Kapananlar:
 
 Q1 (kullanıcı varsayılan görünümü) kapandı: evet, tercihlerde `defaultViewId` (D4).
+
+Q2 (Update satırında boş hücreler) kapandı: evet, sunucudaki kayıttan doldurulur ve orijinal sayılır; Save'de yalnızca kullanıcının değiştirdiği alanlar gider (D38).
+
+Q3 (içe aktarmada boş Excel hücresi) kapandı: hayır, mevcut değeri silmez, atlanır (D39).
 
 ## Tasarım geçmişi
 
