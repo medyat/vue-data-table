@@ -52,7 +52,7 @@ src/
   sheet.ts                  # DataSheet (ayrı giriş: @swors/data-table/sheet)
   core/
     columns/                # useColumnLayout (TanStack), genişlik hesabı, --cols
-    cells/                  # 24 tip: specs (hizalama, genişlik, skeleton), format, renderCell, remoteLabels, CellActions
+    cells/                  # 23 tip: specs (hizalama, genişlik, skeleton), format, renderCell, remoteLabels, CellActions
     format/                 # Intl önbelleği, eksi işareti, göreli zaman, liste biçimi
     editors/                # tipe göre değer girişi (filtre çipi ve sheet editörü ortak)
     grid/                   # GridRoot (sanal gövde, sticky header, sabit sütun gölgesi), HeaderCell, Row (+hücreler), SkeletonRow, useDelegatedTooltip

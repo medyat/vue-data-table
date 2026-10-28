@@ -606,3 +606,55 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     expect(Math.round(h!.height)).toBe(45) // 44 + 1 px kenarlık
   })
 })
+
+test.describe('T11 · DataSheet · çoklu seçim editörü (multiselect)', () => {
+  test.beforeEach(async ({ page }) => {
+    await settings(page)
+    await page.setViewportSize({ width: 1600, height: 700 })
+    await page.goto('/t11-types')
+    await expect(cell(page, 0, 'multi')).toBeVisible()
+  })
+  test('multiselect: editör yalnızca arama kutusu; seçim listeyi açık tutar, tik ile aç/kapa; Esc kaydedip çıkar', async ({
+    page,
+  }) => {
+    await cell(page, 1, 'multi').click()
+    await page.keyboard.press('F2')
+    const list = page.locator('.dt-cell-list')
+    const option = (name: string) => list.locator('.dt-cell-option', { hasText: name })
+    const checked = list.locator('.dt-cell-option:has(.dt-cell-option-check)')
+    await expect(list.locator('.dt-cell-option')).toHaveCount(6)
+    await page.keyboard.type('pum')
+    await expect(list.locator('.dt-cell-option')).toHaveCount(1)
+    await page.keyboard.press('Enter')
+    await expect(list.locator('.dt-cell-option')).toHaveCount(6) // liste açık kalır, arama temizlenir
+    await expect(checked).toHaveText([/Pumps/])
+    await option('Valves').click()
+    await expect(checked).toHaveText([/Pumps/, /Valves/])
+    await option('Pumps').click() // tekrar seçmek kaldırır
+    await expect(checked).toHaveText([/Valves/])
+    await expect(cell(page, 1, 'multi')).toHaveClass(/is-editing/)
+    await page.keyboard.press('Escape') // liste açıkken tek Esc: kaydeder ve çıkar
+    await expect(list).toHaveCount(0)
+    await expect(cell(page, 1, 'multi')).not.toHaveClass(/is-editing/)
+    await expect(cell(page, 1, 'multi')).toHaveClass(/is-changed/)
+    await expect(cell(page, 1, 'multi')).toContainText('Valves')
+    await expect(cell(page, 1, 'multi')).toBeFocused()
+  })
+
+  test('multiselect: yazarak açılış değeri korur, harf aramaya gider; Esc kaydeder, ⌘Z geri alır', async ({ page }) => {
+    await cell(page, 0, 'multi').click()
+    await page.keyboard.type('s')
+    await expect(page.locator('.dt-cell-editor.is-multi input')).toHaveValue('s')
+    const checked = page.locator('.dt-cell-list .dt-cell-option:has(.dt-cell-option-check)')
+    await expect(checked).toHaveText([/Pumps/, /Valves/])
+    await checked.first().click()
+    await expect(checked).toHaveText([/Valves/])
+    await page.keyboard.press('Escape')
+    await expect(cell(page, 0, 'multi')).not.toHaveClass(/is-editing/)
+    await expect(cell(page, 0, 'multi')).toHaveClass(/is-changed/)
+    await expect(cell(page, 0, 'multi')).not.toContainText('Pumps')
+    await expect(cell(page, 0, 'multi')).toBeFocused()
+    await page.keyboard.press('ControlOrMeta+z')
+    await expect(cell(page, 0, 'multi')).toContainText('Pumps')
+  })
+})

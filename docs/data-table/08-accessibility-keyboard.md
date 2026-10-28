@@ -31,7 +31,7 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 
 - **Roving tabindex:** aktif hücre DOM odağını tutar (TanStack `cell.getTabIndex()`: aktif 0, diğerleri −1); `aria-activedescendant` kullanılmaz (ARIA 1.2 referansın DOM'da olmasını ister, sanal listede garanti edilemez). Aktif satır `rangeExtractor` ile DOM'da tutulur; ok tuşu hedef hücreyi `scrollToIndex` ile getirip odaklar.
 - Hücredeki widget'a düzenlenemez hücrede `Enter`, her hücrede `→` ile girilir; `Esc` hücreye döner. Widget içindeyken ızgara tuşları devre dışıdır (DataTable ile aynı kural).
-- Düzenleme açılınca odak editör input'una geçer; Enter/Tab onaylar, Esc iptal eder, odak hücreye döner. Blur ile onaylama yoktur; portallı içerik (combobox listesi, popover) açıkken `Esc` önce onu kapatır, odak tetikleyiciye döner (07 §5).
+- Düzenleme açılınca odak editör input'una geçer; Enter/Tab onaylar, Esc iptal eder, odak hücreye döner. Blur ile onaylama yoktur; portallı içerik (combobox listesi, popover) açıkken `Esc` önce onu kapatır, odak tetikleyiciye döner (07 §5). İstisna: yerleşik `multiselect` editöründe `Esc` seçimleri kaydedip çıkar.
 - Formula bar input'u ayrı tab durağıdır (`aria-label="Value of List price for PS-045-C"`).
 
 ### Popover, menü, dialog

@@ -23,7 +23,7 @@ Her tasarımın light ve dark artboard'u vardır. Çoğu sayfada light solda, da
 | T5 · Selection | Checkbox kuralları, floating ve toolbar bulk bar, ⋯ menüsü, uygulamanın onay dialog'u, telefon | [03-datatable.md](03-datatable.md) §7, [04-datatable-telefon.md](04-datatable-telefon.md) |
 | T6 · Row detail | Expand, satır aksiyonları, satır menüsü, “Copied” (playground'da T1 içinde; T5 de) | [03-datatable.md](03-datatable.md) §8 |
 | T7 · Cell actions | Hücre aksiyonları (hover/odak), uygulamanın çizdiği hücreler | [03-datatable.md](03-datatable.md) §9 |
-| T8 · Cell types | 24 tip, skeleton biçimleri, 8 ton, yoğunluklar | [02-ortak-bilesenler.md](02-ortak-bilesenler.md) §8 |
+| T8 · Cell types | 23 tip, skeleton biçimleri, 8 ton, yoğunluklar | [02-ortak-bilesenler.md](02-ortak-bilesenler.md) §8 |
 | T9 · States | First load, refreshing, query change, empty, no results (3), error, stale, still loading, no rows on page, footer durumları | [03-datatable.md](03-datatable.md) §10–11 |
 | T11 · DataSheet | Toplu düzenleme ekranı, hücre durumları, editörler, doldurma, yapıştırma, hücre menüsü | [06-datasheet.md](06-datasheet.md) |
 | T12 · Saving & import | Kayıt dialog'u, kaydetme, kaydedildi, kısmen kaydedildi, çıkış/vazgeç, açılış, satır sınırı, Excel içe aktarma, telefon salt okunur | [06-datasheet.md](06-datasheet.md) §9–12 |

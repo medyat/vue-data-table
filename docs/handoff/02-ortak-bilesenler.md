@@ -62,8 +62,7 @@ Dokunma alanı: masaüstünde hücrenin tamamı (40 px sütun), telefonda 44 px.
 | Rozet | yükseklik yoğunluğa göre (24 / 22 / 20; popover listesinde 22; dialog listesinde 20), dolgu `0 8px`, yarıçap 999, 12 / 500, nokta 6 px + 6 px boşluk. Renkler `--dt-{ton}-bg/-fg/-dot` |
 | Boolean | Yes: green, nokta yerine `Check` 11 px; No: gray, `Minus`; `falseTone` (yıkıcı) No: red + `X` |
 | Bilinmeyen seçenek değeri | gray rozet, değer olduğu gibi (`qc_hold`) |
-| Tag (`tags` tipi) | 22 px, yarıçap 5, 1 px `--dt-line-2` kenar, zemin yok, metin `--dt-text-2`; renk verilmez |
-| +N | zemin `--dt-surface-3`, metin `--dt-text-2`. Avatar yığınında 20 px, yarıçap 999, 11.5 / 500; multiselect ve tags'te 22 px, yarıçap 5, 12 / 500; array'de 20 px, yarıçap 5 |
+| +N | zemin `--dt-surface-3`, metin `--dt-text-2`. Avatar yığınında 20 px, yarıçap 999, 11.5 / 500; multiselect'te 22 px, yarıçap 5, 12 / 500; array'de 20 px, yarıçap 5 |
 | “New” / “Update” (sheet) | 16 px, dolgu `0 5px`, yarıçap 4, 10.5 / 600; New `--dt-accent` + `--dt-on-accent`, Update `--dt-n-bg` + `--dt-n-fg` |
 | “Default” (görünüm) | 20 px, dolgu `0 6px`, yarıçap 5, `--dt-surface-3`, 11.5 / 500 |
 | Avatar | yoğunluğa göre 24 / 20 / 18; baş harfler `--dt-avatar-fs`, 600; kişinin tonu `-bg` / `-fg` |
@@ -141,7 +140,6 @@ Kurallar brief §5.1–5.2'de. Tasarımdaki görünüş ve varsayılan genişlik
 | boolean | rozet, asla checkbox (bkz. §4) | sol · 96 |
 | select | seçeneğin tonunda rozet; bilinmeyen değer gray | sol · 112–200 |
 | multiselect | iki rozet + `+N` (kalanı popover'da) | sol · 180 |
-| tags | outline tag'ler + `+N` | sol · 180 |
 | ajax | sunucudan etiket; kaydın URL'i varsa altı çizili link | sol · 180 |
 | user | avatar + ad; birden çok: 3 avatar + `+N`; boş: Unassigned | sol · 156 |
 | date | `Oct 24`; başka yıl `Mar 3, 2025`; gecikmiş `--dt-r-fg` + `· 3d late` | sol · 132 |

@@ -299,6 +299,13 @@ const onKeydown = (e: KeyboardEvent) => {
       step(e.shiftKey ? 'left' : 'right')
       return
     }
+    // Yerleşik multiselect: seçimler listede tik ile yapılır, Esc liste açıkken de kaydedip çıkar (07 §5).
+    if (e.key === 'Escape' && ed.def.type === 'multiselect' && !ed.def.editor) {
+      e.preventDefault()
+      sheet.edit.commit()
+      focusActive()
+      return
+    }
     if (e.defaultPrevented || target.getAttribute('aria-expanded') === 'true' || target.tagName === 'BUTTON') return
     if (e.key === 'Enter' && !(e.shiftKey && target.tagName === 'TEXTAREA')) {
       e.preventDefault()

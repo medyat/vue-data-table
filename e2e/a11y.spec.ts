@@ -53,3 +53,14 @@ test('axe · T11 sheet (düzenleme, hata balonu, dialog)', async ({ page }) => {
   await expect(page.locator('.dt-dialog-errors')).toBeVisible()
   await scan(page, "T11 hata dialog'u")
 })
+
+test('axe · sheet çoklu seçim editörü (multiselect)', async ({ page }) => {
+  await settings(page)
+  await page.setViewportSize({ width: 1600, height: 700 })
+  await page.goto('/t11-types')
+  const cell = (c: string, i = 0) => page.locator(`.dt-row[data-index="${i}"] .dt-cell[data-col="${c}"]`)
+  await cell('multi').click()
+  await page.keyboard.press('F2')
+  await expect(page.locator('.dt-cell-list')).toBeVisible()
+  await scan(page, 'multiselect editörü')
+})

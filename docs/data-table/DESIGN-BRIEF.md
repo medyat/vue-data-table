@@ -68,7 +68,7 @@ Tasarımlarda gerçekçi SWORS verisi kullanılır; sayı uydurulmaz, biçimler 
 | Varlık | Alanlar (tip) | Örnek satır |
 |---|---|---|
 | **Üretim emri** (DataTable) | number (id, birincil), product (string + SKU ikinci satır), customer.title (string), status (select: Draft/Planned/Released/In progress/On hold/Done), produced (percentage, bar), owner (user), due_date (date, overdue), plant (select), value (currency TRY), priority (select), created_at (datetime) | `WO-26-0418 · Hydraulic cylinder HC-80 · Kuzey Otomotiv · In progress · 68% · Ayşe K. · Oct 24 · Gebze · 412,800.00 TRY` |
-| **Ürün** (DataSheet) | sku (id, anahtar), name (string), category (select), unit (select: pcs/sets/kg), list_price (currency), cost (currency), vat (percentage), min_stock (int), lead_time (int, birim d), active (boolean), barcode (string), tags (tags) | `HC-080-S · Hydraulic cylinder HC-80 · Hydraulics · pcs · 1,650.00 · 1,120.00 · 20% · 10 · 14 · Yes` |
+| **Ürün** (DataSheet) | sku (id, anahtar), name (string), category (select), unit (select: pcs/sets/kg), list_price (currency), cost (currency), vat (percentage), min_stock (int), lead_time (int, birim d), active (boolean), barcode (string) | `HC-080-S · Hydraulic cylinder HC-80 · Hydraulics · pcs · 1,650.00 · 1,120.00 · 20% · 10 · 14 · Yes` |
 | **Müşteri** (DataTable) | code (id), title (string, birincil), city (string), segment (select), owner (user), balance (currency), last_order (datetime relative), email, phone | `C-0142 · Kuzey Otomotiv · Kocaeli · OEM · Mehmet D. · 84,200.00 TRY · 2 hours ago` |
 | **Fatura** (DataTable) | number (id), customer (string), issued_at (date), due_at (date, overdue), status (select: Draft/Sent/Paid/Overdue), total (currency), currency (string), paid (boolean) | `INV-26-1182 · Kuzey Otomotiv · Oct 3 · Oct 17 · Overdue · 542,179.50 TRY · No` |
 
@@ -242,7 +242,6 @@ Her sütunun bir `type`'ı vardır; tip hücre görünümünü, hizalamayı, sı
 | Seçim | `boolean` | Yes: yeşil rozet + ✓; No: nötr rozet + –; `falseTone: 'destructive'` → kırmızı + ✕ (D9) | sol / 96 |
 | | `select` | Seçeneğin tonunda yumuşak rozet (nokta + etiket) | sol / 112–200 |
 | | `multiselect` | En fazla 2 rozet, sonra `+N` (popover) | sol / 180 |
-| | `tags` | Nötr çerçeveli tag'ler (asla renkli değil), 2 + `+N` | sol / 180 |
 | | `ajax` | Sunucudan gelen etiket; kaydın URL'i varsa link | sol / 180 |
 | | `user` | Avatar + isim; çoklu → avatar yığını (3 + `+N`); boş → “Unassigned” (kesik çizgili avatar) | sol / 156 |
 | Tarih | `date` | `Oct 24` (yıl yalnızca başka yılsa); `overdue` ve geçmişse kırmızı metin + `· 3d late` | sol / 132 |
@@ -381,7 +380,7 @@ Filtre değildir: çip üretmez, sayaca girmez, görünüme kaydedilmez, görün
 | Metin | contains · doesn't contain · is · is not · starts with · ends with · is empty / is not empty | contains |
 | `id` | is / is any of (liste yapıştırılırsa otomatik) · contains | is any of |
 | `select`, `ajax`, `user`, `color` | is / is any of (1 değer tekil, 2+ çoğul) · is not / is none of · is empty; `user`'da “is me” | is any of |
-| `multiselect`, `tags` | is any of (“şunlardan birini içerir”) · is none of · is empty | is any of |
+| `multiselect` | is any of (“şunlardan birini içerir”) · is none of · is empty | is any of |
 | `boolean` | is Yes / is No · is empty (popover yok) | is Yes |
 | `date`, `datetime` | is · is before · is after · is within (hazır aralık veya özel) · is empty | is within |
 | `star` | at least · at most · is · is empty | at least |
@@ -611,7 +610,7 @@ Tık tek hücre; ⇧ + tık veya ⇧ + ok aralığı genişletir; sürükleme ar
 | Delete / Backspace (seçimde) | Seçili hücreleri temizler (read-only atlanır) |
 | Space (`boolean`) | Yes ↔ No, popover yok |
 
-Editörler filtre değer girişleriyle **aynı bileşenlerdir**: `string`/`text` metin (text büyük kutu, ⇧Enter yeni satır) · sayı/para sağa yaslı, `2240`, `2.240,00`, `2,240.00` kabul eder, para kodu soluk · `select`/`ajax` combobox (yazmak süzer, Enter seçer; listede olmayan değer → hata ““Pump” isn't an option” + yakın eşleşme varsa **Use Pumps**) · tarih yazılabilir (“24.10”, “+7d”, “today”) veya seçici · `boolean` Space · `multiselect`/`tags` çoklu combobox · `object` JSON metni. Uygulama bir sütun için **özel editör** verebilir (kategori ağacı, ürün arama); portallı popover/combobox kullanabilir.
+Editörler filtre değer girişleriyle **aynı bileşenlerdir**: `string`/`text` metin (text büyük kutu, ⇧Enter yeni satır) · sayı/para sağa yaslı, `2240`, `2.240,00`, `2,240.00` kabul eder, para kodu soluk · `select`/`ajax` combobox (yazmak süzer, Enter seçer; listede olmayan değer → hata ““Pump” isn't an option” + yakın eşleşme varsa **Use Pumps**) · tarih yazılabilir (“24.10”, “+7d”, “today”) veya seçici · `boolean` Space · `multiselect` çoklu combobox · `object` JSON metni. Uygulama bir sütun için **özel editör** verebilir (kategori ağacı, ürün arama); portallı popover/combobox kullanabilir.
 
 **Onaylama kuralları:** tek düzenlenen hücre vardır; **blur ile onaylama yoktur**. Onaylayanlar: Enter/Tab, başka hücreye tıklama, ızgara dışına tıklama; Esc iptal. Açık combobox listesinde ↓/Enter/Esc önce listeyi yönetir, ikinci Esc düzenlemeyi iptal eder; popover açıkken odak oraya gidebilir, düzenleme sürer. Hücredeki aksiyon düğmeleri düzenleme başlatmaz.
 
@@ -785,7 +784,6 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 |---|---|---|---|
 | Q2 | DataSheet'te sunucuda var olan ama listede olmayan anahtar eklenince (Update satırı) boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet; yalnızca kullanıcının değiştirdiği alanlar gider | Faz 6c |
 | Q3 | Excel içe aktarmada boş hücre mevcut değeri silsin mi? | Hayır, atlanır | Faz 6d |
-| — | `tags` filtresinde seçenek kaynağı (yüklü satırlardan) | Yüklü satırlardan | Faz 3a |
 | — | DataSheet'te yükleme/taşıma hatasının gösterimi (paket prop'u yok, uygulamanın banner'ı) | Uygulamanın | Faz 6c |
 | — | Yükleme süreleri (150 / 400 / 10.000 ms) gerçek SWORS ekranlarında | Paket sabitleri | Faz 7 |
 
@@ -843,7 +841,7 @@ Her görev bağımsız verilebilir. Her birinde: okunacak bölümler, tasarlanac
 
 ### T8 · Hücre tipleri kataloğu
 - **Oku:** 5.1–5.2, 4.7, 4.3.
-- **Tasarla:** 24 tipin hücre görünümü (boş değer, negatif, overdue, relative, bar, fill, falseTone, +N, avatar yığını, Unassigned), tipe göre skeleton'lar, ton paleti, üç yoğunluk, light/dark.
+- **Tasarla:** 23 tipin hücre görünümü (boş değer, negatif, overdue, relative, bar, fill, falseTone, +N, avatar yığını, Unassigned), tipe göre skeleton'lar, ton paleti, üç yoğunluk, light/dark.
 
 ### T9 · Durum ekranları
 - **Oku:** 5.6, 6.14, 6.13.

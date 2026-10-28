@@ -96,7 +96,7 @@ Sıra: `[1] [2] [3] ……… [5] [6] │ [7]`. 1–3 arası 8 px, 5–6 arası 
 | `int`, `float`, `percentage`, `star` | 112 px (`percentage` bar: 156) |
 | `currency` | 148 px |
 | `select` | En uzun seçenek + 40 px, 112–200 arası |
-| `multiselect`, `tags`, `ajax`, `object` | 180 px |
+| `multiselect`, `ajax`, `object` | 180 px |
 | `user` | 156 px |
 | `date` | 132 px · `datetime` 156 px |
 | `boolean` | 96 px |

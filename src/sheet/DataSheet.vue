@@ -38,6 +38,7 @@ import {
   nextTick,
   onBeforeUnmount,
   onMounted,
+  provide,
   ref,
   shallowRef,
   type Component,
@@ -74,6 +75,8 @@ import NumberCell from './editors/NumberCell.vue'
 import OptionCell from './editors/OptionCell.vue'
 import TextCell from './editors/TextCell.vue'
 import DateCell from './editors/DateCell.vue'
+import MultiCell from './editors/MultiCell.vue'
+import { SHEET_EDITOR_KEY } from './editors/context'
 import { fillValues } from './fill'
 import ImportDialog, { type ImportPayload } from './ImportDialog.vue'
 import { inferDecimal, inputText, parseInput, type ParseEnv } from './parse'
@@ -241,8 +244,8 @@ const visibleCols = computed(() => layout.columns.value)
 
 const readOnlyNow = computed(() => loadingNow.value || savingNow.value || readOnlyDevice)
 
-// Editörler filtre değer girişleriyle aynı aileden (07 §5); `boolean` editör açmaz (Space). multiselect/tags/ajax/user/
-// object/array için yalnızca özel editör (`ColumnDef.editor`); yapıştırma yine de çalışır.
+// Editörler filtre değer girişleriyle aynı aileden (07 §5); `boolean` editör açmaz (Space). ajax/user/object/array için
+// yalnızca özel editör (`ColumnDef.editor`).
 const EDITORS: Partial<Record<ColumnType, Component>> = {
   string: TextCell,
   text: TextCell,
@@ -259,18 +262,17 @@ const EDITORS: Partial<Record<ColumnType, Component>> = {
   currency: NumberCell,
   star: NumberCell,
   select: OptionCell,
+  multiselect: MultiCell,
   date: DateCell,
   datetime: DateCell,
 }
-/** Yerleşik editörü olmayan ama yapıştırma/temizleme ile değişebilen tipler. */
-const PASTE_ONLY = new Set<ColumnType>(['multiselect', 'tags'])
 const editorFor = (def: ColumnDef<Row>): Component | null => def.editor ?? EDITORS[def.type] ?? null
 /** Sütunlar varsayılan salt okunur; anahtar sütun yüklenmiş satırlarda her zaman (yeni satırda açık); yüklenirken, kaydederken ve telefonda hiçbiri. */
 const canEdit = (row: Row, def: ColumnDef<Row>): boolean => {
   if (readOnlyNow.value) return false
   const isNew = store.isNew(store.keyOf(row))
   if (def.id === props.keyColumn) return isNew
-  if (def.type !== 'boolean' && !editorFor(def) && !PASTE_ONLY.has(def.type)) return false
+  if (def.type !== 'boolean' && !editorFor(def)) return false
   return typeof def.editable === 'function' ? def.editable(store.current(row), { isNew }) : def.editable === true
 }
 
@@ -282,6 +284,7 @@ const parseEnv = (locale = ctx.locale): ParseEnv => ({
   noWord: i18n.t('common.no'),
 })
 const edit = useSheetEditing<Row>({ store, canEdit, parse: (def, text) => parseInput(def, text, parseEnv()) })
+provide(SHEET_EDITOR_KEY, { seed: () => edit.editing.value?.seed })
 const grid = useTemplateRef<InstanceType<typeof SheetGrid>>('grid')
 const counts = store.counts
 const fmtEnv: FormatEnv = { fmt, i18n, today: new Date(), labels: new RemoteLabels() }
@@ -376,8 +379,6 @@ const copyText = (def: ColumnDef<Row>, row: Row, value: unknown): string => {
       return value instanceof Date ? value.toISOString() : String(value)
     case 'multiselect':
       return (value as unknown[]).map((v) => optionLabel(def.options, v)).join('; ')
-    case 'tags':
-      return (value as string[]).join('; ')
     case 'string':
     case 'text':
     case 'uppercase':

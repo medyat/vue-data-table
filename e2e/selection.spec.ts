@@ -66,7 +66,7 @@ test.describe('T1 · seçim ve bulk bar', () => {
     await box(page, 0).click()
     await box(page, 1).click()
     await bulk(page).getByRole('button', { name: 'Release' }).click()
-    expect(logs).toContain('bulk release 2')
+    expect(logs).toContainEqual(expect.stringMatching(/^bulk release 2\b/)) // T1 'failed N' sayacını da yazar (D35)
     await page.keyboard.press('r')
     await expect(page.locator('.dt-footer-left')).toContainText('Updated just now')
     await expect(bulk(page)).toContainText('2 selected')

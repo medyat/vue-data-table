@@ -1207,3 +1207,10 @@
 .dt-sheet.is-phone .dt-sheet-grid .dt-cell[data-col] {
   cursor: default;
 }
+
+/* Çoklu seçim editörü (T11): seçili seçeneğin tiki. */
+.dt-cell-option-check {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--dt-accent);
+}

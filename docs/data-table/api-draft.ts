@@ -66,14 +66,14 @@ export declare function createDataTable(options?: DataTableOptions): Plugin
 /* 2. Sütun tanımı                                                     */
 /* ------------------------------------------------------------------ */
 
-/** 24 tip. `type` zorunludur; veriden çıkarsama yoktur. */
+/** 23 tip. `type` zorunludur; veriden çıkarsama yoktur. */
 export type ColumnType =
   // sayı
   | 'int' | 'float' | 'percentage' | 'star' | 'currency'
   // metin
   | 'string' | 'text' | 'uppercase' | 'lowercase' | 'phone' | 'color' | 'email' | 'url' | 'id'
   // seçim
-  | 'boolean' | 'select' | 'multiselect' | 'tags' | 'ajax' | 'user'
+  | 'boolean' | 'select' | 'multiselect' | 'ajax' | 'user'
   // tarih
   | 'date' | 'datetime'
   // yapısal (object: sıralanmaz, filtrelenmez — özel içerik için kaçış kapısı)
@@ -269,7 +269,6 @@ export type ColumnDef<Row = any> =
       options: OptionDef[]
       optionEnabled?: OptionEnabled<Row>
     })
-  | (BaseColumn<Row, string[] | null> & { type: 'tags' })
   | (BaseColumn<Row, string | number | null> & { type: 'ajax'; remote: RemoteOptions })
   | (BaseColumn<Row, string | number | Array<string | number> | null> & {
       type: 'user'
@@ -287,7 +286,7 @@ export type ColumnDef<Row = any> =
 /* 3. Filtre, sıralama, sorgu, talep                                   */
 /* ------------------------------------------------------------------ */
 
-/** 18 operatör. Çok değerli hücrelerde (multiselect, tags) `in` "şunlardan birini içerir" anlamındadır. */
+/** 18 operatör. Çok değerli hücrelerde (multiselect) `in` "şunlardan birini içerir" anlamındadır. */
 export type FilterOp =
   | 'is_empty' | 'is_not_empty'
   | 'eq' | 'neq'

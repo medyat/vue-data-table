@@ -3,7 +3,7 @@ import type { Component, VNodeChild } from 'vue'
 import type { Density, IsoDate, Plural, Tone } from './core'
 import type { FilterOp } from './query'
 
-/** 24 tip. `type` zorunludur; veriden çıkarsama yoktur. */
+/** 23 tip. `type` zorunludur; veriden çıkarsama yoktur. */
 export type ColumnType =
   // sayı
   | 'int'
@@ -25,7 +25,6 @@ export type ColumnType =
   | 'boolean'
   | 'select'
   | 'multiselect'
-  | 'tags'
   | 'ajax'
   | 'user'
   // tarih
@@ -199,7 +198,6 @@ export type ColumnDef<Row = any> =
       options: OptionDef[]
       optionEnabled?: OptionEnabled<Row>
     })
-  | (BaseColumn<Row, string[] | null> & { type: 'tags' })
   | (BaseColumn<Row, string | number | null> & { type: 'ajax'; remote: RemoteOptions })
   | (BaseColumn<Row, string | number | Array<string | number> | null> & {
       type: 'user'

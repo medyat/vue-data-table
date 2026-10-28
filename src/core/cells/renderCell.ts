@@ -1,4 +1,4 @@
-// 24 tipin hücre içeriği (03, brief §5.1, T8). Kabuk (hizalama, kesme, yoğunluk, zemin) Cell.vue'da; burada yalnızca içerik.
+// 23 tipin hücre içeriği (03, brief §5.1, T8). Kabuk (hizalama, kesme, yoğunluk, zemin) Cell.vue'da; burada yalnızca içerik.
 import { PhArrowUpRight, PhArrowsOutSimple, PhCheck, PhMinus, PhStar, PhX } from '@phosphor-icons/vue'
 import { h, type Component, type VNodeChild } from 'vue'
 import type { ColumnDef, OptionDef, UserOption } from '../../types/columns'
@@ -40,7 +40,6 @@ export function badge(tone: ToneRef, label: string, icon?: Component): VNodeChil
     h('span', { class: 'dt-badge-label' }, label),
   ])
 }
-const tag = (label: string): VNodeChild => h('span', { class: 'dt-tag' }, label)
 const more = (count: number, tip: string, cls = 'dt-more'): VNodeChild =>
   h('span', { class: cls, 'data-dt-tip': tip }, `+${count}`)
 const mono = (text: string): VNodeChild => h('span', { class: 'dt-mono' }, text)
@@ -204,13 +203,6 @@ export function renderCellContent<Row extends object>(
       return h('span', { class: 'dt-badges' }, [
         ...shown,
         vals.length > 2 ? more(vals.length - 2, fmt.list(vals.slice(2).map((v) => optionLabel(def.options, v)))) : null,
-      ])
-    }
-    case 'tags': {
-      const vals = value as string[]
-      return h('span', { class: 'dt-badges' }, [
-        ...vals.slice(0, 2).map(tag),
-        vals.length > 2 ? more(vals.length - 2, fmt.list(vals.slice(2))) : null,
       ])
     }
     case 'ajax': {

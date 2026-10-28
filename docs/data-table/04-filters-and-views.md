@@ -28,7 +28,7 @@ type TableQuery = { search: string; filters: FilterCondition[]; sort: SortRule[]
 | `gt` `gte` `lt` `lte` | `number`; `currency` sütununda para birimi ayrı `currency` alanında (çipteki ikinci parça) | `{ op: 'gt', value: 100000, currency: 'TRY' }` |
 | `between` | `[min, max]`, uçlar dahil; biri `null` olabilir | `[100000, 250000]` |
 | `contains` … `ends_with` | `string` (büyük/küçük harf duyarsız) | `'HC-'` |
-| `in`, `not_in` | `Array<string \| number>` (`user` için `'@me'` olabilir). Çok değerli hücrelerde (`multiselect`, `tags`) “şunlardan birini içerir / hiçbirini içermez” | `['in_progress', 'released']` |
+| `in`, `not_in` | `Array<string \| number>` (`user` için `'@me'` olabilir). Çok değerli hücrelerde (`multiselect`) “şunlardan birini içerir / hiçbirini içermez” | `['in_progress', 'released']` |
 | `before`, `after` | ISO tarih veya `{ preset: 'today' }` | `{ preset: 'today' }` |
 | `within` | `{ preset: DatePreset }` veya `{ from, to }` (ISO, uçlar dahil) | `{ preset: 'last_30_days' }` |
 | `is_empty`, `is_not_empty` | yok | — |
@@ -77,7 +77,7 @@ Sunucu, `columns` listesinde `filterable` olmayan bir sütun veya tipine uymayan
 | metin tipleri | `contains` |
 | `id` | `in` |
 | `select`, `ajax`, `user`, `color` | `in` |
-| `multiselect`, `tags` | `in` |
+| `multiselect` | `in` |
 | `date`, `datetime` | `within` |
 | `boolean` | `eq` + `true` — popover açılmaz, çip doğrudan “is Yes” olarak uygulanır |
 | `star` | `gte` |

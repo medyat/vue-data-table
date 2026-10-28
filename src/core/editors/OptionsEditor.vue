@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Seçenek editörü (04 §3, T2-02/03): select · multiselect · tags · color · ajax · user. Her işaretleme anında uygulanır;
+// Seçenek editörü (04 §3, T2-02/03): select · multiselect · color · ajax · user. Her işaretleme anında uygulanır;
 // hover'da "Only"; `user`'da Me ve Unassigned en üstte; uzak kaynaklar yazdıkça arar ve 20'şer yükler (03).
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
@@ -14,7 +14,7 @@ const props = defineProps<{
   column: ColumnDef
   op: FilterOp
   modelValue: Array<string | number>
-  /** tags/color: yüklü satırlardaki mevcut değerler (uzaktan öneri yok, D3). */
+  /** color: yüklü satırlardaki mevcut değerler (uzaktan öneri yok, D3). */
   rows: object[]
   labels: RemoteLabels
 }>()
@@ -42,7 +42,7 @@ const staticOptions = computed<OptionDef[]>(() => {
   if (d.type === 'select' || d.type === 'multiselect') return d.options
   if (d.type === 'user' && d.options) return [...d.options].sort((a, b) => a.label.localeCompare(b.label))
   if (d.type === 'color' && d.palette) return d.palette.map((value) => ({ value, label: value }))
-  if (d.type === 'tags' || d.type === 'color') return distinctFromRows()
+  if (d.type === 'color') return distinctFromRows()
   return []
 })
 
@@ -145,7 +145,6 @@ const Opt = (p: { o: OptionDef }) =>
             <span class="dt-swatch" :style="{ background: String(o.value) }" aria-hidden="true" />
             <span class="dt-mono">{{ o.label }}</span>
           </template>
-          <span v-else-if="def.type === 'tags'" class="dt-tag">{{ o.label }}</span>
           <template v-else>{{ o.label }}</template>
         </span>
         <button type="button" class="dt-btn dt-btn-xs dt-option-only" tabindex="-1" @click.prevent="only(o.value)">

@@ -6,7 +6,7 @@
 
 ### DataTable
 
-- 24 hücre tipi, sanal satırlar, sabit sütunlar, sütun menüsü (sırala, filtrele, sabitle, sığdır, taşı, gizle), yoğunluk ve dikey çizgiler (tercih adapter'ı).
+- 23 hücre tipi, sanal satırlar, sabit sütunlar, sütun menüsü (sırala, filtrele, sabitle, sığdır, taşı, gizle), yoğunluk ve dikey çizgiler (tercih adapter'ı).
 - Sunucu ve istemci modu; `@request` / `@count`; durumlar (ilk yükleme, sorgu değişimi, yenileme, hata, stale, boş).
 - Filtre çipleri (operatör + tipe göre editör, hazır tarih aralıkları), toolbar araması, sistem ve kişisel görünümler (`viewsAdapter`), Display.
 - Seçim (sayfa kapsamlı), bulk bar, satır menüsü, satır detayı (expand), `row-click` / `row-open`.
@@ -27,4 +27,4 @@
 ### Bilinen sınırlar
 
 - Telefonda satır ⋯ menüsü ve sütun başlığı menüsü alt sayfa değil, açılır menü olarak kalır; Filters alt sayfasındaki Sort tek kuraldır (ikincil kurallar Show results'ta düşer); kişi listesindeki Me satırında gerçek ad gösterilmez. NVDA/VoiceOver turu elle yapılmadı.
-- Sheet'te `multiselect`/`tags`/`ajax`/`user` hücreleri yalnızca özel editörle düzenlenir; `Alt↓` seçici açma yok.
+- Sheet'te `ajax`/`user` hücreleri yalnızca özel editörle düzenlenir, `multiselect` yerleşik editörle (T11); `Alt↓` seçici açma yok.

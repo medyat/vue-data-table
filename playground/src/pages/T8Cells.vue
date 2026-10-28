@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// T8 · Cell types: 24 tip, her grupta default / varyant / boş satırları (design/T08-cell-types).
+// T8 · Cell types: 23 tip, her grupta default / varyant / boş satırları (design/T08-cell-types).
 import { DataTable, type ColumnDef } from '@swors/data-table'
 import { owners, statusOptions } from '../data/orders'
 import { settings } from '../settings'
@@ -86,7 +86,6 @@ const groups: Array<{ title: string; columns: Array<ColumnDef<Sample>>; rows: Sa
           { value: 'qa', label: 'QA', tone: 'green' },
         ],
       },
-      { id: 'tags', header: 'tags', type: 'tags' },
       { id: 'ajax', header: 'ajax', type: 'ajax', remote, href: (r) => (r.ajax === 'c1' ? '#' : undefined) },
       { id: 'user', header: 'user', type: 'user', options: owners },
       { id: 'users', header: 'user · multiple', type: 'user', options: owners, multiple: true },
@@ -98,7 +97,6 @@ const groups: Array<{ title: string; columns: Array<ColumnDef<Sample>>; rows: Sa
         boolD: true,
         select: 'in_progress',
         multi: ['welding', 'cnc', 'paint', 'qa'],
-        tags: ['export', 'urgent', 'q4'],
         ajax: 'c1',
         user: 'u1',
         users: ['u1', 'u2', 'u5', 'u4', 'u3'],
@@ -109,7 +107,6 @@ const groups: Array<{ title: string; columns: Array<ColumnDef<Sample>>; rows: Sa
         boolD: false,
         select: 'qc_hold',
         multi: ['welding'],
-        tags: ['export'],
         ajax: 'c2',
         user: 'u4',
         users: ['u2'],

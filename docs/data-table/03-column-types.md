@@ -4,7 +4,7 @@ Tasarım referansı: `DESIGN-BRIEF.md` §5.1 ve görev paketi T8.
 
 Her sütunun bir `type` değeri vardır (zorunlu; veriden çıkarsama yok). Tip; hücre görünümünü, hizalamayı, sıralama fonksiyonunu, filtre operatörlerini, filtre değer girişini, DataSheet editörünü ve dışa aktarma metnini **birlikte** belirler. Filtre değer girişi ile sheet editörü aynı bileşendir (`core/editors`). Tek fark: `select` gibi tekli seçimler filtrede çoklu seçime izin verir.
 
-**24 tip:** 19'u mevcut sistemden gelir, 5'i (`currency`, `user`, `email`, `url`, `id`) yeni öneridir. `custom` tipi yoktur; özel içerik `cell`, hücre aksiyonları `actions`, özel editör `editor` ile tanımlanır (aşağıda **Özelleştirme**). Tipe uymayan veri için kaçış kapısı `object`'tir.
+**23 tip:** 18'i mevcut sistemden gelir, 5'i (`currency`, `user`, `email`, `url`, `id`) yeni öneridir. `custom` tipi yoktur; özel içerik `cell`, hücre aksiyonları `actions`, özel editör `editor` ile tanımlanır (aşağıda **Özelleştirme**). Tipe uymayan veri için kaçış kapısı `object`'tir.
 
 Sıralama ve filtreleme her zaman **ham değer** üzerinden çalışır; gösterim (`cell`, biçimlendirme) bunları etkilemez.
 
@@ -55,7 +55,6 @@ Sıralama ve filtreleme her zaman **ham değer** üzerinden çalışır; göster
 | `boolean` | Yes: yeşil rozet + ✓ ikon. No: nötr rozet + – ikon. `falseTone: 'destructive'` → No kırmızı + ✕ | `falseTone` | is (Yes / No), is empty — çipte operatör “is”, değer “Yes” | Yes/No segmented — popover yok; sheet'te Space değiştirir |
 | `select` | Seçeneğin tonunda yumuşak rozet (nokta + etiket). Açık/koyu tema renkleri ayrı verilebilir | `options[]` (`value, label, tone` veya `{ light, dark }`); `optionEnabled(option, row)` satıra göre seçenek kapatır (sheet editörü ve doğrulama; 07 §5) | is any of, is none of, is empty | Combobox — filtrede çoklu seçim, sheet'te tekli. Arama, `Only` kısayolu (hover) |
 | `multiselect` | En fazla 2 rozet, sonra `+N` (popover) | `options[]`, `optionEnabled` | is any of (`in`: şunlardan birini içerir), is none of (`not_in`), is empty | ComboboxMultiple |
-| `tags` | Nötr çerçeveli tag'ler (asla renkli değil), 2 + `+N`; seçenekler yüklü satırlardaki mevcut değerlerden (uzaktan öneri yok, D3) | — | is any of (`in`), is none of (`not_in`), is empty | ComboboxMultiple (mevcut tag'lerde arar, yeni tag yazılabilir) |
 | `ajax` | Sunucudan gelen etiket; kaydın URL'i varsa link | `remote` (`search(q, page)`, `resolve(ids)`) | is any of, is none of, is empty | Async combobox: yazdıkça arar, 20'şer yükler, yükleniyor/boş durumları |
 | `user` **(yeni)** | Avatar + isim; çoklu → avatar yığını (3 + `+N`); boş → “Unassigned” (kesik çizgili avatar) | `remote` veya `options` | is any of, is none of, **is me**, is empty | Kişi combobox'u, “Me” en üstte, “Unassigned” seçeneği |
 
@@ -126,7 +125,7 @@ Sorguya giden anahtar kümesi küçük tutulur (**18 operatör**); aynı anahtar
 | `gt` `gte` `lt` `lte` | sayı | `>` `≥` `<` `≤` · `star` için `gte` = at least, `lte` = at most | sayı, `star` |
 | `between` | `[min, max]` (uçlar dahil) | between | sayı |
 | `contains` `not_contains` `starts_with` `ends_with` | metin | contains · doesn't contain · starts with · ends with | metin tipleri, `array` (`contains`) |
-| `in` `not_in` | dizi | **1 değer: is / is not · 2+ değer: is any of / is none of** · çok değerli hücrede “şunlardan birini içerir / hiçbirini içermez” | `select`, `ajax`, `user`, `color`, `id`, `multiselect`, `tags` |
+| `in` `not_in` | dizi | **1 değer: is / is not · 2+ değer: is any of / is none of** · çok değerli hücrede “şunlardan birini içerir / hiçbirini içermez” | `select`, `ajax`, `user`, `color`, `id`, `multiselect` |
 | `before` `after` | tarih veya hazır değer (`today`) | is before · is after | `date`, `datetime` |
 | `within` | hazır aralık veya `{ from, to }` | is within | `date`, `datetime` |
 | `is_empty` `is_not_empty` | — | is empty · is not empty | hepsi |

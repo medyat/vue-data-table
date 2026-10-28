@@ -293,15 +293,13 @@ describe('pano ve doldurma yardımcıları (07 §7–8)', () => {
     expect(inferDecimal(['1.250', '3'])).toBeNull()
     expect(inferDecimal(['1,250'])).toBeNull()
   })
-  it('boolean, tags ve multiselect yapıştırma çözümlemesi', async () => {
+  it('boolean ve multiselect yapıştırma çözümlemesi', async () => {
     const { parseInput } = await import('../src/sheet/parse')
     const env = { locale: 'en', today: new Date(), todayWord: 'Today', yesWord: 'Yes', noWord: 'No' }
     const bool: ColumnDef = { id: 'b', header: 'B', type: 'boolean' }
     expect(parseInput(bool, 'yes', env)).toBe(true)
     expect(parseInput(bool, '0', env)).toBe(false)
     expect(parseInput(bool, 'maybe', env)).toBe('maybe')
-    const tags: ColumnDef = { id: 't', header: 'T', type: 'tags' }
-    expect(parseInput(tags, 'a; b, c', env)).toEqual(['a', 'b', 'c'])
     const multi: ColumnDef = { id: 'm', header: 'M', type: 'multiselect', options: [{ value: 'x', label: 'Ex' }] }
     expect(parseInput(multi, 'ex; Zed', env)).toEqual(['x', 'Zed'])
   })

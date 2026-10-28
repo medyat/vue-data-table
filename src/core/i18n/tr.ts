@@ -66,7 +66,6 @@ export const tr: Record<string, string> = {
   "type.boolean": "Evet / Hayır",
   "type.option": "Seçenek",
   "type.options": "Seçenekler",
-  "type.tags": "Etiketler",
   "type.relation": "İlişki",
   "type.person": "Kişi",
   "type.date": "Tarih",

@@ -32,7 +32,6 @@ export const OPERATORS: Record<ColumnType, FilterOp[]> = {
   boolean: ['eq', ...EMPTY],
   select: LIST,
   multiselect: LIST,
-  tags: LIST,
   ajax: LIST,
   user: LIST,
   date: DATE,

@@ -66,7 +66,6 @@ export const en: Record<string, string> = {
   "type.boolean": "Yes / No",
   "type.option": "Option",
   "type.options": "Options",
-  "type.tags": "Tags",
   "type.relation": "Relation",
   "type.person": "Person",
   "type.date": "Date",

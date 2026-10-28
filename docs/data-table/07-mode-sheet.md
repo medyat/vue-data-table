@@ -117,7 +117,7 @@ Editörler filtre değer girişleriyle **aynı bileşenler** (03):
 - `select` · `ajax` — combobox; yazmak süzer, Enter seçer. Listede olmayan değer → hata “**“Pump” isn't an option**”, yakın eşleşme varsa balonda **Use Pumps** düğmesi. `optionEnabled(option, row)` verilmişse satıra göre kapalı seçenekler listede görünmez (satırın taslak hali; aynı satırda başka hücre değişince liste yeniden hesaplanır); yapıştırma/doldurma ile gelen kapalı değer aynı hatayı verir, ama yalnızca **değişen** hücrede — mevcut değer kural değişince hata olmaz. `options` tam liste kalır: etiket, filtre ve dışa aktarma ondan okur.
 - `date` · `datetime` — “24.10”, “24.10.2026”, “+7d”, “today” yazılabilir veya seçici açılır.
 - `boolean` — Space değiştirir.
-- `multiselect` · `tags` — ComboboxMultiple; yapıştırmada `;` veya `,` ayrılmış liste.
+- `multiselect` — hücre içinde arama kutusu, altta seçenek listesi (reka Combobox, `multiple`). Yazmak süzer, Enter vurgulu seçeneği aç/kapar; eşleşen seçenek yoksa liste açılmaz; listede olmayan metin yok sayılır ve Enter onaylar (listede olmayan değer yalnızca yapıştırmayla girer ve “isn't an option” hatası olur). Editörde chip yok, yalnızca arama kutusu; seçim listeyi açık tutar, seçili seçenekler listede tik ile kalır, tekrar seçmek kaldırır. **Esc iptal etmez**: liste açıkken de seçimleri kaydedip düzenlemeden çıkar (geri almak için ⌘Z); Tab da onaylar. **Yazmaya başlamak mevcut değeri silmez**, yazılan harf aramaya gider (tablodaki genel kuralın istisnası). Yapıştırmada `;` veya `,` ayrılmış liste.
 - `object` — yalnızca `editable: true` verilmişse JSON metni olarak düzenlenir (gelişmiş kullanım).
 
 Doğrulama hücre onaylanınca anında çalışır: tip çözümleme → `required` → `validate` (hata) → `warn` (uyarı). Bir hücre değişince **aynı satırın** diğer hücrelerinin doğrulaması da yenilenir (çapraz kural: “Cost can't be higher than list price (214.50)”).
@@ -126,7 +126,7 @@ Doğrulama hücre onaylanınca anında çalışır: tip çözümleme → `requir
 
 - Tek `editing` hücresi vardır; editör yalnızca düzenlenirken render edilir, taslak değer depoda durur (sanal kaydırmada kaybolmaz).
 - **Blur ile onaylama yoktur** (portallı bileşenler yanlış tetiklerdi). Onaylayan eylemler: `Enter`/`Tab` (editörde), başka hücreye `mousedown`, ızgara dışına `pointerdown` (reka katmanları — combobox listesi, popover — dışarı sayılmaz). `Esc` iptal eder.
-- Editördeki `Enter`/`Esc`, hedef `aria-expanded="true"` (açık combobox) ise, olay `defaultPrevented` ise ya da hedef input dışı bir buton ise sheet'e ulaşmaz: önce widget çalışır, ikinci `Esc` düzenlemeyi iptal eder.
+- Editördeki `Enter`/`Esc`, hedef `aria-expanded="true"` (açık combobox) ise, olay `defaultPrevented` ise ya da hedef input dışı bir buton ise sheet'e ulaşmaz: önce widget çalışır, ikinci `Esc` düzenlemeyi iptal eder. İstisna: yerleşik `multiselect` editöründe `Esc` her zaman kaydedip çıkar.
 - `ColumnDef.editor` ile özel editör: props `{ modelValue, row, column }`, emit `update:modelValue`; Enter/Tab/Esc'i sheet yönetir; reka Popover/Combobox gibi portallı içerik serbesttir ve reka'nın public olayları (`escapeKeyDown`, `focusOutside`, `interactOutside`) kullanılır. Portallı içeriğin köküne `dt-sheet-layer` sınıfı verilir: oradaki tık "ızgara dışı" sayılmaz, düzenleme sürer (yerleşik combobox ve takvim de böyle).
 - Hücredeki `actions` ve `cell` içindeki düğmeler düzenleme başlatmaz: düzenleme yalnızca hücre gövdesinden (çift tık, F2, yazma) açılır; düğmeye `mousedown` hücreyi aktif yapar ama düzenlemez.
 

@@ -53,8 +53,6 @@ export function formatCell<Row extends object>(def: ColumnDef<Row>, row: Row, va
       return optionLabel(def.options, value)
     case 'multiselect':
       return fmt.list((value as unknown[]).map((v) => optionLabel(def.options, v)))
-    case 'tags':
-      return fmt.list((value as string[]).map(String))
     case 'ajax':
       return env.labels.label(def.id as string, def.remote, value as string | number)
     case 'user': {

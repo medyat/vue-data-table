@@ -127,18 +127,6 @@
   vertical-align: middle;
 }
 
-.dt-tag {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 6px;
-  border: 1px solid var(--dt-line-2);
-  border-radius: var(--dt-radius-sm);
-  color: var(--dt-text-2);
-  font-size: 12px;
-  line-height: 1;
-}
-
 .dt-more {
   display: inline-flex;
   align-items: center;

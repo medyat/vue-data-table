@@ -111,14 +111,11 @@ describe('seçim tipleri', () => {
     expect(u.find('.dt-badge').classes()).toContain('dt-tone-gray')
     expect(u.text()).toBe('qc_hold')
   })
-  it('multiselect ve tags: 2 + N', () => {
+  it('multiselect: 2 + N', () => {
     const m = render(col('multiselect', { options }), ['in_progress', 'done', 'custom'])
     expect(m.findAll('.dt-badge')).toHaveLength(2)
     expect(m.find('.dt-more').text()).toBe('+1')
     expect(m.find('.dt-more').attributes('data-dt-tip')).toBe('Custom')
-    const t = render(col('tags'), ['export', 'urgent', 'x', 'y'])
-    expect(t.findAll('.dt-tag')).toHaveLength(2)
-    expect(t.find('.dt-more').text()).toBe('+2')
   })
   it('user: tek, çoklu (3 + N), Unassigned', () => {
     const users = [

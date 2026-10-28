@@ -13,6 +13,8 @@ export interface EditState<Row extends object> {
   inCell: boolean
   /** Formül çubuğundan yazılan ham metin (çözümlenmiş değerden geri üretilmez: "2," yazarken virgül kaybolmasın). */
   text?: string
+  /** `multiselect` editörü yazarak açıldıysa: yazılan harf aramaya gider, değer korunur. */
+  seed?: string
 }
 
 export interface SheetEditingOptions<Row extends object> {
@@ -29,6 +31,11 @@ export function useSheetEditing<Row extends object>(o: SheetEditingOptions<Row>)
     if (!o.canEdit(row, def)) return false
     // boolean'ın düzenleme modu yok (07 §5): Space / çift tık çevirir; özel editör verilmişse o açılır.
     if (def.type === 'boolean' && !def.editor) return false
+    // Çoklu değerde yazmak chip'leri silmez (06 §7 T11-07): harf arama kutusuna gider.
+    if (opts.replace !== undefined && !def.editor && def.type === 'multiselect') {
+      editing.value = { row, def, value: o.store.read(row, def), inCell: opts.inCell, seed: opts.replace }
+      return true
+    }
     const value = opts.replace !== undefined ? o.parse(def, opts.replace) : o.store.read(row, def)
     editing.value = { row, def, value, inCell: opts.inCell, text: opts.replace }
     return true

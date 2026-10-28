@@ -9,7 +9,6 @@ interface Order {
   qty: number | null
   status: 'draft' | 'done'
   dueAt: string
-  tags: string[]
 }
 
 export const ok: Array<ColumnDef<Order>> = [
@@ -31,7 +30,6 @@ export const ok: Array<ColumnDef<Order>> = [
     cell: ({ value }) => String(value satisfies string | number | null),
   },
   { id: 'dueAt', header: 'Due', type: 'date', overdue: (r) => r.status !== 'done' },
-  { id: 'tags', header: 'Tags', type: 'tags', cell: ({ value }) => (value ?? []).join(', ') },
   { id: 'number', header: 'No', type: 'id', primary: true, href: (r) => `/orders/${r.id}` },
 ]
 

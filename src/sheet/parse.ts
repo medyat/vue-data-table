@@ -88,8 +88,6 @@ export function parseInput(def: ColumnDef, text: string, env: ParseEnv): unknown
       return matchOption(def.options, s, env.locale)
     case 'multiselect':
       return splitList(s).map((part) => matchOption(def.options, part, env.locale))
-    case 'tags':
-      return splitList(s)
     case 'boolean': {
       const v = fold(s, env.locale)
       if (['true', '1', 'yes', fold(env.yesWord, env.locale)].includes(v)) return true

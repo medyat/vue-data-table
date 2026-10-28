@@ -1,7 +1,7 @@
 // api-draft.ts §3'ten türetildi: filtre, sıralama, sütun düzeni.
 import type { IsoDate } from './core'
 
-/** 18 operatör (04). Çok değerli hücrelerde (multiselect, tags) `in` "şunlardan birini içerir" anlamındadır. */
+/** 18 operatör (04). Çok değerli hücrelerde (multiselect) `in` "şunlardan birini içerir" anlamındadır. */
 export type FilterOp =
   | 'is_empty'
   | 'is_not_empty'

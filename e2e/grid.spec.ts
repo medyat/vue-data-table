@@ -189,7 +189,7 @@ test('T8: uzun header kesikken tek çift tık sığdırır (header ölçümü)',
   expect(Math.round(await head.evaluate((el) => el.getBoundingClientRect().width))).toBe(Math.round(w1))
 })
 
-test('T8: 24 tip light ve dark görsel referansı', async ({ page }) => {
+test('T8: 23 tip light ve dark görsel referansı', async ({ page }) => {
   for (const theme of ['light', 'dark-class']) {
     await settings(page, 'standard', theme)
     await page.clock.setFixedTime(new Date('2026-10-21T10:00:00')) // "3d late" gibi göreli tarihler sabit
