@@ -1,6 +1,6 @@
 {
   "name": "@medyat/vue-data-table",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vue 3 için DataTable ve DataSheet: ortak çekirdek, iki bileşen.",
   "type": "module",
   "license": "MIT",

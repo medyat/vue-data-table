@@ -1,6 +1,6 @@
 # Sürüm notları
 
-## Yayımlanmamış
+## 1.0.1 — 2026-10-29
 
 ### İçe ve dışa aktarma (D46)
 
