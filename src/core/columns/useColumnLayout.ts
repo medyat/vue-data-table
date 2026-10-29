@@ -70,6 +70,9 @@ const trackMin = (t: Track): number => (typeof t === 'number' ? t : t.min)
 /** Sütun id'si CSS özel özellik adına: 'product.name' → '--dt-off-product_name'. */
 export const offsetVarName = (id: string): string => `--dt-off-${id.replace(/[^a-zA-Z0-9_-]/g, '_')}`
 
+/** Gizlenemeyen sütun: `alwaysVisible`, birincil ve `required` (DataSheet: zorunlu alan görünmeden doldurulamaz). */
+const alwaysShown = (d: ColumnDef): boolean => !!(d.alwaysVisible || d.primary || d.required)
+
 export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions<Row>) {
   const defs = computed(() => toValue(options.columns))
   const defById = computed(() => new Map(defs.value.map((d) => [d.id as string, d])))
@@ -101,7 +104,7 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
         // Açık `width` 80'in altındaysa (ör. 56 px aksiyon sütunu) o geçerli.
         minSize: minOf(d),
         maxSize: d.maxWidth,
-        enableHiding: !(d.alwaysVisible || d.primary),
+        enableHiding: !alwaysShown(d),
       }
     }),
   )
@@ -115,7 +118,7 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     const visibility: Record<string, boolean> = {}
     for (const d of defs.value) {
       const id = d.id as string
-      visibility[id] = d.alwaysVisible || d.primary || (l?.visible ? l.visible.includes(id) : !d.hidden)
+      visibility[id] = alwaysShown(d) || (l?.visible ? l.visible.includes(id) : !d.hidden)
     }
     const sizing: Record<string, number> = {}
     for (const [id, w] of Object.entries(l?.widths ?? {})) if (defById.value.has(id)) sizing[id] = clampWidth(id, w)

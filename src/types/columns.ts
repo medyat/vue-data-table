@@ -138,7 +138,7 @@ export interface BaseColumn<Row, V = unknown> {
   minWidth?: number
   maxWidth?: number
   hidden?: boolean
-  /** Gizlenemez. Birincil sütun için otomatik true. */
+  /** Gizlenemez. Birincil ve `required` sütun için otomatik true. */
   alwaysVisible?: boolean
 
   /** Birincil hücre: gerçek <a href> (D6); her zaman sola sabit (D45). Tabloda en fazla bir tane. */

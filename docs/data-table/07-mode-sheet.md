@@ -50,7 +50,7 @@ Bulk edit products                                                              
 | **Add row** | Partiye yeni satır (§9). |
 | **Import Excel** | Varsayılan açık (`:importable="false"` gizler); dosyayı paket okur, `parseFile` verilirse o (§13, D46). |
 | **Export** | Menü: Export all rows (10,000) · Export visible rows (96) › Excel (.xlsx) / CSV. Taslak değerlerle; dosyayı paket yazar, `@export` dinlenirse olay yayılır ve uygulama yazar (§13 · Dışa aktarma, D46). `:exportable="false"` gizler. |
-| Display ⚙ | Yoğunluk, Columns (dialog, D45), Vertical grid lines. (Sort › yok; header tıklaması yeterli.) |
+| Display ⚙ | Yoğunluk, Columns (dialog, D45; anahtar, birincil ve `required` sütunlar kilitli: zorunlu alan gizlenemez), Vertical grid lines. (Sort › yok; header tıklaması yeterli.) |
 
 ### Formula bar (36 px)
 

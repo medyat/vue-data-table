@@ -193,7 +193,7 @@ interface BaseColumn<Row, V = unknown> {
   maxWidth?: number
   /** Varsayılan olarak gizli (Columns dialog'unda kapalı). Sabitleme sütunda değil, görünümde ve dialog'da (D45). */
   hidden?: boolean
-  /** Gizlenemez (Columns dialog'unda anahtarı pasif). Birincil sütun için otomatik true. */
+  /** Gizlenemez (Columns dialog'unda anahtarı pasif). Birincil ve `required` sütun için otomatik true. */
   alwaysVisible?: boolean
 
   /**

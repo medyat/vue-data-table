@@ -114,6 +114,24 @@ describe('useColumnLayout', () => {
     await nextTick()
     expect(api.state.value.pinned).toEqual({ left: ['number'], right: ['customer', 'value'] })
   })
+  it('required sütun gizlenemez: dialog satırı kilitli, görünümde gizli verilse de görünür, setVisible(false) etkisiz', async () => {
+    let api!: ColumnLayoutApi<Order>
+    const cols = ref<Array<ColumnDef<Order>>>(
+      columns.map((c) => (c.id === 'customer' ? { ...c, required: true, hidden: true } : c)),
+    )
+    mount(
+      defineComponent({
+        setup() {
+          api = useColumnLayout<Order>({ columns: cols, rows, layout: { visible: ['number', 'value'] } })
+          return () => null
+        },
+      }),
+    )
+    expect(api.panel.value.find((c) => c.id === 'customer')).toMatchObject({ canHide: false, visible: true })
+    api.setVisible('customer', false)
+    await nextTick()
+    expect(api.columns.value.map((c) => c.id)).toContain('customer')
+  })
   it('arrange genişlikleri korur', async () => {
     const { api } = setup()
     api.setWidth('customer', 220)

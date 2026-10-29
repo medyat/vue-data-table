@@ -10,6 +10,10 @@
 - .xlsx: yazı 16 pt; başlık kalın, dolgulu, dondurulmuş; sayı, para, yüzde ve tarih tipli hücre; `select` ve `boolean` sütunlarının seçenekleri ikinci sayfada (“Options”), hücreler o listeden açılır liste.
 - Eski ikili `.xls` yerleşik okuyucuda desteklenmez (`import.xlsxOnly`); `import.drop` metninden `.xls` çıktı.
 
+### DataSheet
+
+- `required` sütunlar gizlenemez: Columns dialog'unda kilitli, görünümde gizli kayıtlı olsa da görünür.
+
 ### DataTable
 
 - **Satır klavyesi kaldırıldı (D40).** Satır odağı ve çerçevesi, satır okları, satırda `↵` / `→` / `←` / `X` / `⇧↑↓` / `⌘A` / `⇧F10` ve başlıklar arası ok gezinmesi yok. Satırdaki widget'lar ve başlık düğmeleri doğal Tab sırasında; kök `role="table"`, hücreler `cell`, satırda `aria-selected` yok. Sayfa kısayolları ve başlık düğmesindeki sıralama/menü/genişlik/taşıma tuşları değişmedi. DataSheet etkilenmez.
