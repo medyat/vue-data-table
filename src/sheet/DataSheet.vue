@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="Row extends object">
 // DataSheet (07, brief §8, handoff 06) — Faz 6a–6c: ızgara, editörler, doğrulama, taslak deposu; toolbar'da Find,
 // All / Changed / Errors, Undo/Redo, Add row, Display + Save kontrolleri; formül çubuğu; status bar; açılış ilerlemesi;
-// pano, fill handle, komut yığını; satır partisi (ekle / çıkar, lookupKeys New/Update, anahtar tekilliği); yerel
+// pano, fill handle, komut yığını; satır partisi (ekle / çıkar, anahtar tekilliği; sunucu durumu bilinmez, D47); yerel
 // sıralama; kayıt akışı (hata dialog'u, `@save`, `saving`, `applyResult`, Partly saved şeridi, Copy errors); ayrılma
 // koruması. İçe/dışa aktarma ve telefon düzeni (6d) sonraki fazda. Veri çekmez, kaydetmez (D18): yalnızca `@save` yayar.
 import {
@@ -107,8 +107,6 @@ const props = withDefaults(
     loading?: Progress
     /** `@save` sonrası uygulama kaydederken: grid salt okunur, ilerleme şeridi (07 §14). */
     saving?: Progress
-    /** Yeni satırlarda yazılan anahtarların kontrolü (New / Update, 07 §9). Verilmezse her bilinmeyen anahtar New. */
-    lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
     /** Add row ile oluşan satırın başlangıç değerleri. */
     newRowDefaults?: () => Partial<Row>
     /** Import: dosyayı uygulama ayrıştırır ve ham satırları verir (07 §13). Verilmezse paketin okuyucusu (.xlsx, .csv; D46). */
@@ -710,59 +708,6 @@ const sortMap = computed(() => {
   return m
 })
 
-// Anahtar kontrolü (07 §9): yeni satırın anahtarı onaylanınca 300 ms sonra `lookupKeys`; yok → New, var → Update + sunucu
-// kaydı base (Q2). Verilmemişse her bilinmeyen anahtar New.
-const looked = new Map<string, string>()
-const pending = new Map<string, string>()
-let lookupTimer: ReturnType<typeof setTimeout> | undefined
-let lookupCtl: AbortController | null = null
-const runLookup = async () => {
-  const batchKeys = new Map(pending)
-  pending.clear()
-  if (!batchKeys.size) return
-  if (!props.lookupKeys) {
-    for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'new')
-    return
-  }
-  for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'checking')
-  lookupCtl?.abort()
-  lookupCtl = new AbortController()
-  try {
-    const values = [...new Set(batchKeys.values())].slice(0, 500)
-    const result = await props.lookupKeys(values, { signal: lookupCtl.signal })
-    const bases: Array<{ key: string; row: Row }> = []
-    for (const [rowKey, value] of batchKeys) {
-      if (looked.get(rowKey) !== value) continue
-      const found = result[value]
-      if (found) {
-        store.setKeyState(rowKey, 'update')
-        bases.push({ key: rowKey, row: found })
-      } else store.setKeyState(rowKey, 'new')
-    }
-    store.setBase(bases)
-  } catch {
-    for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'new')
-  }
-}
-watch(store.version, () => {
-  const def = keyDef.value
-  if (!def) return
-  for (const r of store.batch.value) {
-    const rowKey = store.keyOf(r)
-    if (!store.isNew(rowKey)) continue
-    const v = store.readUntracked(r, def)
-    const text = isEmptyValue(v) ? '' : String(v)
-    if (looked.get(rowKey) === text) continue
-    looked.set(rowKey, text)
-    if (text) pending.set(rowKey, text)
-    else store.setKeyState(rowKey, 'new')
-  }
-  if (pending.size) {
-    clearTimeout(lookupTimer)
-    lookupTimer = setTimeout(() => void runLookup(), 300)
-  }
-})
-
 // Kayıt akışı (07 §14): hatalı satır varsa dialog; `@save` yükü; uygulama `saving` verir; `applyResult` sonuçları işler;
 // bitişte status bar sonucu ya da Partly saved şeridi (görünüm Errors, aktif hücre ilk hatada).
 const errorDialogOpen = ref(false)
@@ -787,7 +732,6 @@ const emitSave = () => {
   saveTotals.value = { created: 0, updated: 0, errors: 0 }
   savedSummary.value = null
   partly.value = null
-  store.settleUntouched()
   emit('save', store.getChanges())
 }
 const save = () => {
@@ -865,7 +809,7 @@ const openHref = (row: Row): string | undefined => {
   return keyDef.value?.href?.(row) ?? primaryDef.value?.href?.(row)
 }
 
-// Import (07 §13): listede olan anahtar güncellenir; sunucuda olan Update satırı (base), olmayan New satırı; tek undo adımı.
+// Import (07 §13): listede olan anahtar o satırı günceller, olmayan (Add … checkbox'ı açıksa) satır olarak eklenir; tek undo adımı.
 const importOpen = ref(false)
 const keyIndexSet = computed(() => {
   void store.version.value
@@ -879,7 +823,7 @@ const keyIndexSet = computed(() => {
   return set
 })
 const inList = (key: string) => keyIndexSet.value.has(key)
-const applyImport = (payload: ImportPayload<Row>) => {
+const applyImport = (payload: ImportPayload) => {
   if (readOnlyNow.value || !keyDef.value) return
   edit.commit()
   const def = keyDef.value
@@ -894,7 +838,7 @@ const applyImport = (payload: ImportPayload<Row>) => {
   const need = new Set<string>()
   for (const item of payload.rows) {
     if (byKeyValue.has(item.key) || need.has(item.key)) continue
-    if (item.server === null && !payload.addNew) continue
+    if (!payload.addNew) continue
     if (start + need.size + 1 > props.maxRows) break
     need.add(item.key)
   }
@@ -902,31 +846,25 @@ const applyImport = (payload: ImportPayload<Row>) => {
   const freshByKey = new Map([...need].map((k, i) => [k, fresh[i]!]))
   const changes: Array<Change<Row>> = []
   const addedRows: Array<{ key: string; row: Row }> = []
-  const bases: Array<{ key: string; row: Row }> = []
   let updated = 0
   let news = 0
   for (const item of payload.rows) {
     let row = byKeyValue.get(item.key)
     if (!row) {
-      if (item.server === null && !payload.addNew) continue
+      if (!payload.addNew) continue
       const a = freshByKey.get(item.key)
       if (!a) break // sınır
       row = a.row
       addedRows.push(a)
       byKeyValue.set(item.key, row)
       changes.push({ row, def, value: item.key })
-      if (item.server) {
-        bases.push({ key: a.key, row: item.server })
-        updated++
-      } else news++
+      news++
     } else updated++
     for (const [id, value] of Object.entries(item.values)) {
       const d = defById.value.get(id)
       if (d && canEdit(row, d)) changes.push({ row, def: d, value })
     }
   }
-  for (const b of bases) store.setKeyState(b.key, 'update')
-  store.setBase(bases)
   store.apply(changes, addedRows)
   if (addedRows.length && order.value) order.value = [...order.value, ...addedRows.map((a) => a.key)]
   showToast({
@@ -1012,8 +950,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onDocPointerdown, true)
   window.removeEventListener('beforeunload', onBeforeUnload)
   clearTimeout(toastTimer)
-  clearTimeout(lookupTimer)
-  lookupCtl?.abort()
 })
 
 // ⌘S / ⌘F odak sheet içindeyken (07 §2); ızgara kendi işlediyse (defaultPrevented) tekrar etmez.
@@ -1258,8 +1194,6 @@ const discard = () => {
   sortRules.value = []
   partly.value = null
   savedSummary.value = null
-  looked.clear()
-  pending.clear()
   grid.value?.focusActive()
 }
 
@@ -1658,7 +1592,6 @@ defineExpose({
       :max-rows="maxRows"
       :row-count="store.allRows.value.length"
       :in-list="inList"
-      :lookup-keys="lookupKeys"
       :parse-env="parseEnv"
       :fmt-env="fmtEnv"
       @apply="applyImport"

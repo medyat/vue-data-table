@@ -796,7 +796,6 @@ defineExpose({ focusActive, scrollToIndex: (i: number) => virtualizer.value.scro
                 :draft="store.rowDraft(keyOf(rows[item.index]))"
                 :issues="store.rowIssues(keyOf(rows[item.index]))"
                 :is-new="store.isNew(keyOf(rows[item.index]))"
-                :key-state="store.keyState(keyOf(rows[item.index]))"
                 :row-error="store.rowError(keyOf(rows[item.index]))"
                 :active="activeIndex === item.index ? active!.columnId : null"
                 :selection="selectionFor(item.index)"

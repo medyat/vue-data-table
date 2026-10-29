@@ -119,13 +119,13 @@ describe('useSheetStore', () => {
     s.set(rows[0]!, col('name'), 'Pump')
     expect(s.rowIssues('1')).toBeUndefined()
   })
-  it('getChanges: yalnızca değişmiş ve hatasız satırlar, yalnızca değişen alanlar, anahtar sütun değeri', () => {
+  it('getChanges: yalnızca değişmiş ve hatasız satırlar; değişen alanlar + required sütunlar + anahtar, op yok (D47)', () => {
     const s = make()
     s.set(rows[1]!, def('name'), 'New name')
     s.set(rows[1]!, def('note'), null)
     s.set(rows[0]!, def('cost'), 999) // cost > price → hata, gönderilmez
     expect(s.getChanges()).toEqual({
-      rows: [{ clientId: '2', key: 'GP-25', op: 'update', values: { name: 'New name', note: null } }],
+      rows: [{ clientId: '2', key: 'GP-25', values: { name: 'New name', note: null, listPrice: 200, sku: 'GP-25' } }],
     })
     s.reset()
     expect(s.getChanges().rows).toEqual([])
@@ -212,7 +212,7 @@ describe('komut yığını, toplu yazma, yeni satırlar (Faz 6b)', () => {
     expect(n).toBe(100)
     expect(s.read(rows[1]!, def('note'))).toBe('v19') // 20. adımdan geriye gidilemez
   })
-  it('addRows: anahtar new:n, orijinal yok, anahtar sütunu zorunlu; getChanges create; undo satırı kaldırır, redo geri koyar', () => {
+  it('addRows: anahtar new:n, orijinal yok, anahtar sütunu zorunlu; getChanges boş değeri göndermez; undo satırı kaldırır, redo geri koyar', () => {
     const s = make()
     const added = s.addRows(1)
     const row = added[0]!.row
@@ -229,7 +229,7 @@ describe('komut yığını, toplu yazma, yeni satırlar (Faz 6b)', () => {
       { row, def: def('note'), value: '' },
     ])
     expect(s.getChanges().rows).toEqual([
-      { clientId: 'new:1', key: 'NEW-1', op: 'create', values: { name: 'Fresh', sku: 'NEW-1', listPrice: 10 } },
+      { clientId: 'new:1', key: 'NEW-1', values: { name: 'Fresh', sku: 'NEW-1', listPrice: 10 } },
     ])
     expect(s.counts.value.newRows).toBe(1)
     s.undo()
@@ -316,7 +316,7 @@ describe('satır partisi, base katmanı, kayıt sonucu (Faz 6c)', () => {
     expect(s.counts.value).toMatchObject({ changedCells: 0, changedRows: 0 })
     s.undo()
     expect(s.allRows.value).toHaveLength(2)
-    expect(s.getChanges().rows[0]?.values).toEqual({ name: 'A' })
+    expect(s.getChanges().rows[0]?.values).toEqual({ name: 'A', listPrice: 100, sku: 'HC-080-S' })
     expect(s.rowNoOf('2')).toBe(2) // numara kararlı
   })
   it('anahtar tekilliği: yeni satırın anahtarı yüklenmiş satırla çakışınca ikisi de hata; düzeltince ikisi de temizlenir', () => {
@@ -330,27 +330,12 @@ describe('satır partisi, base katmanı, kayıt sonucu (Faz 6c)', () => {
     expect(s.rowIssues('2')).toBeUndefined()
     expect(s.rowIssues('new:1')?.get('sku')).toBeUndefined()
   })
-  it('setBase (Update satırı, Q2): sunucu kaydı orijinal olur, boş hücreler dolar, yalnızca değişen alan gider; settleUntouched', () => {
+  it('yük kuralı (D47): yalnızca maliyeti değişen satırda maliyet + required sütunların güncel değeri + anahtar gider', () => {
     const s = make()
-    const [a] = s.addRows(1)
-    s.apply([{ row: a!.row, def: def('sku'), value: 'SV-9' }], [a!])
-    s.setKeyState('new:1', 'update')
-    s.setBase([
-      {
-        key: 'new:1',
-        row: { id: 99, sku: 'SV-9', name: 'Server name', category: 'hyd', listPrice: 500, cost: 100, note: null },
-      },
+    s.set(rows[0]!, def('cost'), 70)
+    expect(s.getChanges().rows).toEqual([
+      { clientId: '1', key: 'HC-080-S', values: { cost: 70, name: 'Cylinder', listPrice: 100, sku: 'HC-080-S' } },
     ])
-    expect(s.read(a!.row, def('name'))).toBe('Server name')
-    expect(s.rowDraft('new:1')).toBeUndefined() // sku sunucuyla aynı → taslaktan düştü
-    expect(s.hasError('new:1')).toBe(false)
-    s.set(a!.row, def('listPrice'), 800)
-    expect(s.getChanges().rows).toEqual([{ clientId: 'new:1', key: 'SV-9', op: 'update', values: { listPrice: 800 } }])
-    expect(s.rowIssues('new:1')?.get('listPrice')?.level).toBe('warning') // orijinal sunucu değeri 500 → %60 değişim
-    s.set(a!.row, def('listPrice'), 500)
-    s.settleUntouched()
-    expect(s.isNew('new:1')).toBe(false)
-    expect(s.counts.value.newRows).toBe(0)
   })
   it('applyResult: created/updated taslağı düşürür ve base yazar; error alan/satır hatası; hücre düzenlenince sunucu hatası gider; yığın temizlenir', () => {
     const s = make()

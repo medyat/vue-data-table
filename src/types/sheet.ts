@@ -6,8 +6,10 @@ export interface SheetChangeRow {
   clientId: string
   /** Anahtar sütunun değeri (ör. SKU). */
   key: string
-  /** create: anahtar sunucuda yok → tüm dolu alanlar. update: yalnızca değişen alanlar. Sunucu anahtara göre upsert yapar (D11). */
-  op: 'create' | 'update'
+  /**
+   * Değişen alanlar + `required` sütunlar + anahtar (sütun id'leriyle). Eklenen satırda boş değer gitmez. Sunucu anahtara
+   * göre upsert eder (D11, D47); paket kaydın sunucuda olup olmadığını bilmez.
+   */
   values: Record<string, unknown>
 }
 

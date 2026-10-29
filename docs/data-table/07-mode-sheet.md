@@ -69,7 +69,7 @@ Bulk edit products                                                              
 | Sütun | Genişlik | Not |
 |---|---|---|
 | Gutter (satır no) | 56 px, sola sabit | Mono 11 px `--dt-text-3`, binlik ayırıcısız (`10001`), sağa yaslı, `--dt-surface-2` (header'da `--dt-surface-3`). Solunda işaret: değişti = 6 px accent kare (2 px yarıçap), hata = 13 px kırmızı ikon, yeni = 13 px accent `+`. `role="rowheader"`. |
-| Anahtar (`keyColumn`) | 128 px, sabit | Mono. Header tooltip: “Match key — an existing SKU updates that product, a new SKU creates one”. **Yüklenmiş satırlarda salt okunur**, yeni satırlarda düzenlenebilir. Yeni satırda sağda `New` / `Update` etiketi. |
+| Anahtar (`keyColumn`) | 128 px, sabit | Mono. Header tooltip: “Match key — an existing SKU updates that product, a new SKU creates one”. **Yüklenmiş satırlarda salt okunur**, yeni satırlarda düzenlenebilir. Yeni satırda etiket yok (D47). |
 | Birincil ad | `minmax(220px, 1.4fr)`, sabit | |
 | Diğerleri | Sütun tanımındaki `width`; yoksa 05 §4'teki tip varsayılanları | Sayısal sütunlar sağa yaslı. |
 
@@ -94,7 +94,7 @@ Mavi = senin değişikliğin veya seçimin · kırmızı = kaydedilemez · amber
 | Error | `--dt-r-bg` zemin + 1.5 px `--dt-r-dot` iç çerçeve + kırmızı köşe | Satırı kayıttan **alıkoyar**. Hover veya aktifken hücrenin üstünde kırmızı balon (`--dt-error-tip-bg` zemin, beyaz metin, `--dt-shadow-tip`). |
 | Warning | `--dt-a-bg` zemin + amber köşe | Kayda izin verir (ör. “Price changed by more than 40%”) |
 | Required, empty | Hücrede kırmızı “Required” metni (`--dt-r-fg`) | Hata ile aynı |
-| New row | Anahtar hücresi `--dt-accent-soft`, sağda `New` etiketi; gutter'da `+` | Bilinmeyen anahtar → Save oluşturur |
+| Added row | Anahtar hücresi `--dt-accent-soft`; gutter'da `+` (“Added row”) | Save'de sunucu anahtara göre oluşturur ya da günceller (D47) |
 
 Öncelik (aynı hücrede birden çoğu): Error > Warning > Changed. Active/Editing/Selection zemini üstte; köşe üçgeni her durumda görünür kalır.
 
@@ -173,15 +173,9 @@ TanStack `cellSelection`: `cell.getTabIndex()` (roving tabindex; aktif hücre DO
 ### Ekleme
 
 - **Add row** (toolbar) veya hücre menüsü › Insert row above / below. Yeni satır `newRowDefaults()` ile oluşur, odak **anahtar hücresinde**, düzenleme açık.
-- Yeni satırın anahtarı yazıldıkça (onayda, 300 ms debounce) `lookupKeys` callback'i ile kontrol edilir (verilmemişse her bilinmeyen anahtar **New** sayılır). Kontrol sürerken etikette küçük spinner.
-
-| Sonuç | Etiket | Save'de |
-|---|---|---|
-| Anahtar sunucuda yok | `New` (accent) | Ürün **oluşturulur** |
-| Anahtar sunucuda var, listede yok | `Update` (nötr) | O ürün **güncellenir** |
-| Anahtar listede zaten var | Hata: “HC-080-S is already in row 1” | Gönderilmez |
-
-- **Update satırının boş hücreleri sunucudaki kayıttan doldurulur** ve bu değerler “orijinal” sayılır (değişmiş işaretlenmez). Böylece satır, yüklenmiş bir satır gibi davranır ve Save'de yalnızca kullanıcının değiştirdiği alanlar gider — boş bırakılan hücreler mevcut ürünü boşaltmaz. (D38)
+- Yeni satırın anahtarı sunucuda **aranmaz** (D47). Paket kaydın sunucuda olup olmadığını bilmez; Save'de sunucu anahtara göre upsert eder (var → günceller, yok → oluşturur). Satırda New / Update etiketi yoktur; gutter'da `+`, anahtar hücresi `--dt-accent-soft`.
+- Eklenen satırın **boş hücreleri gönderilmez**: anahtar sunucuda var olan bir kayda denk gelirse boş bırakılan alan o kaydın değerini silmez. `required` sütunlar eklenen satırda da doldurulmadan kaydedilemez.
+- Anahtar listede zaten var → hata “HC-080-S is already in row 1”, hiçbiri gönderilmez.
 - Bir anahtar listede **yalnızca bir kez** olabilir: aynı anahtarı taşıyan **tüm** satırların anahtar hücresi hata alır ve hiçbiri gönderilmez, biri düzeltilene veya listeden çıkarılana kadar.
 
 ### Listeden çıkarma
@@ -229,18 +223,18 @@ Dialog 560 px, başlık “Import from Excel”, açıklama: “Rows are matched
 2. **Başlık satırı** (`detectHeaderRow`): paket ham satırlardan başlığı otomatik seçer — ilk 20 satır içinde, boş olmayan hücre sayısı en yüksek ve hücrelerinin çoğu metin olan ilk satır; eşitlikte ilk boş olmayan satır. Eşleşme satırının sağındaki **Header row** select'i (“Row 1”) tespit edilen satırla gelir; kullanıcı değiştirebilir, değişince sütun eşleme tablosu yeniden kurulur ve önceki elle seçimler sıfırlanır. Tespit dosya biçiminden bağımsızdır (.xlsx ve .csv aynı yol).
 3. **Eşleşme anahtarı:** “Match rows by **SKU ← “Stok Kodu”**”. Anahtar eşlenmeden **Apply pasif**.
 4. **Sütun eşleme tablosu** (`matchColumns`): Excel column → Field (yerel `select`; tasarımdaki özel liste yerine, klavye ve ekran okuyucu için) · First value (dönüşüm önizlemesiyle: `1.650,00 → 1,650.00`, `%20 → 20%`). Otomatik eşleme yalnızca **tek ve kesin** eşleşmede: başlık, normalize edilerek (küçük harf, baştaki/sondaki ve ardışık boşluklar, Türkçe karakterler `ı→i, ş→s` …) sütunun `header`, `id` veya `importAliases` değerlerinden biriyle aynıysa. Eşleşmeyen ya da birden fazla alana uyan sütunun select'i **boş** kalır (“Choose a field”, `import.chooseField`); kullanıcı elle seçer. Otomatik eşlemeler de değiştirilebilir. Seçenekler: alanlar · “Don't import”. Boş bırakılan sütun Apply'da alınmaz (Don't import gibi). Read-only alanlara eşleme yapılamaz (listede pasif). Başlık tespiti ve sütun eşleme ayrı saf fonksiyonlardır (01, `sheet/import/`), ayrı test edilir.
-5. **Özet** (info banner): “**1,240** update existing products · **12** new SKUs · See new SKUs” + checkbox “Add the 12 new SKUs as new rows” (varsayılan açık).
+5. **Özet** (info banner): “**1,240** rows in the list will be updated · **12** SKUs not in the list · See SKUs not in the list” + checkbox “Add the 12 SKUs not in the list as rows” (varsayılan açık).
 6. Cancel · **Apply to grid**.
 
 Uygulama kuralları:
 
 - Listede olan anahtar → o satırın eşlenen hücreleri güncellenir (normal **Changed** durumu).
-- Listede olmayan anahtar → `lookupKeys` → sunucuda varsa **Update** satırı eklenir (§9 doldurma kuralıyla), yoksa (checkbox açıksa) **New** satırı.
+- Listede olmayan anahtar → (checkbox açıksa) satır olarak eklenir; sunucuda aranmaz, Save'de sunucu upsert eder (§9, D47).
 - **Excel'deki boş hücre mevcut değeri silmez** (atlanır). Bir değeri bilerek boşaltmak için grid'de temizlenir.
 - Dosyada aynı anahtar iki kez → ikisi de içe alınır ve **duplicate** hatası alır (§9).
 - Sayı/tarih hücreleri Excel'den tipli gelirse olduğu gibi; metin olarak gelirse §7'deki yerel ayar kuralı.
 - `maxRows` aşılırsa Apply pasif ve uyarı: `sheet.limitFile`: “This file would make 11,252 rows. The limit is 10,000.”
-- İçe aktarma **tek undo adımı**. Sonrasında toast: “Imported 1,252 rows · 1,240 updated · 12 new · Undo”.
+- İçe aktarma **tek undo adımı**. Sonrasında toast: “Imported 1,252 rows · 1,240 updated · 12 added · Undo”.
 
 ### Dışa aktarma (D46; DataTable de aynı yazıcıyı kullanır)
 
@@ -274,7 +268,7 @@ Uygulama her chunk'ın yanıtı için ya da tümü için bir kez çağırır.
 
 | Sonuç | Satıra ne olur |
 |---|---|
-| `created` | Taslak silinir, işaretler kalkar; satır artık “yüklenmiş” (anahtar salt okunur, `New` etiketi gider). `row` döndüyse değerler onunla, dönmediyse taslağın uygulanmış haliyle güncellenir. |
+| `created` | Taslak silinir, işaretler kalkar; satır artık “yüklenmiş” (anahtar salt okunur, `+` işareti gider). `row` döndüyse değerler onunla, dönmediyse taslağın uygulanmış haliyle güncellenir. |
 | `updated` | Taslak silinir; `row` döndüyse onunla güncellenir. |
 | `error` | Değişiklikler **kalır**; `fieldErrors` ilgili hücrelerde kırmızı, `rowError` anahtar hücresinde ve gutter tooltip'inde. Kullanıcı hücreyi düzenleyince o hücrenin sunucu hatası temizlenir. |
 
@@ -314,7 +308,7 @@ Paket sözleşmesi `@save` → `SheetChanges` ve `applyResult(SheetRowResult[])`
 ```ts
 async function onSave(changes: SheetChanges) {
   saving.value = { done: 0, total: changes.rows.length }
-  for (const chunk of chunksOf(changes.rows, 500)) {            // sıralı; bir sonraki, öncekinin yanıtı gelince
+  for (const chunk of chunksOf(changes.rows, 100)) {            // sıralı; parça boyutu backend'in istek sınırı
     const { data } = await http.post('/api/products/bulk-upsert', { key: 'sku', rows: chunk })
     sheet.value!.applyResult(data.results.map(toRowResult))     // snake_case → SheetRowResult
     saving.value = { done: saving.value.done + chunk.length, total: changes.rows.length }
@@ -336,14 +330,12 @@ Zaman aşımı, yeniden deneme (upsert anahtarla yapıldığı için aynı chunk
     {
       "client_id": "r_10001",
       "key": "HC-125-S",
-      "op": "create",
       "values": { "sku": "HC-125-S", "name": "Hydraulic cylinder HC-125", "category": "hydraulics", "unit": "pcs", "list_price": 2780.00, "vat": 20, "active": true }
     },
     {
       "client_id": "r_418",
       "key": "GH-310-AL",
-      "op": "update",
-      "values": { "list_price": 344.00 }
+      "values": { "list_price": 344.00, "name": "Gear pump GH-310", "category": "pumps", "vat": 20, "sku": "GH-310-AL" }
     }
   ]
 }
@@ -363,12 +355,12 @@ Zaman aşımı, yeniden deneme (upsert anahtarla yapıldığı için aynı chunk
 ### Sunucu notları
 
 - Her satırı **bağımsız** işleyin: satır başına doğrulama (`Validator::make`), satır başına transaction veya savepoint. Bir satırın hatası diğerlerini geri almamalı.
-- Eşleme **anahtara göre**: `op` ipucudur; sunucu anahtarı kendisi arar (bu arada başka biri oluşturmuş olabilir). Var → güncelle, yok → oluştur. Hiçbir koşulda silme yok.
-- `update` satırlarında yalnızca gelen alanları güncelleyin (`fill($values)`); gelmeyen alanlara dokunmayın. `null` gelen alan bilerek boşaltılmıştır.
+- Eşleme **anahtara göre** (D47): istekte `op` yoktur, sunucu anahtarı kendisi arar. Var → güncelle, yok → oluştur. Hiçbir koşulda silme yok.
+- `values` = değişen alanlar + `required` sütunların güncel değeri + anahtar; eklenen satırda boş değer gelmez. Yalnızca gelen alanları yazın (`fill($values)`), gelmeyenlere dokunmayın. `null` gelen alan bilerek boşaltılmıştır. Required alanlar her satırda geldiği için backend bunları her satırda `required` doğrulayabilir.
 - Eloquent `upsert()` toplu ve hızlıdır ama model olaylarını tetiklemez ve satır başına hata döndüremez; satır sonucu gerektiği için `firstOrNew` + `save()` döngüsü (chunk içinde) önerilir.
 - Benzersizlik çakışmaları (barcode vb.) alan hatası olarak dönmeli, 500 değil.
-- İstek başına en fazla 500 satır (uygulamanın chunk boyutu); üstü **413**.
-- Ek uç noktalar: `GET /api/products/sheet?page=` (yükleme, `total` alanı ile), `POST /api/products/lookup-keys` → `{ "HC-125-S": null, "GH-310-AL": { …kayıt } }` (`lookupKeys` callback'i bunu çağırır).
+- Parça boyutu backend'in istek sınırına göre seçilir (ör. 100); üstü **413**.
+- Ek uç nokta: `GET /api/products/sheet?page=` (yükleme, `total` alanı ile).
 
 ## 17. Telefonda (D14)
 

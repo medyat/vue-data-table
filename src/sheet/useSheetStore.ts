@@ -1,6 +1,6 @@
 // Taslak deposu (07 §18, D11–D13): uygulamanın `rows` dizisine dokunmaz. Katmanlar, okuma sırasıyla:
 //   draft  Map<rowKey, Map<columnId, value>>  — hücre başına, `Map.has` ile (bilinçli null korunur)
-//   base   Map<rowKey, Row>                    — kayıt sonrası sunucu satırı ya da Update satırının sunucu kaydı (07 §9, §14)
+//   base   Map<rowKey, Row>                    — kayıt sonrası sunucu satırı (07 §14)
 //   rows   uygulamanın dizisi + `added` (yeni satırlar `new:n`, sunucu değeri yok, anahtar sütunu zorunlu)
 // Tek okuyucu `read`; render, doğrulama, kopyalama bunu kullanır. Doğrulama satır başına, hücre onaylanınca (07 §5):
 // tip → required → validate → warn; aynı satırın diğer hücreleri de yenilenir (çapraz kural); anahtar tekilliği (07 §9)
@@ -43,7 +43,6 @@ export interface Change<Row extends object> {
   value: unknown
 }
 /** Yeni satırın anahtar durumu (07 §9): kontrol sürüyor · sunucuda yok (New) · sunucuda var (Update). */
-export type KeyState = 'checking' | 'new' | 'update'
 
 export interface SheetStoreOptions<Row extends object> {
   rows: MaybeRefOrGetter<Row[]>
@@ -111,7 +110,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
   const base = shallowReactive(new Map<string, { row: Row; from: Row | undefined }>())
   const added = shallowRef<Array<{ key: string; row: Row; saved?: boolean }>>([])
   const removed = shallowReactive(new Set<string>())
-  const keyStates = shallowReactive(new Map<string, KeyState>())
   /** Her yazmada artar: seçim özeti gibi toplu okuyucular hücre başına bağımlılık kurmadan buna bağlanır. */
   const version = shallowRef(0)
   const undoStack: Step[] = []
@@ -334,7 +332,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     added.value = [...added.value, ...rows]
     version.value++
     for (const r of rows) {
-      keyStates.set(r.key, 'new')
       validateRow(r.row)
     }
     return rows
@@ -345,7 +342,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     for (const k of keys) {
       draft.delete(k)
       issues.delete(k)
-      keyStates.delete(k)
       base.delete(k)
     }
     version.value++
@@ -370,7 +366,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     if (dir === 'undo' && step.added) dropAdded(step.added.map((a) => a.key))
     if (dir === 'redo' && step.added) {
       added.value = [...added.value, ...(step.added as Array<{ key: string; row: Row }>)]
-      for (const a of step.added) keyStates.set(a.key, 'new')
       version.value++
     }
     if (step.removed) {
@@ -430,36 +425,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     for (const i of m.values()) if (i.level === 'error') return true
     return false
   }
-  const keyState = (key: string): KeyState | undefined => keyStates.get(key)
-  const setKeyState = (key: string, state: KeyState) => {
-    if (addedByKey.value.has(key)) keyStates.set(key, state)
-  }
-  /**
-   * Update satırları (07 §9, Q2): sunucu kaydı orijinal sayılır; boş hücreler onunla dolar, yalnızca değişenler gider.
-   * Toplu: sürüm bir kez artar, her satır bir kez doğrulanır (satır başına artış 10k içe aktarmada karesel olurdu).
-   */
-  const setBase = (entries: Array<{ key: string; row: Row }>) => {
-    if (!entries.length) return
-    for (const { key, row } of entries) base.set(key, { row, from: isNew(key) ? undefined : byKey.value.get(key) })
-    version.value++
-    for (const { key } of entries) {
-      const r = byKey.value.get(key)
-      if (!r) continue
-      // Taslakta sunucuyla aynı olan değerler düşer.
-      const d = draft.get(key)
-      if (d) {
-        const next = new Map(d)
-        for (const [col, v] of d) {
-          const def = defById.value.get(col)
-          if (def && same(v, original(r, def))) next.delete(col)
-        }
-        if (next.size) draft.set(key, next)
-        else draft.delete(key)
-      }
-      validateRow(r)
-    }
-  }
-
   const counts = computed(() => {
     let changedCells = 0
     const changedKeys = new Set<string>()
@@ -498,40 +463,34 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     rowErrors.clear()
     added.value = []
     removed.clear()
-    keyStates.clear()
     clearHistory()
     version.value++
   }
 
-  /** Kayıt başlarken: sunucuda var olan (Update) ve hiç değişmemiş yeni satırlar gönderilecek bir şey taşımaz; yüklenmiş sayılır. */
-  const settleUntouched = () => {
-    let changed = false
-    const next = added.value.map((a) => {
-      if (a.saved || removed.has(a.key) || keyStates.get(a.key) !== 'update' || draft.get(a.key)?.size) return a
-      changed = true
-      keyStates.delete(a.key)
-      issues.delete(a.key)
-      return { ...a, saved: true }
-    })
-    if (changed) {
-      added.value = next
-      version.value++
-    }
-  }
-
-  /** `@save` yükü (D11, D12): değişmiş + yeni, hatasız, çıkarılmamış satırlar; güncellemede yalnızca değişen alanlar. */
+  /**
+   * `@save` yükü (D11, D12, D47): değişmiş + eklenmiş, hatasız, çıkarılmamış satırlar. `values` = değişen alanlar +
+   * `required` sütunlar + anahtar (sunucu anahtara göre upsert eder ve zorunlu alanları her satırda doğrular); eklenen
+   * satırda boş değerler gitmez.
+   */
   const getChanges = (): SheetChanges => {
     const keyDef = defById.value.get(keyCol())
+    const always = defs.value.filter((d) => d.required || d.id === keyCol())
     const rows: SheetChangeRow[] = []
     for (const [key, m] of draft) {
       const row = byKey.value.get(key)
       if (!row || removed.has(key) || hasError(key)) continue
-      const create = isNew(key) && keyStates.get(key) !== 'update'
-      const values = Object.fromEntries([...m].filter(([, v]) => !create || !isEmptyValue(v)))
+      const isAdded = isNew(key)
+      const values: Record<string, unknown> = {}
+      for (const [id, v] of m) if (!isAdded || !isEmptyValue(v)) values[id] = v
+      for (const d of always) {
+        const id = d.id as string
+        if (id in values) continue
+        const v = read(row, d)
+        if (!isEmptyValue(v)) values[id] = v
+      }
       rows.push({
         clientId: key,
         key: String(keyDef ? read(row, keyDef) : readPath(row, keyCol())),
-        op: create ? 'create' : 'update',
         values,
       })
     }
@@ -544,6 +503,7 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     let created = 0
     let updated = 0
     let errors = 0
+    const saved = new Set<string>()
     for (const r of results) {
       const key = r.clientId
       const row = byKey.value.get(key)
@@ -564,10 +524,10 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
       issues.delete(key)
       serverErrors.delete(key)
       rowErrors.delete(key)
-      keyStates.delete(key)
-      const a = addedByKey.value.get(key)
-      if (a) added.value = added.value.map((x) => (x.key === key ? { ...x, saved: true } : x))
+      if (addedByKey.value.has(key)) saved.add(key)
     }
+    // Tek kopya: sonuç başına kopya 10k kayıtta karesel olurdu.
+    if (saved.size) added.value = added.value.map((x) => (saved.has(x.key) ? { ...x, saved: true } : x))
     clearHistory()
     version.value++
     return { created, updated, errors }
@@ -595,9 +555,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     rowNoOf,
     isNew,
     isRemoved: (key: string) => removed.has(key),
-    keyState,
-    setKeyState,
-    setBase,
     read,
     readUntracked,
     original,
@@ -619,7 +576,6 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
     counts,
     reset,
     getChanges,
-    settleUntouched,
     applyResult,
   }
 }

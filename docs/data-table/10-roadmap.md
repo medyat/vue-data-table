@@ -162,7 +162,7 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 ### 6c — Satır partisi, anahtar, kayıt teslimi
 
 **Ön koşul:** Q2 cevaplandı.
-**Kapsam:** Add row / insert / remove from list + undo toast'ı, `lookupKeys` callback'i (New/Update), Update satırı doldurma kuralı, duplicate kontrolü, All/Changed/Errors, F8, sıralama (gutter sabit), `@save` + `saving` + `applyResult()`, hata dialog'u, Partly saved banner'ı, Copy errors, ayrılma koruması (`isDirty`), Discard.
+**Kapsam:** Add row / insert / remove from list + undo toast'ı, eklenen satır (sunucu sorgusu yok, D47), duplicate kontrolü, All/Changed/Errors, F8, sıralama (gutter sabit), `@save` + `saving` + `applyResult()`, hata dialog'u, Partly saved banner'ı, Copy errors, ayrılma koruması (`isDirty`), Discard.
 
 - [x] `@save` yükünde yalnızca yeni + değişmiş satırlar; update satırlarında yalnızca değişen alanlar (D11); hatalı satırlar yok.
 - [x] Hiçbir yol silme isteği üretmez; Remove from list nötr renkte (D12).

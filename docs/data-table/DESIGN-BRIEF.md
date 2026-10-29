@@ -563,7 +563,7 @@ Products › Bulk edit · Bulk edit products                                    
 | Sütun | Genişlik | Not |
 |---|---|---|
 | Gutter (satır no) | 56 px, sola sabit, `role="rowheader"` | Mono 11 px `--dt-text-3`, sağa yaslı, `--dt-surface-2`; solunda işaret: değişti = 6 px accent kare, hata = 13 px kırmızı ikon, yeni = 13 px accent `+`. Numara **kararlıdır**: yükleme sırası; yeni satırlar 10,001… ; sıralama/filtre numarayı değiştirmez |
-| Anahtar (`keyColumn`, ör. SKU) | 128 px, sabit, mono | Header tooltip “Match key — an existing SKU updates that product, a new SKU creates one”; header'da kilit ikonu. Yüklenmiş satırlarda salt okunur, yeni satırda düzenlenebilir; yeni satırda sağda `New` / `Update` etiketi |
+| Anahtar (`keyColumn`, ör. SKU) | 128 px, sabit, mono | Header tooltip “Match key — an existing SKU updates that product, a new SKU creates one”; header'da kilit ikonu. Yüklenmiş satırlarda salt okunur, yeni satırda düzenlenebilir; etiket yok (D47) |
 | Birincil ad | `minmax(220px, 1.4fr)`, sabit | |
 | Diğerleri | Tanımdaki `width`, yoksa tip varsayılanı | Sayısal sağa yaslı; zorunlu sütun header'ında kırmızı `*`; birim header'da soluk (`Lead time d`) |
 
@@ -584,7 +584,7 @@ Mavi = senin değişikliğin veya seçimin · kırmızı = kaydedilemez · amber
 | Error | `--dt-r-bg` zemin + 1.5 px `--dt-r-dot` iç çerçeve + kırmızı köşe | Satırı kayıttan alıkoyar; hover/aktifken hücrenin üstünde kırmızı balon (`--dt-error-tip-bg`, beyaz metin) |
 | Warning | `--dt-a-bg` zemin + amber köşe | Kayda izin verir (“Price changed by more than 40%”) |
 | Required, empty | Hücrede kırmızı “Required” | Hata ile aynı |
-| New row | Anahtar hücresi `--dt-accent-soft` + `New`; gutter'da `+` | Bilinmeyen anahtar → Save oluşturur |
+| Added row | Anahtar hücresi `--dt-accent-soft`; gutter'da `+` | Save'de sunucu anahtara göre oluşturur ya da günceller (D47) |
 
 Öncelik: Error > Warning > Changed. Renk tek başına anlam taşımaz: değişmiş = zemin + köşe + gutter noktası; hata = zemin + çerçeve + ikon + metin.
 
@@ -622,7 +622,7 @@ Editörler filtre değer girişleriyle **aynı bileşenlerdir**: `string`/`text`
 
 ### 8.9 Satırlar bir partidir [Karar D12]
 
-- **Add row** (toolbar) veya hücre menüsü › Insert row above/below: yeni satır varsayılan değerlerle, odak anahtar hücresinde, düzenleme açık. Anahtar yazılınca (300 ms) uygulama kontrol eder (verilmişse): sunucuda yok → `New` (accent), Save oluşturur; var, listede yok → `Update` (nötr), Save günceller **[Açık Q2: Update satırının boş hücreleri sunucudaki değerlerle doldurulsun mu? Dokümandaki varsayılan: evet, yalnızca değişen alanlar gider]**; listede zaten var → hata “HC-080-S is already in row 1”, hiçbiri gönderilmez.
+- **Add row** (toolbar) veya hücre menüsü › Insert row above/below: yeni satır varsayılan değerlerle, odak anahtar hücresinde, düzenleme açık. Anahtar sunucuda aranmaz, satırda etiket yok; gutter'da `+`, Save'de sunucu anahtara göre oluşturur ya da günceller (D47); listede zaten var → hata “HC-080-S is already in row 1”, hiçbiri gönderilmez.
 - **Remove from list** (`⌘−`, hücre menüsü; çoklu seçimde hepsi): nötr renk; toast “Row 214 removed from this list. The product isn't deleted. **Undo**”. Çıkarılan yüklenmiş satırın değişiklikleri gönderilmez.
 - **Hücre menüsü** (sağ tık): Cut `⌘X` · Copy `⌘C` · Paste `⌘V` · Fill down `⌘D` · Clear contents `Del` · ─ · Insert row above · Insert row below · Remove from list `⌘−` · ─ · Open product (yeni sekmede; yalnızca sunucuda var olan satırlar).
 
@@ -652,7 +652,7 @@ Editörler filtre değer girişleriyle **aynı bileşenlerdir**: `string`/`text`
 
 ### 8.14 Senaryo: Ürün fiyat listesi
 
-Can “Products › Bulk edit” ekranını açar; 10.000 ürün yüklenir (ilerleme şeridi), düzenleme açılır. Excel'den 300 satır × 3 sütun (SKU, List price, Cost) kopyalayıp A1'e yapıştırır: 298 satır Changed olur, 2 SKU listede yoktur ve yeni satır olarak sona eklenir (`New`); toast “Pasted 300 rows × 3 columns · Undo”. Status bar “10,000 rows · 300 changes in 298 rows · 2 new rows”. Bir hücrede maliyet liste fiyatını aşmıştır: hücre kırmızı, balonda “Cost can't be higher than list price (214.50)”; Errors segmenti “1”. Can `F8` ile hataya gider, düzeltir. `⌘S`: değişiklikler uygulamaya gider; uygulama 500'lük parçalarla kaydederken şerit “Saving… 300 of 300 rows” sayacını gösterir; sonuçta 299 satır kaydedilir, 1 satır barkod çakışması hatası alır: kırmızı banner “1 row couldn't be saved. 299 rows were saved.”, görünüm Errors'a geçer, hücrede “Barcode is already used by HC-080-S”.
+Can “Products › Bulk edit” ekranını açar; 10.000 ürün yüklenir (ilerleme şeridi), düzenleme açılır. Excel'den 300 satır × 3 sütun (SKU, List price, Cost) kopyalayıp A1'e yapıştırır: 298 satır Changed olur, 2 SKU listede yoktur ve yeni satır olarak sona eklenir (gutter'da `+`); toast “Pasted 300 rows × 3 columns · Undo”. Status bar “10,000 rows · 300 changes in 298 rows · 2 new rows”. Bir hücrede maliyet liste fiyatını aşmıştır: hücre kırmızı, balonda “Cost can't be higher than list price (214.50)”; Errors segmenti “1”. Can `F8` ile hataya gider, düzeltir. `⌘S`: değişiklikler uygulamaya gider; uygulama 500'lük parçalarla kaydederken şerit “Saving… 300 of 300 rows” sayacını gösterir; sonuçta 299 satır kaydedilir, 1 satır barkod çakışması hatası alır: kırmızı banner “1 row couldn't be saved. 299 rows were saved.”, görünüm Errors'a geçer, hücrede “Barcode is already used by HC-080-S”.
 
 ---
 
@@ -701,7 +701,7 @@ export const orderColumns: ColumnDef<Order>[] = [
 ### 9.3 Veri akışı ve sorumluluk sınırı [Karar D18]
 
 - **DataTable** `rows` alır. `mode: 'client'` (varsayılan): her şey yerelde. `mode: 'server'`: sorgu değişince `@request` yayar — `{ query: { search, filters, sort, page: { number, size }, columns, fields }, reason, signal }`; uygulama HTTP'yi atar, `rows`, `hasMore` (Laravel `simplePaginate` → `next_page_url !== null`), `loading`, `error` verir. `refresh()` son talebi yeniden yayar. Sayım `countable` + `@count` → `total`. Yeni görünen sütunun alanı yoksa paket `reason: 'columns'` ile ister.
-- **DataSheet** `rows` + `loading` alır; `@save` ile `{ rows: [{ clientId, key, op: 'create' | 'update', values }] }` verir; uygulama kaydeder, `saving` ile ilerlemeyi bildirir, `applyResult([{ clientId, status, fieldErrors?, rowError?, row? }])` çağırır. `lookupKeys` ve `parseFile` uygulamanın verdiği callback'lerdir.
+- **DataSheet** `rows` + `loading` alır; `@save` ile `{ rows: [{ clientId, key, values }] }` verir (D47); uygulama kaydeder, `saving` ile ilerlemeyi bildirir, `applyResult([{ clientId, status, fieldErrors?, rowError?, row? }])` çağırır. `parseFile` uygulamanın verebileceği callback'tir (D46).
 - Paket içinde HTTP, önbellek, otomatik yeniden deneme, chunk gönderimi ve iş mantığı **yoktur**. Toplu/satır aksiyonları `run(rows)` / `run(row)` olarak çağrılır ve beklenmez.
 
 ### 9.4 Filtre, sıralama, sayfalama modelleri [Karar]
@@ -738,7 +738,7 @@ Uygulamanın `rows` dizisine dokunulmaz. Değişiklikler hücre başına **tasla
 
 | | DataTable | DataSheet |
 |---|---|---|
-| Props | `tableId`, `columns`, `rows`, `rowKey`, `mode`, `loading`, `error`, `hasMore`, `total`, `countable`, `fields`, `requestOnColumnChange`, `views`, `toolbar`, `searchPlaceholder`, `selectable`, `selectionBar`, `bulkActions`, `rowActions`, `rowClick`, `expand`, `pageSize`, `pageSizes`, `autoRefresh`, `density`, `locale`, `messages`, `entityName`, `shortcuts` | `tableId`, `columns`, `rows`, `rowKey`, `keyColumn`, `loading`, `saving`, `lookupKeys`, `parseFile`, `maxRows`, `newRowDefaults`, `readOnlyBelow`, `density`, `locale`, `messages`, `entityName`, `shortcuts` |
+| Props | `tableId`, `columns`, `rows`, `rowKey`, `mode`, `loading`, `error`, `hasMore`, `total`, `countable`, `fields`, `requestOnColumnChange`, `views`, `toolbar`, `searchPlaceholder`, `selectable`, `selectionBar`, `bulkActions`, `rowActions`, `rowClick`, `expand`, `pageSize`, `pageSizes`, `autoRefresh`, `density`, `locale`, `messages`, `entityName`, `shortcuts` | `tableId`, `columns`, `rows`, `rowKey`, `keyColumn`, `loading`, `saving`, `parseFile`, `maxRows`, `newRowDefaults`, `readOnlyBelow`, `density`, `locale`, `messages`, `entityName`, `shortcuts` |
 | Emits | `request`, `count`, `selection-change`, `row-open`, `row-click`, `view-change`, `export`, `import`, `print` | `save`, `export` |
 | Slot'lar | `#expanded`, `#empty`, `#toolbar-end`, `#selection-actions` | `#empty` |
 | Handle | `refresh()`, `clearSelection()` | `status`, `isDirty()`, `getChanges()`, `applyResult()`, `reset()`, `undo()`, `redo()`, `goToNextError()` |
@@ -776,7 +776,7 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 
 | # | Soru | Dokümandaki varsayılan | Ne zaman |
 |---|---|---|---|
-| Q2 | DataSheet'te sunucuda var olan ama listede olmayan anahtar eklenince (Update satırı) boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet; yalnızca kullanıcının değiştirdiği alanlar gider | Faz 6c |
+| Q2 | DataSheet'te sunucuda var olan ama listede olmayan anahtar eklenince (Update satırı) boş hücreler sunucudaki değerlerle doldurulsun mu? | Evet (D38); D47 ile geri alındı, Update satırı yok | Faz 6c |
 | Q3 | Excel içe aktarmada boş hücre mevcut değeri silsin mi? | Hayır, atlanır | Faz 6d |
 | — | DataSheet'te yükleme/taşıma hatasının gösterimi (paket prop'u yok, uygulamanın banner'ı) | Uygulamanın | Faz 6c |
 | — | Yükleme süreleri (150 / 400 / 10.000 ms) gerçek ERP ekranlarında | Paket sabitleri | Faz 7 |

@@ -66,7 +66,7 @@ S6, S11 ve S12 spesifikasyona işlendi (02 dialog ölçüsü, 07 Find genişliğ
 - Telefonda satır ⋯ sütunu T13'te çizilmedi; 05 §11 gereği masaüstündeki gibi sağa sabit 56 px ⋯ sütunu uygulanır (düğme 28 × 28, dokunma alanı 44 px).
 - Import'ta eşleşmeyen sütun satırı (select boş, “Choose a field”) ve `maxRows` aşımı uyarısı (`sheet.limitFile`) çizilmedi; metinler 09'da.
 - Switch'in açık durumu çizilmedi (02-ortak §3).
-- Q2 (Update satırının boş hücreleri) ve Q3 (Excel'deki boş hücre) için tasarımlar README'deki varsayılanı izler.
+- Q3 (Excel'deki boş hücre) için tasarımlar README'deki varsayılanı izler. Tasarımdaki `New` / `Update` etiketi uygulanmaz (D47): eklenen satır yalnızca gutter'daki `+` ve accent-soft anahtar hücresiyle işaretlenir.
 
 ## `design/` görselleri
 

@@ -108,11 +108,12 @@ const rows = shallowRef<Sample[]>([
 
 const sheet = useTemplateRef<DataSheetHandle>('sheet')
 const lastSave = shallowRef<SheetChanges | null>(null)
-/** Sunucu yerine: her satırı olduğu gibi kabul eder. */
+/** Sunucu yerine: her satırı olduğu gibi kabul eder; listede olmayan kod oluşturulur (upsert, D47). */
 function onSave(changes: SheetChanges) {
   lastSave.value = changes
+  const known = new Set(rows.value.map((r) => r.code))
   sheet.value!.applyResult(
-    changes.rows.map((r) => ({ clientId: r.clientId, status: r.op === 'create' ? 'created' : 'updated' })),
+    changes.rows.map((r) => ({ clientId: r.clientId, status: known.has(r.key) ? 'updated' : 'created' })),
   )
 }
 </script>

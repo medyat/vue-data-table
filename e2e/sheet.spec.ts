@@ -339,7 +339,7 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     await page.setViewportSize({ width: 1440, height: 960 })
   })
 
-  test("sıralama; Add row + lookupKeys (New/Update, base); tekil anahtar; ⌘− + Undo; görünümler; hücre menüsü; hata dialog'u; saving; applyResult; Partly saved + Copy errors", async ({
+  test("sıralama; Add row (sunucu sorgusu yok, D47); tekil anahtar; ⌘− + Undo; görünümler; hücre menüsü; hata dialog'u; saving; applyResult; Partly saved + Copy errors", async ({
     page,
   }) => {
     await page.goto('/t11?delay=0&rows=30&saveDelay=400&fresh=1')
@@ -355,20 +355,28 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     await page.locator('.dt-head-cell[data-col="listPrice"] .dt-head-label').click()
     await expect(page.locator('.dt-row[data-index="0"] [role="rowheader"]')).toHaveText('1')
 
-    // Add row: focus key cell editing; type known SKU → Update + base fill; type new → New
+    // Add row: focus key cell editing; SKU sunucuda olsa da satır sunucudan doldurulmaz, etiket yok (D47)
     await page.locator('.dt-sheet-add').click()
     await expect(cell(page, 30, 'sku')).toHaveClass(/is-editing/)
     await expect(page.locator('.dt-row[data-index="30"] [role="rowheader"]')).toHaveText('31')
     await page.keyboard.type('HC-0100-S') // sunucuda var, listede yok (rows=30)
     await page.keyboard.press('Enter')
-    await expect(cell(page, 30, 'sku')).toContainText('Update', { timeout: 5000 })
+    await expect(cell(page, 30, 'sku')).toHaveText('HC-0100-S')
     await expect(cell(page, 30, 'sku')).not.toHaveClass(/is-error/)
-    await expect(cell(page, 30, 'name')).toContainText('Hydraulic cylinder HC 100') // base fill (Q2)
-    await expect(cell(page, 30, 'name')).not.toHaveClass(/is-changed/)
+    await expect(cell(page, 30, 'name')).toContainText('Required')
+    // zorunlu alanları doldur (vat newRowDefaults'tan)
+    await cell(page, 30, 'name').click()
+    await page.keyboard.type('Upserted')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('Pumps')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('77')
+    await page.keyboard.press('Enter')
+    await expect(cell(page, 30, 'listPrice')).not.toHaveClass(/is-error/)
     await page.locator('.dt-sheet-add').click()
     await page.keyboard.type('NEW-100')
     await page.keyboard.press('Enter')
-    await expect(cell(page, 31, 'sku')).toContainText('New', { timeout: 5000 })
     await expect(page.locator('.dt-sheet-changes')).toContainText('2 new')
     // duplicate key: another new row with NEW-100 → both error
     await page.locator('.dt-sheet-add').click()
@@ -420,7 +428,7 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     const dialog = page.locator('.dt-dialog-errors')
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText('1 row has errors')
-    await expect(dialog).toContainText('The other 1 changed rows will be saved.')
+    await expect(dialog).toContainText('The other 2 changed rows will be saved.')
     await expect(dialog).toContainText('NEW-100')
     await dialog.getByText('Fix first').click()
     await expect(page.locator('.dt-sheet-views .dt-seg-item[value="errors"]')).toHaveAttribute('data-state', 'on')
@@ -445,8 +453,8 @@ test.describe('T11 · DataSheet · satır partisi, sıralama, kayıt (Faz 6c)', 
     await expect(page.locator('.dt-sheet-changes')).toContainText('No changes')
     await expect(page.locator('.dt-status')).not.toContainText('new row')
     await page.locator('.dt-scroll').evaluate((el) => (el.scrollTop = el.scrollHeight)) // son satırlar sanal pencerede
-    await expect(cell(page, 30, 'sku')).not.toContainText('Update')
-    await expect(cell(page, 31, 'sku')).not.toContainText('New')
+    await expect(cell(page, 30, 'sku')).not.toHaveClass(/is-new/)
+    await expect(cell(page, 31, 'sku')).not.toHaveClass(/is-new/)
     // server error path: cost > 100000 (istemci kuralı için liste fiyatı daha yüksek) → partly saved banner + copy errors
     await cell(page, 4, 'listPrice').click()
     await page.keyboard.type('300000')
@@ -515,13 +523,15 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     await expect(rowsEl.nth(3)).toContainText('1,650.00')
     await expect(rowsEl.nth(5)).toContainText('20%')
     await expect(rowsEl.nth(2).locator('select')).toHaveValue('') // Birim eşleşmedi
-    await expect(dlg.locator('.dt-import-summary')).toContainText('2 update existing products · 1 new SKUs')
+    await expect(dlg.locator('.dt-import-summary')).toContainText(
+      '2 rows in the list will be updated · 1 SKUs not in the list',
+    )
     await dlg.locator('.dt-import-link').click()
     await expect(dlg.locator('.dt-import-newlist')).toContainText('NEW-CSV-1')
     await expect(dlg.locator('.dt-btn-primary')).toBeEnabled()
     await dlg.locator('.dt-btn-primary').click()
     await expect(dlg).toHaveCount(0)
-    await expect(page.locator('.dt-toast')).toContainText('Imported 3 rows · 2 updated · 1 new')
+    await expect(page.locator('.dt-toast')).toContainText('Imported 3 rows · 2 updated · 1 added')
     await expect(cell(page, 0, 'name')).toContainText('Hidrolik silindir HC-1')
     await expect(cell(page, 0, 'listPrice')).toContainText('1,650.00')
     await expect(cell(page, 1, 'listPrice')).toContainText('2,240.00')
@@ -532,7 +542,7 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     await expect(cell(page, 0, 'sku')).toBeFocused() // odak ızgaraya döndü
     await page.keyboard.press('Control+End')
     await expect(cell(page, 30, 'sku')).toContainText('NEW-CSV-1')
-    await expect(cell(page, 30, 'sku')).toContainText('New')
+    await expect(cell(page, 30, 'sku')).toHaveClass(/is-new/)
     await expect(cell(page, 30, 'listPrice')).toContainText('99.50')
     await page.keyboard.press('Meta+z')
     await expect(page.locator('.dt-status')).toContainText('30 rows')
@@ -564,7 +574,7 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     ).toBe('PK')
   })
 
-  test('10.000 satır: Export All .xlsx → boş sayfaya Import → Apply donmadan (< 5 s), hepsi Update', async ({
+  test('10.000 satır: Export All .xlsx → boş sayfaya Import → Apply donmadan (< 5 s), listede olmayanlar eklenir', async ({
     page,
   }) => {
     test.setTimeout(120_000)
@@ -577,7 +587,7 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     const dl = page.waitForEvent('download')
     await page.locator('.dt-menu-item', { hasText: 'Excel (.xlsx)' }).click()
     const file = (await (await dl).path())!
-    // Listede satır yokken (kullanıcı hepsini çıkarmış gibi) aynı dosya: her anahtar sunucuda var → Update satırı.
+    // Listede tek satır varken aynı dosya: 9.999 anahtar listede yok → satır olarak eklenir (sunucu upsert eder, D47).
     await page.goto('/t11?delay=0&rows=1&fresh=1')
     await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
     await page.locator('.dt-sheet-import').click()
@@ -585,7 +595,7 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     await dlg
       .locator('input[type=file]')
       .setInputFiles({ name: 'products.xlsx', mimeType: 'application/octet-stream', buffer: readFileSync(file) })
-    await expect(dlg.locator('.dt-import-summary')).toContainText('update existing products', { timeout: 30000 })
+    await expect(dlg.locator('.dt-import-summary')).toContainText(/9,?999 SKUs not in the list/, { timeout: 30000 })
     await expect(dlg.locator('.dt-btn-primary')).toBeEnabled()
     const t0 = Date.now()
     await dlg.locator('.dt-btn-primary').click()

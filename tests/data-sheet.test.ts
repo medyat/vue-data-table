@@ -285,7 +285,9 @@ describe('formül çubuğu, Save, Discard, handle', () => {
     await flush()
     const saves = w.emitted<[SheetChanges]>('save')!
     expect(saves).toHaveLength(1)
-    expect(saves[0]![0].rows).toEqual([{ clientId: '1', key: 'HC-001', op: 'update', values: { name: 'x' } }])
+    expect(saves[0]![0].rows).toEqual([
+      { clientId: '1', key: 'HC-001', values: { name: 'x', listPrice: 100, sku: 'HC-001' } },
+    ])
     // hatayı düzeltince dialog yok: düğme doğrudan yayar
     await click(w, 1, 'cost')
     await key(w, { key: 'Delete' })
@@ -344,7 +346,6 @@ describe('pano, doldurma, geri al (Faz 6b)', () => {
     expect(w.get('.dt-status').text()).toContain('1 new row')
     expect(cell(w, 20, 'sku').text()).toContain('K3')
     expect(cell(w, 20, 'sku').classes()).toContain('is-new')
-    expect(cell(w, 20, 'sku').text()).toContain('New')
     expect(w.get('.dt-row[data-index="20"] [role="rowheader"]').text()).toBe('21')
     expect(cell(w, 20, 'listPrice').get('.dt-cell-content').text()).toBe('Required')
     expect(w.get('.dt-toast').text()).toContain('Pasted 3 rows × 3 columns')
@@ -437,21 +438,8 @@ describe('pano, doldurma, geri al (Faz 6b)', () => {
 })
 
 describe('satır partisi, görünümler, sıralama, kayıt akışı (Faz 6c)', () => {
-  const lookup = async (keys: string[]) =>
-    Object.fromEntries(
-      keys.map((k) => [
-        k,
-        k === 'SRV-1'
-          ? { id: 900, sku: 'SRV-1', name: 'From server', category: 'hyd', listPrice: 9, cost: 1, active: true }
-          : null,
-      ]),
-    )
-  it('Add row: numara devam eder, odak anahtar hücresinde düzenlemede; lookupKeys → New / Update (base dolar); tekil anahtar', async () => {
-    const w = await mountSheet({
-      rows: rows.slice(0, 5),
-      lookupKeys: lookup,
-      newRowDefaults: () => ({ active: false }),
-    })
+  it('Add row: numara devam eder, odak anahtar hücresinde düzenlemede; sunucu sorgusu yok (D47); tekil anahtar', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5), newRowDefaults: () => ({ active: false }) })
     await w.get('.dt-sheet-add').trigger('click')
     await flush()
     expect(w.get('.dt-row[data-index="5"] [role="rowheader"]').text()).toBe('6')
@@ -459,12 +447,8 @@ describe('satır partisi, görünümler, sıralama, kayıt akışı (Faz 6c)', (
     expect(cell(w, 5, 'active').text()).toContain('No') // newRowDefaults
     await typeInto('SRV-1')
     await key(w, { key: 'Enter' })
-    expect(cell(w, 5, 'sku').text()).toContain('SRV-1')
-    await new Promise((r) => setTimeout(r, 350))
-    await flush()
-    expect(cell(w, 5, 'sku').text()).toContain('Update')
-    expect(cell(w, 5, 'name').text()).toBe('From server')
-    expect(cell(w, 5, 'name').classes()).not.toContain('is-changed')
+    expect(cell(w, 5, 'sku').text()).toBe('SRV-1') // etiket yok
+    expect(cell(w, 5, 'name').get('.dt-cell-content').text()).toBe('Required') // sunucudan doldurulmaz
     expect(w.get('.dt-sheet-changes').text()).toContain('1 new')
     await w.get('.dt-sheet-add').trigger('click')
     await flush()
@@ -473,9 +457,6 @@ describe('satır partisi, görünümler, sıralama, kayıt akışı (Faz 6c)', (
     expect(cell(w, 6, 'sku').classes()).toContain('is-error') // listede var (satır 2)
     expect(cell(w, 6, 'sku').get('.dt-cell-tip').text()).toContain('HC-002 is already in row 2')
     expect(cell(w, 1, 'sku').classes()).toContain('is-error')
-    await new Promise((r) => setTimeout(r, 350))
-    await flush()
-    expect(cell(w, 6, 'sku').text()).toContain('New')
   })
   it('Remove from list (⌘−): nötr toast + Undo; sayı düşer; Discard çıkarılanı geri getirir', async () => {
     const w = await mountSheet({ rows: rows.slice(0, 5) })
@@ -672,7 +653,9 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     expect((trs[2]!.querySelector('select') as HTMLSelectElement).value).toBe('') // Birim: alan yok
     expect((trs[3]!.querySelector('select') as HTMLSelectElement).value).toBe('listPrice')
     expect(trs[3]!.textContent).toContain('1,650.00')
-    expect(dlg().querySelector('.dt-import-summary')!.textContent).toContain('1 update existing products · 1 new SKUs')
+    expect(dlg().querySelector('.dt-import-summary')!.textContent).toContain(
+      '1 rows in the list will be updated · 1 SKUs not in the list',
+    )
     // Birim'i elle Cost'a eşle, sonra Don't import
     const birim = trs[2]!.querySelector('select') as HTMLSelectElement
     birim.value = 'cost'
@@ -691,7 +674,7 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     expect(cell(w, 5, 'sku').text()).toContain('NEW-1')
     expect(cell(w, 5, 'listPrice').text()).toContain('99.50')
     expect(cell(w, 5, 'cost').text()).toContain('50.00')
-    expect(w.get('.dt-toast').text()).toContain('Imported 2 rows · 1 updated · 1 new')
+    expect(w.get('.dt-toast').text()).toContain('Imported 2 rows · 1 updated · 1 added')
     await w.get('.dt-toast-undo').trigger('click')
     await flush()
     expect(w.get('.dt-status').text()).toContain('5 rows')
@@ -778,21 +761,20 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     expect(off.find('.dt-sheet-import').exists()).toBe(false)
     off.unmount()
   })
-  it('Import 10.000 satır (hepsi listede yok, sunucuda var → Update) donmadan uygulanır', async () => {
+  it('Import 10.000 satır (hepsi listede yok → eklenir) donmadan uygulanır', async () => {
     const N = 10_000
-    const server = Array.from({ length: N }, (_, i) => ({ ...rows[0]!, id: i + 1, sku: `P-${i}`, name: `P ${i}` }))
     const w = await mountSheet({ rows: [] })
     await w.get('.dt-sheet-import').trigger('click')
     await flush()
     const t0 = performance.now()
     w.findComponent(ImportDialog).vm.$emit('apply', {
-      rows: server.map((r) => ({ key: r.sku, values: { listPrice: 5 }, server: r })),
+      rows: Array.from({ length: N }, (_, i) => ({ key: `P-${i}`, values: { name: `P ${i}`, listPrice: 5 } })),
       addNew: true,
     })
     await flush()
     const ms = performance.now() - t0
     expect(w.get('.dt-status').text()).toContain('10,000 rows')
-    expect(document.querySelector('.dt-toast')?.textContent).toContain('10,000 updated · 0 new')
+    expect(document.querySelector('.dt-toast')?.textContent).toContain('0 updated · 10,000 added')
     expect(ms).toBeLessThan(3000) // düzeltme öncesi ~27 s ve sınır yanlışlıkla 5.000'de doluyordu
     w.unmount()
   }, 120_000)

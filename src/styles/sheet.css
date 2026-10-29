@@ -556,23 +556,9 @@
   cursor: default;
 }
 
-/* Yeni satır (07 §7): anahtar hücresi accent-soft + "New" etiketi; gutter'da `+`. */
+/* Eklenen satır (07 §9, D47): anahtar hücresi accent-soft; gutter'da `+`. */
 .dt-sheet-grid .dt-cell[data-col].is-new {
   --dt-row-bg: var(--dt-accent-soft);
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--dt-space-sm);
-}
-.dt-tag-new {
-  flex: none;
-  padding: 1px 6px;
-  border-radius: var(--dt-radius-xs);
-  background: var(--dt-accent);
-  color: var(--dt-on-accent);
-  font-family: var(--dt-font);
-  font-size: var(--dt-ui-fs-3xs);
-  font-weight: 600;
 }
 .dt-mark.is-new {
   color: var(--dt-accent);
@@ -713,15 +699,6 @@
   color: var(--dt-r-fg);
 }
 
-/* Yeni satır etiketleri (06 §5): New accent, Update nötr; kontrol sürerken spinner. */
-.dt-tag-new.is-update {
-  background: var(--dt-surface-3);
-  color: var(--dt-text-2);
-}
-.dt-tag-spin {
-  flex: none;
-  color: var(--dt-text-3);
-}
 
 /* Kaydederken (06 §9.1): Save mürekkep + spinner, aria-disabled; formül ipucunda kilit. */
 .dt-sheet-save[aria-disabled='true'] {

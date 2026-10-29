@@ -12,7 +12,8 @@
 
 ### DataSheet
 
-- Büyük içe aktarma artık sayfayı dondurmuyor: listede olmayan 10.000 anahtarın içe aktarılması ~27 s'den ~1–2 s'ye indi. Yeni satırlar ve Update satırlarının sunucu kayıtları satır satır değil toplu ekleniyor (her satırda tüm parti yeniden doğrulanıyordu).
+- **Yeni / Güncelle ayrımı kalktı (D47).** `lookupKeys` prop'u, New / Update etiketi ve Update satırını sunucudan doldurma yok; eklenen satır gutter'da `+` ile işaretlenir, sunucu anahtara göre upsert eder. **Geçiş:** `:lookup-keys` ve sorgu uç noktası silinebilir; `@save` yükünde `SheetChangeRow.op` yok, `values` artık değişen alanlar + `required` sütunlar + anahtar (eklenen satırda boş değer gitmez). Import özeti ve toast metinleri “listede olan / olmayan”, “added” oldu; `sheet.tag.new` / `sheet.tag.update` yerine `sheet.addedRow`.
+- Büyük içe aktarma artık sayfayı dondurmuyor: listede olmayan 10.000 anahtarın içe aktarılması ~27 s'den ~1–2 s'ye indi. Yeni satırlar satır satır değil toplu ekleniyor (her satırda tüm parti yeniden doğrulanıyordu); `applyResult` da sonuçları tek seferde işliyor.
 - İçe aktarmada `maxRows` sınırı eklenen satırları iki kez sayıyordu; 10.000 sınırında yalnızca 5.000 satır alınıyordu.
 - `required` sütunlar gizlenemez: Columns dialog'unda kilitli, görünümde gizli kayıtlı olsa da görünür.
 

@@ -165,7 +165,7 @@ app.use(createDataTable({ locale: 'tr', viewsAdapter, preferences }))
 | `viewsAdapter` | hayır (yoksa yalnızca `views` prop'undaki görünümler; kaydetme yok) | kişisel görünümleri listele / oluştur / güncelle / sil (paylaşım yok, D30) |
 | `preferences` | hayır (yoksa tercihler oturumluk; arayüz “kaydedildi” demez) | yoğunluk, dikey çizgiler, sayfa boyutu, varsayılan görünüm id'si — `tableId` başına |
 | `createLocalStorageViews({ scope })`, `createLocalStoragePreferences({ scope })` | hazır adapter'lar | tarayıcıda saklar; `scope` zorunlu, değişince eski veri taşınmaz |
-| DataSheet `lookupKeys`, `parseFile` | hayır | callback prop'ları; HTTP ve Excel ayrıştırma uygulamada |
+| DataSheet `parseFile` | hayır | callback prop'u; verilmezse paketin okuyucusu (D46) |
 
 Arayüzlerin tamamı: [api-draft.ts](api-draft.ts).
 

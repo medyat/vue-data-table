@@ -5,7 +5,6 @@
 // GET /api/products?page=1&size=2000&delay=ms                            → { items, total } (T11 · DataSheet, 10.000 ürün)
 // POST /api/products/bulk-upsert { key, rows }                           → { results } (07 §16: ≤ 500 satır, satır başına sonuç,
 //      snake_case; cost > 100000 → field_errors.cost; sku "ERR-…" → row_error; bir satırın hatası diğerlerini düşürmez)
-// POST /api/products/lookup-keys { keys }                                 → { [key]: product | null }
 import type { Plugin } from 'vite'
 import { matches } from '../../src/core/filters/model'
 import type { FilterCondition } from '../../src/types/query'
@@ -198,15 +197,9 @@ export function mockApi(): Plugin {
           const start = (page - 1) * size
           return json(200, { items: products.slice(start, start + size), total: products.length })
         }
-        if (url.pathname === '/products/lookup-keys' || url.pathname === '/products/bulk-upsert') {
+        if (url.pathname === '/products/bulk-upsert') {
           const body = JSON.parse((await readBody(req)) || '{}') as {
-            keys?: string[]
-            rows?: Array<{ client_id: string; key: string; op: 'create' | 'update'; values: Record<string, unknown> }>
-          }
-          if (url.pathname === '/products/lookup-keys') {
-            const out: Record<string, Product | null> = {}
-            for (const k of body.keys ?? []) out[k] = products.find((p) => p.sku === k) ?? null
-            return json(200, out)
+            rows?: Array<{ client_id: string; key: string; values: Record<string, unknown> }>
           }
           const rows = body.rows ?? []
           if (rows.length > 500) return json(413, { message: 'Too many rows' })

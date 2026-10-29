@@ -483,11 +483,9 @@ export interface SheetChangeRow {
   /** Anahtar sütunun değeri (ör. SKU). */
   key: string
   /**
-   * create: anahtar sunucuda yok → tüm dolu alanlar.
-   * update: anahtar var → yalnızca değişen alanlar (kısmi güncelleme).
-   * Sunucu her durumda anahtara göre upsert yapar (D11); `op` ipucudur.
+   * Değişen alanlar + `required` sütunlar + anahtar (sütun id'leriyle). Eklenen satırda boş değer gitmez. Sunucu anahtara
+   * göre upsert eder (D11, D47); paket kaydın sunucuda olup olmadığını bilmez.
    */
-  op: 'create' | 'update'
   values: Record<string, unknown>
 }
 
@@ -654,11 +652,6 @@ export interface DataSheetProps<Row> extends CommonProps<Row> {
   loading?: Progress
   /** `@save` sonrası uygulama kaydederken; grid salt okunur, ilerleme şeridi. */
   saving?: Progress
-  /**
-   * Yeni satırlarda yazılan / yapıştırılan / içe aktarılan anahtarların kontrolü (New / Update ayrımı).
-   * Verilmezse her bilinmeyen anahtar New sayılır. Toplu çağrılır (en fazla 500 anahtar).
-   */
-  lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
   /** Import: dosyayı uygulama ayrıştırır ve ham satırları verir. Verilmezse paketin okuyucusu (.xlsx `read-excel-file`, .csv; D46). */
   parseFile?: (file: File) => Promise<ParsedWorkbook>
   /** Toolbar › Import (D46). Varsayılan true. */

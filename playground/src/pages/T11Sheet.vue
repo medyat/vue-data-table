@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // T11 · DataSheet: 10.000 ürün sahte API'den 2.000'lik parçalarla yüklenir (ilerleme şeridi); düzenleme yükleme bitince
 // açılır. Kayıt 07 §16 tarifiyle: 500'lük parçalar sırayla, `saving` sayacı, her parçanın yanıtı `applyResult` (snake_case →
-// SheetRowResult). `lookupKeys` → /api/products/lookup-keys. URL: ?delay=ms (parça başına gecikme), ?limit=1 (maxRows
-// şeridi), ?rows=N (yalnızca ilk N ürün; yeni satır / kayıt denemek için), ?saveDelay=ms (kayıt parçası gecikmesi).
+// SheetRowResult). Sunucu SKU'ya göre upsert eder (D47). URL: ?delay=ms (parça başına gecikme), ?limit=1
+// (maxRows şeridi), ?rows=N (yalnızca ilk N ürün; yeni satır / kayıt denemek için), ?saveDelay=ms (kayıt parçası gecikmesi).
 // Import / Export paketin yerleşik okuyucu ve yazıcısıyla (D46): `parseFile` ve `@export` verilmez.
 import {
   DataSheet,
@@ -70,7 +70,7 @@ async function onSave(changes: SheetChanges) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         key: 'sku',
-        rows: chunk.map((r) => ({ client_id: r.clientId, key: r.key, op: r.op, values: r.values })),
+        rows: chunk.map((r) => ({ client_id: r.clientId, key: r.key, values: r.values })),
       }),
     })
     const data = (await res.json()) as { results: ApiResult[] }
@@ -81,15 +81,6 @@ async function onSave(changes: SheetChanges) {
   saving.value = false
 }
 
-async function lookupKeys(keys: string[], { signal }: { signal: AbortSignal }) {
-  const res = await fetch('/api/products/lookup-keys', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ keys }),
-    signal,
-  })
-  return (await res.json()) as Record<string, Product | null>
-}
 const newRowDefaults = (): Partial<Product> => ({ unit: 'pcs', vat: 20, active: true })
 </script>
 
@@ -117,7 +108,6 @@ const newRowDefaults = (): Partial<Product> => ({ unit: 'pcs', vat: 20, active: 
       :loading="loading"
       :saving="saving"
       :max-rows="maxRows"
-      :lookup-keys="lookupKeys"
       :new-row-defaults="newRowDefaults"
       :entity-name="{ one: 'product', other: 'products' }"
       @save="onSave"

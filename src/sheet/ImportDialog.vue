@@ -33,14 +33,12 @@ import type { ParsedWorkbook } from '../types/sheet'
 import { cellText, detectHeaderRow, matchColumns } from './import/model'
 import { inferDecimal, parseInput, type ParseEnv } from './parse'
 
-export interface ImportRow<Row> {
+export interface ImportRow {
   key: string
   values: Record<string, unknown>
-  /** undefined: listede var; Row: sunucuda var (Update); null: yeni. */
-  server?: Row | null
 }
-export interface ImportPayload<Row> {
-  rows: Array<ImportRow<Row>>
+export interface ImportPayload {
+  rows: ImportRow[]
   addNew: boolean
 }
 
@@ -53,11 +51,10 @@ const props = defineProps<{
   /** Şu anki satır sayısı (sınır için). */
   rowCount: number
   inList: (key: string) => boolean
-  lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
   parseEnv: (locale?: string) => ParseEnv
   fmtEnv: FormatEnv
 }>()
-const emit = defineEmits<{ apply: [payload: ImportPayload<Row>] }>()
+const emit = defineEmits<{ apply: [payload: ImportPayload] }>()
 const open = defineModel<boolean>('open', { default: false })
 const { i18n, locale } = useDataTableContext()
 const SKIP = '__skip__'
@@ -147,61 +144,33 @@ const reset = () => {
   failed.value = false
   mapping.value = {}
   keyCol.value = null
-  lookup.value = null
 }
 watch(open, (o) => {
   if (!o) reset()
 })
 
-// Anahtarlar: listede olanlar güncellenir; olmayanlar `lookupKeys` ile sunucuda aranır (varsa Update, yoksa New).
+// Anahtarlar: listede olanlar o satırı günceller, olmayanlar satır olarak eklenir (sunucu anahtara göre upsert eder, D47).
 const keyTexts = computed(() =>
   keyCol.value === null ? [] : dataRows.value.map((r) => cellText(r?.[keyCol.value!])).filter(Boolean),
 )
-const lookup = shallowRef<Map<string, Row | null> | null>(null)
-let ctl: AbortController | null = null
-watch(keyTexts, async (keys) => {
-  lookup.value = null
-  ctl?.abort()
-  const unknown = [...new Set(keys.filter((k) => !props.inList(k)))]
-  if (!unknown.length || !props.lookupKeys) {
-    lookup.value = new Map(unknown.map((k) => [k, null]))
-    return
-  }
-  ctl = new AbortController()
-  const map = new Map<string, Row | null>()
-  try {
-    for (let i = 0; i < unknown.length; i += 500) {
-      const chunk = unknown.slice(i, i + 500)
-      const res = await props.lookupKeys(chunk, { signal: ctl.signal })
-      for (const k of chunk) map.set(k, res[k] ?? null)
-    }
-    lookup.value = map
-  } catch {
-    if (!ctl.signal.aborted) lookup.value = new Map(unknown.map((k) => [k, null]))
-  }
-})
 const summary = computed(() => {
   if (!keyTexts.value.length) return null
   const seen = new Set<string>()
-  let inList = 0
-  let server = 0
+  let updates = 0
   const news: string[] = []
   for (const k of keyTexts.value) {
     if (seen.has(k)) continue
     seen.add(k)
-    if (props.inList(k)) inList++
-    else if (lookup.value?.get(k)) server++
+    if (props.inList(k)) updates++
     else news.push(k)
   }
-  return { updates: inList + server, news, pending: lookup.value === null && !!props.lookupKeys }
+  return { updates, news }
 })
 const overLimit = computed(() => {
   const s = summary.value
   return !!s && addNew.value && props.rowCount + s.news.length > props.maxRows
 })
-const canApply = computed(
-  () => !!workbook.value && keyCol.value !== null && !!summary.value && !summary.value.pending && !overLimit.value,
-)
+const canApply = computed(() => !!workbook.value && keyCol.value !== null && !!summary.value && !overLimit.value)
 
 // Önizleme: ilk veri satırının ham değeri ve çözümlenmiş biçimi (sütun bazında ondalık çıkarımı, 07 §7).
 const localeFor = (col: number, def: ColumnDef<Row>): string => {
@@ -228,7 +197,7 @@ const preview = (col: number): { raw: string; shown: string | null } => {
 
 const apply = () => {
   if (!canApply.value || keyCol.value === null) return
-  const out: Array<ImportRow<Row>> = []
+  const out: ImportRow[] = []
   for (const r of dataRows.value) {
     const key = cellText(r?.[keyCol.value])
     if (!key) continue
@@ -240,7 +209,7 @@ const apply = () => {
       if (!def || cellText(raw) === '') continue // boş hücre mevcut değeri silmez (Q3)
       values[id] = convert(Number(col), def, raw)
     }
-    out.push({ key, values, server: props.inList(key) ? undefined : (lookup.value?.get(key) ?? null) })
+    out.push({ key, values })
   }
   emit('apply', { rows: out, addNew: addNew.value })
   open.value = false
@@ -403,7 +372,6 @@ const sheetInfo = computed(() => {
                     i18n.t('import.summary', {
                       updates: summary.updates,
                       news: summary.news.length,
-                      entity,
                       key: keyHeader,
                     })
                   }}
