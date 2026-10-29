@@ -335,15 +335,12 @@ describe('satır partisi, base katmanı, kayıt sonucu (Faz 6c)', () => {
     const [a] = s.addRows(1)
     s.apply([{ row: a!.row, def: def('sku'), value: 'SV-9' }], [a!])
     s.setKeyState('new:1', 'update')
-    s.setBase('new:1', {
-      id: 99,
-      sku: 'SV-9',
-      name: 'Server name',
-      category: 'hyd',
-      listPrice: 500,
-      cost: 100,
-      note: null,
-    })
+    s.setBase([
+      {
+        key: 'new:1',
+        row: { id: 99, sku: 'SV-9', name: 'Server name', category: 'hyd', listPrice: 500, cost: 100, note: null },
+      },
+    ])
     expect(s.read(a!.row, def('name'))).toBe('Server name')
     expect(s.rowDraft('new:1')).toBeUndefined() // sku sunucuyla aynı → taslaktan düştü
     expect(s.hasError('new:1')).toBe(false)

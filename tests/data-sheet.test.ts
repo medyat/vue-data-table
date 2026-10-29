@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { exportFile } from '../src/core/export/write'
 import DataSheet from '../src/sheet/DataSheet.vue'
+import ImportDialog from '../src/sheet/ImportDialog.vue'
 import type { ColumnDef, OptionDef, SheetChanges } from '../src/types'
 import { flush, mockLayout } from './helpers/dom'
 
@@ -777,6 +778,24 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     expect(off.find('.dt-sheet-import').exists()).toBe(false)
     off.unmount()
   })
+  it('Import 10.000 satır (hepsi listede yok, sunucuda var → Update) donmadan uygulanır', async () => {
+    const N = 10_000
+    const server = Array.from({ length: N }, (_, i) => ({ ...rows[0]!, id: i + 1, sku: `P-${i}`, name: `P ${i}` }))
+    const w = await mountSheet({ rows: [] })
+    await w.get('.dt-sheet-import').trigger('click')
+    await flush()
+    const t0 = performance.now()
+    w.findComponent(ImportDialog).vm.$emit('apply', {
+      rows: server.map((r) => ({ key: r.sku, values: { listPrice: 5 }, server: r })),
+      addNew: true,
+    })
+    await flush()
+    const ms = performance.now() - t0
+    expect(w.get('.dt-status').text()).toContain('10,000 rows')
+    expect(document.querySelector('.dt-toast')?.textContent).toContain('10,000 updated · 0 new')
+    expect(ms).toBeLessThan(3000) // düzeltme öncesi ~27 s ve sınır yanlışlıkla 5.000'de doluyordu
+    w.unmount()
+  }, 120_000)
   it('telefon (D14): banner, Copy link, footer, gutter yok, düzenleme yok', async () => {
     const orig = window.matchMedia
     window.matchMedia = ((q: string) => ({

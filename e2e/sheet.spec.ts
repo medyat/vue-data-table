@@ -564,6 +564,38 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     ).toBe('PK')
   })
 
+  test('10.000 satır: Export All .xlsx → boş sayfaya Import → Apply donmadan (< 5 s), hepsi Update', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000)
+    await settings(page)
+    await page.setViewportSize({ width: 1440, height: 960 })
+    await page.goto('/t11?delay=0&fresh=1')
+    await expect(page.locator('.dt-status')).toContainText('10,000', { timeout: 30000 })
+    await page.locator('.dt-sheet-export').click()
+    await page.locator('.dt-menu-item', { hasText: 'Export all rows (10,000)' }).hover()
+    const dl = page.waitForEvent('download')
+    await page.locator('.dt-menu-item', { hasText: 'Excel (.xlsx)' }).click()
+    const file = (await (await dl).path())!
+    // Listede satır yokken (kullanıcı hepsini çıkarmış gibi) aynı dosya: her anahtar sunucuda var → Update satırı.
+    await page.goto('/t11?delay=0&rows=1&fresh=1')
+    await expect(cell(page, 0, 'name')).toBeVisible({ timeout: 15000 })
+    await page.locator('.dt-sheet-import').click()
+    const dlg = page.locator('.dt-import')
+    await dlg
+      .locator('input[type=file]')
+      .setInputFiles({ name: 'products.xlsx', mimeType: 'application/octet-stream', buffer: readFileSync(file) })
+    await expect(dlg.locator('.dt-import-summary')).toContainText('update existing products', { timeout: 30000 })
+    await expect(dlg.locator('.dt-btn-primary')).toBeEnabled()
+    const t0 = Date.now()
+    await dlg.locator('.dt-btn-primary').click()
+    await expect(page.locator('.dt-toast')).toContainText('Imported 10,000 rows', { timeout: 60000 })
+    const ms = Date.now() - t0
+    console.log('IMPORT_MS', ms)
+    expect(ms).toBeLessThan(5000)
+    await expect(page.locator('.dt-status')).toContainText('10,000 rows')
+  })
+
   test('Import dialog düzeni (TR): uzun başlık tabloyu taşırmaz, İlk değer görünür, sınır uyarısı binmez, etiketler tek satır', async ({
     page,
   }) => {

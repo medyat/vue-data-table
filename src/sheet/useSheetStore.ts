@@ -434,12 +434,17 @@ export function useSheetStore<Row extends object>(o: SheetStoreOptions<Row>) {
   const setKeyState = (key: string, state: KeyState) => {
     if (addedByKey.value.has(key)) keyStates.set(key, state)
   }
-  /** Update satırı (07 §9, Q2): sunucu kaydı orijinal sayılır; boş hücreler onunla dolar, yalnızca değişenler gider. */
-  const setBase = (key: string, row: Row) => {
-    base.set(key, { row, from: isNew(key) ? undefined : byKey.value.get(key) })
+  /**
+   * Update satırları (07 §9, Q2): sunucu kaydı orijinal sayılır; boş hücreler onunla dolar, yalnızca değişenler gider.
+   * Toplu: sürüm bir kez artar, her satır bir kez doğrulanır (satır başına artış 10k içe aktarmada karesel olurdu).
+   */
+  const setBase = (entries: Array<{ key: string; row: Row }>) => {
+    if (!entries.length) return
+    for (const { key, row } of entries) base.set(key, { row, from: isNew(key) ? undefined : byKey.value.get(key) })
     version.value++
-    const r = byKey.value.get(key)
-    if (r) {
+    for (const { key } of entries) {
+      const r = byKey.value.get(key)
+      if (!r) continue
       // Taslakta sunucuyla aynı olan değerler düşer.
       const d = draft.get(key)
       if (d) {

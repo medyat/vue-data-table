@@ -12,6 +12,8 @@
 
 ### DataSheet
 
+- Büyük içe aktarma artık sayfayı dondurmuyor: listede olmayan 10.000 anahtarın içe aktarılması ~27 s'den ~1–2 s'ye indi. Yeni satırlar ve Update satırlarının sunucu kayıtları satır satır değil toplu ekleniyor (her satırda tüm parti yeniden doğrulanıyordu).
+- İçe aktarmada `maxRows` sınırı eklenen satırları iki kez sayıyordu; 10.000 sınırında yalnızca 5.000 satır alınıyordu.
 - `required` sütunlar gizlenemez: Columns dialog'unda kilitli, görünümde gizli kayıtlı olsa da görünür.
 
 ### DataTable

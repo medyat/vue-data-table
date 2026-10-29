@@ -730,14 +730,16 @@ const runLookup = async () => {
   try {
     const values = [...new Set(batchKeys.values())].slice(0, 500)
     const result = await props.lookupKeys(values, { signal: lookupCtl.signal })
+    const bases: Array<{ key: string; row: Row }> = []
     for (const [rowKey, value] of batchKeys) {
       if (looked.get(rowKey) !== value) continue
       const found = result[value]
       if (found) {
         store.setKeyState(rowKey, 'update')
-        store.setBase(rowKey, found)
+        bases.push({ key: rowKey, row: found })
       } else store.setKeyState(rowKey, 'new')
     }
+    store.setBase(bases)
   } catch {
     for (const rowKey of batchKeys.keys()) store.setKeyState(rowKey, 'new')
   }
@@ -886,6 +888,18 @@ const applyImport = (payload: ImportPayload<Row>) => {
     const v = store.readUntracked(r, def)
     if (!isEmptyValue(v)) byKeyValue.set(String(v), r)
   }
+  // Yeni satırlar önce sayılır ve tek `addRows` çağrısıyla eklenir: satır satır eklemek her seferinde tüm partiyi
+  // yeniden doğruluyordu (10k'da karesel). Sınır başlangıçtaki satır sayısına göre (eklenen satır iki kez sayılmaz).
+  const start = store.allRows.value.length
+  const need = new Set<string>()
+  for (const item of payload.rows) {
+    if (byKeyValue.has(item.key) || need.has(item.key)) continue
+    if (item.server === null && !payload.addNew) continue
+    if (start + need.size + 1 > props.maxRows) break
+    need.add(item.key)
+  }
+  const fresh = need.size ? store.addRows(need.size) : []
+  const freshByKey = new Map([...need].map((k, i) => [k, fresh[i]!]))
   const changes: Array<Change<Row>> = []
   const addedRows: Array<{ key: string; row: Row }> = []
   const bases: Array<{ key: string; row: Row }> = []
@@ -895,9 +909,8 @@ const applyImport = (payload: ImportPayload<Row>) => {
     let row = byKeyValue.get(item.key)
     if (!row) {
       if (item.server === null && !payload.addNew) continue
-      if (store.allRows.value.length + addedRows.length + 1 > props.maxRows) break
-      const [a] = store.addRows(1)
-      if (!a) continue
+      const a = freshByKey.get(item.key)
+      if (!a) break // sınır
       row = a.row
       addedRows.push(a)
       byKeyValue.set(item.key, row)
@@ -912,10 +925,8 @@ const applyImport = (payload: ImportPayload<Row>) => {
       if (d && canEdit(row, d)) changes.push({ row, def: d, value })
     }
   }
-  for (const b of bases) {
-    store.setKeyState(b.key, 'update')
-    store.setBase(b.key, b.row)
-  }
+  for (const b of bases) store.setKeyState(b.key, 'update')
+  store.setBase(bases)
   store.apply(changes, addedRows)
   if (addedRows.length && order.value) order.value = [...order.value, ...addedRows.map((a) => a.key)]
   showToast({
