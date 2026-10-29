@@ -2,8 +2,9 @@
 // Enter aşağı, Tab sağa, Esc iptal, blur onaylamaz, başka hücreye mousedown onaylar), Space boolean, Delete temizler,
 // hücre durumları ve "Was …", formül çubuğu, status bar, Save yükü, Discard, loading. Portallı editörler e2e/sheet.spec.ts.
 import { mount } from '@vue/test-utils'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { exportFile } from '../src/core/export/write'
 import DataSheet from '../src/sheet/DataSheet.vue'
 import type { ColumnDef, OptionDef, SheetChanges } from '../src/types'
 import { flush, mockLayout } from './helpers/dom'
@@ -49,6 +50,8 @@ const columns: Array<ColumnDef<Product>> = [
   },
   { id: 'active', header: 'Active', type: 'boolean', editable: true },
 ]
+
+vi.mock('../src/core/export/write', async (orig) => ({ ...(await orig()), exportFile: vi.fn(async () => {}) }))
 
 beforeAll(mockLayout)
 const mounted: Array<{ unmount: () => void }> = []
@@ -623,9 +626,9 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
     ],
   }
   const parseFile = async () => workbook
-  const pickFile = async (w: W) => {
+  const pickFile = async (w: W, file = new File(['x'], 'fiyat.csv')) => {
     const input = document.querySelector<HTMLInputElement>('.dt-import input[type=file]')!
-    Object.defineProperty(input, 'files', { value: [new File(['x'], 'fiyat.csv')], configurable: true })
+    Object.defineProperty(input, 'files', { value: [file], configurable: true })
     input.dispatchEvent(new Event('change', { bubbles: true }))
     await flush()
     await new Promise((r) => setTimeout(r, 0))
@@ -725,6 +728,54 @@ describe('içe/dışa aktarma ve telefon (Faz 6d)', () => {
       e.textContent?.includes('Export all rows (5)'),
     )
     expect(item).toBeTruthy()
+  })
+  it('Import (D46): parseFile yokken yerleşik okuyucu — .csv okunur, .xls sebebiyle reddedilir', async () => {
+    const w = await mountSheet({ rows: rows.slice(0, 5) })
+    await w.get('.dt-sheet-import').trigger('click')
+    await flush()
+    await pickFile(w, new File(['SKU;Product name\nHC-002;From csv\n'], 'fiyat.csv'))
+    await new Promise((r) => setTimeout(r, 0))
+    await flush()
+    expect(document.querySelector('.dt-import-file')?.textContent).toContain('Sheet “fiyat” · 1 rows') // başlık altındaki satırlar
+    await pickFile(w, new File(['x'], 'eski.xls'))
+    await new Promise((r) => setTimeout(r, 0))
+    await flush()
+    expect(document.querySelector('.dt-import-error')?.textContent).toContain('Only .xlsx and .csv files can be read.')
+    w.unmount()
+  })
+  it('Export (D46): @export yokken dosyayı paket yazar, taslak değerlerle; :exportable / :importable false gizler', async () => {
+    vi.mocked(exportFile).mockClear()
+    const w = await mountSheet({ rows: rows.slice(0, 5) })
+    await click(w, 0, 'name')
+    await key(w, { key: 'q' })
+    await key(w, { key: 'Enter' })
+    await w.get('.dt-sheet-export').trigger('click')
+    await flush()
+    const sub = [...document.querySelectorAll<HTMLElement>('.dt-menu-item')].find((e) =>
+      e.textContent?.includes('Export all rows (5)'),
+    )!
+    sub.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+    await flush()
+    const csv = [...document.querySelectorAll<HTMLElement>('.dt-menu-item')].find(
+      (e) => e.textContent?.trim() === 'CSV',
+    )!
+    csv.click()
+    await flush()
+    expect(exportFile).toHaveBeenCalledTimes(1)
+    const job = vi.mocked(exportFile).mock.calls[0]![0]
+    expect(job).toMatchObject({ format: 'csv', name: 'products' })
+    expect(job.rows).toHaveLength(5)
+    expect(
+      job.read(
+        job.rows[0]!,
+        job.columns.find((c) => c.id === 'name')!,
+      ),
+    ).toBe('q')
+    w.unmount()
+    const off = await mountSheet({ rows: rows.slice(0, 5), exportable: false, importable: false })
+    expect(off.find('.dt-sheet-export').exists()).toBe(false)
+    expect(off.find('.dt-sheet-import').exists()).toBe(false)
+    off.unmount()
   })
   it('telefon (D14): banner, Copy link, footer, gutter yok, düzenleme yok', async () => {
     const orig = window.matchMedia

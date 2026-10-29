@@ -237,6 +237,17 @@ Dark değerleri (siyah bazlı, daha yoğun):
 
 `prefers-reduced-motion: reduce` → döngüsel animasyonlar durur, geçişler anlık olur.
 
+## Dışa aktarma (Excel)
+
+Excel dosyası CSS değişkeni okumaz; renkler hex olarak yazılır ve tema ne olursa olsun **açık temanın** değerleridir (koyu temada indirilen dosya da açık görünür). Kaynak: `src/core/export/write.ts` (`HEADER`). Bu tablo `tokens.css`'e girmez.
+
+| Excel | Değer | Kaynak | Kullanım |
+|---|---|---|---|
+| `header.text` | `#15171C` | `--dt-text` (light) | Başlık metni, kalın |
+| `header.fill` | `#E8EAEE` | `--dt-track` (light) | Başlık dolgusu; veri satırlarından belirgin ayrılsın diye `--dt-surface-2`'den koyu |
+| `header.border` | `#B4B9C2` | `--dt-line-3` (light) | Başlık hücre kenarı (ince) |
+| `font.size` | 16 pt | — | Tüm hücreler (Excel varsayılanı 11); okunurluk için (D46). Sütun genişliği 16/11 oranında büyür |
+
 ## shadcn-vue köprüsü
 
 Paket kendi token'larıyla çalışır; uygulamanın shadcn-vue temasını devralmak için opsiyonel `shadcn-bridge.css` yüklenir. **Dikkat:** shadcn'in `--accent` değişkeni bir hover grisidir, marka rengi değildir; `--dt-accent` ona bağlanmaz.

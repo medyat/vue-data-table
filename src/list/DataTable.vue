@@ -17,6 +17,7 @@ import { optionLabel } from '../core/cells/format'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import { TYPE_SPECS } from '../core/cells/specs'
 import { readPath } from '../core/columns/readPath'
+import { exportFile } from '../core/export/write'
 import { useColumnLayout } from '../core/columns/useColumnLayout'
 import ColumnPicker from '../core/filters/ColumnPicker.vue'
 import FilterBar from '../core/filters/FilterBar.vue'
@@ -115,6 +116,8 @@ const props = withDefaults(
     expand?: boolean | ExpandOptions<Row>
     /** Satır hatası (D35): metin/metin listesi → `--dt-r-bg` + ⋯ hücresinde uyarı ikonu + satırda tooltip. Harita uygulamanın. */
     rowError?: (row: Row) => string | string[] | null | undefined
+    /** More › Export (D46). Varsayılan açık; `false` gizler (ör. yetki). */
+    exportable?: boolean
   }>(),
   {
     rowKey: 'id',
@@ -130,6 +133,7 @@ const props = withDefaults(
     selectionBar: 'floating',
     rowClick: 'none',
     expand: false,
+    exportable: true,
   },
 )
 const emit = defineEmits<{
@@ -142,7 +146,16 @@ const emit = defineEmits<{
   'row-open': [payload: { row: Row; href: string; event: MouseEvent }]
   /** Seçim her değiştiğinde; sayfa kapsamlı yüklü satırlar (D19). */
   'selection-change': [rows: Row[]]
-  export: [payload: { format: 'csv' | 'xlsx'; query: QueryWithoutPage; selection: Row[]; visibleColumns: string[] }]
+  /** Dinlenirse paket dosya yazmaz (D46); `rows` paketin yazacağı satırlardır (seçim ya da sayfa). */
+  export: [
+    payload: {
+      format: 'csv' | 'xlsx'
+      query: QueryWithoutPage
+      selection: Row[]
+      rows: Row[]
+      visibleColumns: string[]
+    },
+  ]
   import: []
   print: [payload: { query: QueryWithoutPage; visibleColumns: string[] }]
   'view-change': [payload: { id: string; kind: View['kind'] }]
@@ -597,7 +610,7 @@ const hasSearch = computed(() => props.toolbar !== false && props.columns.some(i
 const hasDisplay = computed(() => props.toolbar === 'auto')
 const more = computed(() => ({
   refresh: listens('onRequest'),
-  export: listens('onExport'),
+  export: props.exportable ? exportLabel.value : (false as const),
   import: listens('onImport'),
   print: listens('onPrint'),
   autoRefresh: props.autoRefresh !== undefined,
@@ -634,13 +647,35 @@ const phoneSortOn = {
     goTo(1)
   },
 }
-const onExport = (format: 'csv' | 'xlsx') =>
-  emit('export', {
+// Export (D46): ekranda görünen sütunlar ve satırlar — seçim varsa seçili satırlar, yoksa sayfadaki satırlar.
+const exportRowsOf = () => (list.selectedRows.value.length ? list.selectedRows.value : rowsShown.value)
+const exportLabel = computed(() => {
+  const n = list.selectedRows.value.length
+  return n
+    ? i18n.t('toolbar.exportSelected', { count: n })
+    : i18n.t('toolbar.export', { count: rowsShown.value.length })
+})
+const cellValue = (row: Row, def: ColumnDef<Row>) =>
+  def.accessor ? def.accessor(row) : readPath(row, def.id as string)
+const onExport = (format: 'csv' | 'xlsx') => {
+  const rows = exportRowsOf()
+  if (listens('onExport'))
+    return emit('export', {
+      format,
+      query: queryWithoutPage(),
+      selection: list.selectedRows.value,
+      rows,
+      visibleColumns: visibleColumns.value,
+    })
+  void exportFile({
     format,
-    query: queryWithoutPage(),
-    selection: list.selectedRows.value,
-    visibleColumns: visibleColumns.value,
+    columns: layout.columns.value.map((c) => c.def),
+    rows,
+    read: cellValue,
+    env: { fmt, i18n, today: new Date(), labels },
+    name: entity.value.other,
   })
+}
 
 // Birincil hücre (D6): link, aria etiketleri ve Copy için metin; ⋯ sütunu birincil sütun ya da rowActions varsa.
 const primaryDef = computed(() => props.columns.find((c) => c.primary))

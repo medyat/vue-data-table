@@ -25,4 +25,12 @@ describe.skipIf(!existsSync('dist/sheet.js'))('dist bağımlılıkları', () => 
     expect(js.some((f) => f.startsWith('CalendarDate-'))).toBe(false)
     expect(code).toMatch(/from\s*["']@internationalized\/date["']/)
   })
+
+  // D46: Excel kütüphaneleri peer; gömülmez, ilk Import/Export'ta dinamik yüklenir (ilk açılış bundle'ına girmez).
+  it('read-excel-file / write-excel-file gömülü değil, dinamik import', () => {
+    expect(code).not.toMatch(/No `format` was specified for a `Date`/)
+    for (const m of ['read-excel-file/browser', 'write-excel-file/browser', 'write-excel-file/utility'])
+      expect(code).toContain(`import("${m}")`)
+    expect(code).not.toMatch(/from\s*["'](read|write)-excel-file/)
+  })
 })

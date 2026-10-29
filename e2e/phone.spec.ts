@@ -11,7 +11,7 @@ const settings = (page: Page) =>
     localStorage.setItem('pg:settings', JSON.stringify({ theme: 'light', density: 'standard', locale: 'en' })),
   )
 const sheet = (page: Page) => page.locator('.dt-bsheet')
-const sheetRow = (page: Page, text: string) =>
+const sheetRow = (page: Page, text: string | RegExp) =>
   sheet(page).locator('.dt-bsheet-row, .dt-bsheet-row-main').filter({ hasText: text }).first()
 const footerRows = (page: Page) => page.locator('.dt-footer-rows')
 const box = async (locator: ReturnType<Page['locator']>) => (await locator.boundingBox())!
@@ -98,8 +98,6 @@ test.describe('T13 · telefon', () => {
   test('görünüm alt sayfası seçer; ⋯ alt sayfası: Display › Density (satır 48 kalır), Export › CSV', async ({
     page,
   }) => {
-    const logs: string[] = []
-    page.on('console', (m) => logs.push(m.text()))
     await page.locator('.dt-view-trigger').click()
     await expect(sheet(page)).toBeVisible()
     await sheet(page)
@@ -113,10 +111,12 @@ test.describe('T13 · telefon', () => {
     await sheetRow(page, 'Compact').click()
     await expect(sheetRow(page, 'Density')).toContainText('Compact')
     expect((await box(page.locator('.dt-row[data-index="0"]'))).height).toBe(49)
-    await sheetRow(page, 'Export matching rows').click()
+    // Export (D46): dinleyici yok, dosyayı paket yazar; etiket sayfadaki satır sayısı.
+    await sheetRow(page, /Export \d+ rows/).click()
+    const download = page.waitForEvent('download')
     await sheetRow(page, 'CSV').click()
     await expect(sheet(page)).toHaveCount(0)
-    expect(logs.some((l) => l.startsWith('export'))).toBe(true)
+    expect((await download).suggestedFilename()).toBe('orders.csv')
   })
 
   test('bulk bar: yanlardan 10 px, 2 aksiyon + More; More sayfası sayaç + yıkıcı en altta; × temizler', async ({

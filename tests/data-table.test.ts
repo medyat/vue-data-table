@@ -3,6 +3,8 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { exportFile } from '../src/core/export/write'
+import MoreMenu from '../src/core/toolbar/MoreMenu.vue'
 import DataTable from '../src/list/DataTable.vue'
 import type { ColumnDef, PreferencesAdapter, TableRequest, View, ViewsAdapter } from '../src/types'
 import { flush, mockLayout } from './helpers/dom'
@@ -32,6 +34,8 @@ const columns: Array<ColumnDef<Order>> = [
   { id: 'dueAt', header: 'Due date', type: 'date' },
   { id: 'urgent', header: 'Urgent', type: 'boolean' },
 ]
+
+vi.mock('../src/core/export/write', async (orig) => ({ ...(await orig()), exportFile: vi.fn(async () => {}) }))
 
 beforeAll(mockLayout)
 beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
@@ -265,8 +269,11 @@ describe('istemci modu: arama, sıralama, sayfalama', () => {
 })
 
 describe('toolbar, tercihler, kısayollar', () => {
-  it('yuvalar: aranabilir sütun yoksa arama yok; dinleyici yoksa ⋯ yok; toolbar=false hiç yok; #toolbar-end', async () => {
-    const plain = await mountClient({ columns: [{ id: 'value', header: 'Value', type: 'currency', currency: 'TRY' }] })
+  it('yuvalar: aranabilir sütun yoksa arama yok; Export kapalı ve dinleyici yoksa ⋯ yok; toolbar=false hiç yok; #toolbar-end', async () => {
+    const plain = await mountClient({
+      columns: [{ id: 'value', header: 'Value', type: 'currency', currency: 'TRY' }],
+      exportable: false,
+    })
     expect(plain.find('.dt-search').exists()).toBe(false)
     expect(plain.find('[aria-label="More actions"]').exists()).toBe(false)
     expect(plain.find('[aria-label="Display"], .dt-toolbar .dt-btn').exists()).toBe(true)
@@ -865,7 +872,57 @@ describe('görünümler (04 §7)', () => {
     expect(ids()).toEqual(['number', 'status'])
     expect(w.get('.dt-head-cell[data-col="status"]').classes()).toContain('is-pinned-start')
     expect(trigger(w).text()).toContain('Edited')
+    w.unmount()
+  })
+})
+
+describe('Export (D46)', () => {
+  const more = async (w: W) => {
+    await w.get('[aria-label="More actions"]').trigger('click')
     await flush()
+    return document.querySelector('.dt-more-menu')!.textContent ?? ''
+  }
+  beforeEach(() => vi.mocked(exportFile).mockClear())
+  it('dinleyici yokken de menüde; etiket sayfadaki satır sayısı; dosyayı paket yazar: görünen sütunlar + sayfadaki satırlar', async () => {
+    const w = await mountClient({ pageSize: 25 })
+    expect(await more(w)).toContain('Export 25 rows')
+    w.findComponent(MoreMenu).vm.$emit('export', 'xlsx')
+    await flush()
+    expect(exportFile).toHaveBeenCalledTimes(1)
+    const job = vi.mocked(exportFile).mock.calls[0]![0]
+    expect(job.format).toBe('xlsx')
+    expect(job.name).toBe('orders')
+    expect(job.columns.map((c) => c.id)).toEqual(['number', 'product.name', 'status', 'value', 'dueAt', 'urgent'])
+    expect(job.rows).toHaveLength(25)
+    expect(job.rows[0]).toEqual(rows[0])
+    expect(job.read(rows[0]!, job.columns[1]!)).toBe('Pump 0') // nokta yolu
+    w.unmount()
+  })
+  it('seçim varsa seçili satırlar ve "Export N selected rows"', async () => {
+    const w = await mountClient({ selectable: true })
+    const boxes = w.findAll('.dt-cell-select input')
+    await boxes[2]!.trigger('click')
+    await boxes[4]!.trigger('click')
+    await flush()
+    expect(await more(w)).toContain('Export 2 selected rows')
+    w.findComponent(MoreMenu).vm.$emit('export', 'csv')
+    await flush()
+    expect(vi.mocked(exportFile).mock.calls[0]![0].rows).toEqual([rows[2], rows[4]])
+    w.unmount()
+  })
+  it('@export dinlenirse paket dosya yazmaz, olay yazacağı satırlarla yayılır', async () => {
+    const onExport = vi.fn()
+    const w = await mountClient({ onExport, pageSize: 25 })
+    w.findComponent(MoreMenu).vm.$emit('export', 'csv')
+    await flush()
+    expect(exportFile).not.toHaveBeenCalled()
+    expect(onExport.mock.calls[0]![0]).toMatchObject({ format: 'csv', selection: [] })
+    expect(onExport.mock.calls[0]![0].rows).toHaveLength(25)
+    w.unmount()
+  })
+  it(':exportable="false" menüden kaldırır (başka öğe yoksa ⋯ de yok)', async () => {
+    const w = await mountClient({ exportable: false })
+    expect(w.find('[aria-label="More actions"]').exists()).toBe(false)
     w.unmount()
   })
 })

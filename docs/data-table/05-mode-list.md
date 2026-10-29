@@ -78,8 +78,8 @@ Sıra: `[1] … [2 3] … [5 6] │ [7]` (D43). [2 3] toolbar'ın tam ortasında
 
 ### More menüsü (236 px)
 
-- **Export matching rows** › CSV / Excel (.xlsx). Seçim varsa üstte “Export 7 selected rows”. Dışa aktarma uygulamada yapılır: paket `export` olayını (`format`, sorgu, seçili satırlar, görünür sütunlar) yayar, dosyayı uygulama üretir. `cell` içeriği dışa aktarılmaz; tipin biçimlendirmesi kullanılır.
-- **Import…** — uygulama olayı.
+- **Export 100 rows** › Excel (.xlsx) / CSV (D46). Ekranda görünen sütunlar ve satırlar yazılır: seçim varsa seçili satırlar (“Export 7 selected rows”), yoksa sayfadaki satırlar (sunucu modunda yüklü sayfa). Dosyayı paket yazar; `@export` dinlenirse paket yazmaz, olay (`format`, sorgu, seçim, `rows`, görünür sütunlar) ile uygulama üretir. Varsayılan açık, `:exportable="false"` gizler. `cell` içeriği dışa aktarılmaz; tipin değeri kullanılır (.xlsx'te sayı/tarih tipli, seçenek etiketi; dosya biçimi 07 §13 · Dışa aktarma).
+- **Import…** — uygulama olayı (`@import` dinlenirse).
 - **Print**, **Refresh** `R`, **Auto-refresh** (switch; açıkken footer'daki “Updated …” yerine yeşil `live-dot` + “Live”).
 
 ## 4. Izgara

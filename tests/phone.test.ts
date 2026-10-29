@@ -153,7 +153,7 @@ describe('DataTable · telefon düzeni', () => {
     await click(rowNamed('Density'))
     await click(rowNamed('Compact'))
     expect(w.find('.dt-grid').attributes('data-density')).toBe('compact')
-    await click(rowNamed('Export matching rows'))
+    await click(rowNamed('Export 30 rows'))
     await click(rowNamed('CSV'))
     expect(sheet()).toBeNull()
     expect(w.emitted('export')?.[0]?.[0]).toMatchObject({ format: 'csv' })

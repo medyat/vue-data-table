@@ -22,7 +22,7 @@ Ortak bir çekirdek üzerinde üç bileşen. Uygulama (ör. Laravel + Inertia/Vu
 | İkonlar | `@phosphor-icons/vue` | Tek ağırlık (regular), tree-shake. |
 | Stil | Derlenmiş CSS + `--dt-*` değişkenleri | Uygulamanın Tailwind kurulumundan bağımsız; shadcn temasına köprülenebilir (02). |
 | Biçimlendirme | `Intl.NumberFormat` / `DateTimeFormat` / `Collator`, locale+seçenek anahtarıyla önbellekli | Hücre başına formatter oluşturmak 10k satırda 134 ms, önbellekli 3,5 ms. |
-| Excel / CSV okuma | `parseFile` callback'i — öneri: `exceljs` (.xlsx/.xls okuma ve Export için yazma), CSV için uygulamanın ayrıştırıcısı | Lisans/boyut kararını uygulama versin; paket yalnızca ham satır dizisi alır. Başlık satırı tespiti ve sütun eşleme paketindedir ve dosya biçiminden bağımsızdır (07 §13). |
+| Excel / CSV | `read-excel-file` + `write-excel-file` (zorunlu peer, `import()` ile ilk kullanımda; D46); CSV paketin ayrıştırıcısıyla. Okuma ve yazma `core/export/`, `sheet/import/read.ts` | Bakımlı, MIT, ikisi birlikte gzip 32 KB (exceljs 262 KB). Uygulama `@export` / `parseFile` ile ezebilir. Başlık satırı tespiti ve sütun eşleme dosya biçiminden bağımsızdır (07 §13). |
 | Pano | Clipboard olayları (`copy`/`cut`/`paste`, `clipboardData`) + `readText` yedeği; `text/plain` (TSV) + `text/html` | Excel'den kopyalanan aralıklar TSV gelir; olay tabanlı yol izin istemez. |
 
 ### TanStack sınırı (D23)

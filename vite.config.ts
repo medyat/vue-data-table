@@ -35,6 +35,8 @@ export default defineConfig({
         /^@dnd-kit\//,
         /^@phosphor-icons\//,
         /^@internationalized\//,
+        /^read-excel-file/,
+        /^write-excel-file/,
       ],
     },
     sourcemap: true,

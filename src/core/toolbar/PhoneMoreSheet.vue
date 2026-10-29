@@ -22,7 +22,8 @@ const props = defineProps<{
   sort: SortRule[]
   persistent: boolean
   refresh: boolean
-  export: boolean
+  /** Export menü etiketi ("Export 100 rows" / "Export 3 selected rows"); false → yok. */
+  export: string | false
   import: boolean
   print: boolean
   autoRefresh: boolean
@@ -58,7 +59,7 @@ const TITLES = {
   main: 'toolbar.more',
   density: 'display.density',
   sort: 'display.sort',
-  export: 'toolbar.export',
+  export: 'sheet.export',
 } as const
 const headerOf = (id: string) => props.columns.find((c) => c.id === id)?.def.header ?? id
 const sortSummary = computed(() => {
@@ -116,7 +117,7 @@ const setDensity = (d: Density) => {
       </button>
       <div v-if="hasActions" class="dt-bsheet-sep" />
       <button v-if="$props.export" type="button" class="dt-bsheet-row" @click="level = 'export'">
-        {{ i18n.t('toolbar.export') }}
+        {{ $props.export }}
         <PhCaretRight :size="16" class="dt-bsheet-end" aria-hidden="true" />
       </button>
       <button v-if="$props.import" type="button" class="dt-bsheet-row" @click="close(() => emit('import'))">

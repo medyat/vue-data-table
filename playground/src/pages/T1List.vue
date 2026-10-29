@@ -202,7 +202,6 @@ async function onCount({ query, signal }: CountRequest) {
       :entity-name="{ one: 'order', other: 'orders' }"
       @request="onRequest"
       @count="onCount"
-      @export="(p) => console.log('export', p)"
       @import="() => console.log('import')"
       @print="(p) => console.log('print', p)"
       @row-open="(p) => (p.event.preventDefault(), console.log('open', p.href))"

@@ -189,6 +189,13 @@ Dört alt fazda; her biri playground'daki 10.000 satırlık örnekle test edilir
 - [x] `maxRows` aşımı engellenir.
 - [x] < 768 px veya yalnızca dokunmatik: banner, Copy link, düzenleme/aralık/Save yok (D14).
 
+**Yerleşik içe/dışa aktarma (D46, 2026-10-29)**
+- [x] `@export` / `parseFile` olmadan DataTable ve DataSheet Excel ve CSV yazar, DataSheet .xlsx ve .csv okur; kütüphaneler peer ve dinamik import (dist'e gömülmez).
+- [x] DataTable: seçim varsa seçili, yoksa sayfadaki satırlar; görünür sütunlar; etiket satır sayısıyla.
+- [x] .xlsx: başlık boyalı ve dondurulmuş; sayı/para/yüzde/tarih tipli; tarih UTC kaymasız (Europe/Istanbul ve America/New_York'ta test); `select`/`boolean` seçenek sayfasından (görünür) açılır liste.
+- [x] Yazılan .xlsx yerleşik okuyucuyla geri okunduğunda aynı değerler; .xls sebep mesajıyla reddedilir.
+- [x] `@export` dinlenirse paket yazmaz; `:exportable="false"` / `:importable="false"` gizler.
+
 ## Faz 7 — Telefon, erişilebilirlik ve yayın cilası
 
 **Tasarım:** T13.

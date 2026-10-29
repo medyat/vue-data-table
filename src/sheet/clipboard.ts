@@ -10,8 +10,8 @@ const escapeHtml = (s: string): string =>
 export const toHtml = (matrix: string[][]): string =>
   `<table><tbody>${matrix.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
 
-/** TSV → matris; sondaki tek boş satır (Excel'in eklediği) atılır. */
-export function parseTsv(text: string): string[][] {
+/** TSV → matris (CSV için `sep` verilir); sondaki tek boş satır (Excel'in eklediği) atılır. */
+export function parseTsv(text: string, sep = '\t'): string[][] {
   const rows: string[][] = []
   let row: string[] = []
   let cell = ''
@@ -28,7 +28,7 @@ export function parseTsv(text: string): string[][] {
       continue
     }
     if (ch === '"' && cell === '') quoted = true
-    else if (ch === '\t') {
+    else if (ch === sep) {
       row.push(cell)
       cell = ''
     } else if (ch === '\n' || ch === '\r') {

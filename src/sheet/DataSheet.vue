@@ -35,6 +35,7 @@ import {
 } from 'reka-ui'
 import {
   computed,
+  getCurrentInstance,
   nextTick,
   onBeforeUnmount,
   onMounted,
@@ -46,10 +47,13 @@ import {
   watch,
 } from 'vue'
 import { comparator } from '../core/cells/compare'
-import { formatCell, isEmptyValue, optionLabel, type FormatEnv } from '../core/cells/format'
+import { formatCell, isEmptyValue, type FormatEnv } from '../core/cells/format'
 import { RemoteLabels } from '../core/cells/remoteLabels'
 import { TYPE_SPECS, typeLabelKey } from '../core/cells/specs'
+import { readPath } from '../core/columns/readPath'
 import { useColumnLayout } from '../core/columns/useColumnLayout'
+import { plainText } from '../core/export/cells'
+import { exportFile } from '../core/export/write'
 import { getFormat } from '../core/format'
 import { useDelegatedTooltip } from '../core/grid/useDelegatedTooltip'
 import { FIND_KBD, REDO_KBD, SAVE_KBD, UNDO_KBD } from '../core/interaction/kbd'
@@ -80,6 +84,7 @@ import MultiCell from './editors/MultiCell.vue'
 import { SHEET_EDITOR_KEY } from './editors/context'
 import { fillValues } from './fill'
 import ImportDialog, { type ImportPayload } from './ImportDialog.vue'
+import { readWorkbook } from './import/read'
 import { inferDecimal, inputText, parseInput, type ParseEnv } from './parse'
 import SaveErrorsDialog, { type ErrorRowItem } from './SaveErrorsDialog.vue'
 import SheetGrid from './SheetGrid.vue'
@@ -106,19 +111,31 @@ const props = withDefaults(
     lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
     /** Add row ile oluşan satırın başlangıç değerleri. */
     newRowDefaults?: () => Partial<Row>
-    /** Import Excel / CSV: dosyayı uygulama ayrıştırır ve ham satırları verir (07 §13). Verilmezse Import yok. */
+    /** Import: dosyayı uygulama ayrıştırır ve ham satırları verir (07 §13). Verilmezse paketin okuyucusu (.xlsx, .csv; D46). */
     parseFile?: (file: File) => Promise<ParsedWorkbook>
+    /** Import düğmesi (D46). Varsayılan açık. */
+    importable?: boolean
+    /** Export menüsü (D46). Varsayılan açık; `false` gizler (ör. yetki). */
+    exportable?: boolean
     /** Aşılırsa ilk `maxRows` satır kullanılır ve şerit uyarır (07 §15); yapıştırma ve ekleme bu sınırı aşamaz. */
     maxRows?: number
     /** Bu genişliğin altında veya yalnızca dokunmatikte salt okunur (D14); karar açılışta. */
     readOnlyBelow?: number
   }>(),
-  { rowKey: 'id', loading: false, saving: false, maxRows: 10_000, readOnlyBelow: 768 },
+  {
+    rowKey: 'id',
+    loading: false,
+    saving: false,
+    maxRows: 10_000,
+    readOnlyBelow: 768,
+    importable: true,
+    exportable: true,
+  },
 )
 const emit = defineEmits<{
   /** Save: doğrulama geçen değişmiş + yeni satırlar. Uygulama kaydeder, `saving` verir, `applyResult` çağırır. */
   save: [changes: SheetChanges]
-  /** Export: değerler güncel (kaydedilmemiş değişiklikler dahil); dosyayı uygulama yazar. */
+  /** Export: değerler güncel (kaydedilmemiş değişiklikler dahil). Dinlenirse paket dosya yazmaz (D46). */
   export: [payload: { format: 'csv' | 'xlsx'; scope: 'all' | 'visible'; columns: string[]; rows: Row[] }]
 }>()
 defineSlots<{ empty?: () => unknown }>()
@@ -127,6 +144,8 @@ const ctx = useDataTableContext()
 const { i18n } = ctx
 const fmt = getFormat(ctx.locale)
 const entity = computed<Plural>(() => props.entityName ?? { one: props.tableId, other: props.tableId })
+const listensExport = 'onExport' in (getCurrentInstance()?.vnode.props ?? {})
+const readFile = (file: File) => (props.parseFile ? props.parseFile(file) : readWorkbook(file, i18n))
 
 const pref = usePreferences(() => props.tableId, ctx.preferences, {
   density: props.density ?? 'compact',
@@ -370,29 +389,7 @@ const goToError = (dir: 1 | -1) => {
 }
 
 // Pano (07 §7): görüntülenen biçimde TSV + HTML; para kodu ve "—" yok, tarihler ISO, listeler `; ` ile (geri yapıştırılabilir).
-const copyText = (def: ColumnDef<Row>, row: Row, value: unknown): string => {
-  if (isEmptyValue(value)) return ''
-  switch (def.type) {
-    case 'currency':
-      return fmt.decimal(Number(value), def.decimalPlaces ?? 2)
-    case 'date':
-    case 'datetime':
-      return value instanceof Date ? value.toISOString() : String(value)
-    case 'multiselect':
-      return (value as unknown[]).map((v) => optionLabel(def.options, v)).join('; ')
-    case 'string':
-    case 'text':
-    case 'uppercase':
-    case 'lowercase':
-    case 'email':
-    case 'url':
-    case 'phone':
-    case 'id':
-      return String(value)
-    default:
-      return formatCell(def, row, value, fmtEnv)
-  }
-}
+const copyText = (def: ColumnDef<Row>, row: Row, value: unknown): string => plainText(def, row, value, fmtEnv)
 const copyMatrix = (): string[][] | null => {
   const b = table.bounds.value
   if (!b) return null
@@ -935,11 +932,19 @@ const applyImport = (payload: ImportPayload<Row>) => {
   const i = firstRow ? indexByKey.value.get(store.keyOf(firstRow)) : undefined
   if (i !== undefined) focusCell(i, props.keyColumn)
 }
-/** Export (07 §2): All / Visible › CSV / Excel; değerler güncel (taslak uygulanmış), dosyayı uygulama yazar. */
+/** Export (07 §2): All / Visible › CSV / Excel; değerler güncel (taslak uygulanmış). `@export` yoksa dosyayı paket yazar (D46). */
 const exportRows = (format: 'csv' | 'xlsx', scope: 'all' | 'visible') => {
   edit.commit()
   const rows = (scope === 'all' ? store.allRows.value : rowsAll.value).map((r) => store.current(r))
-  emit('export', { format, scope, columns: visibleCols.value.map((c) => c.id), rows })
+  if (listensExport) return emit('export', { format, scope, columns: visibleCols.value.map((c) => c.id), rows })
+  void exportFile({
+    format,
+    columns: visibleCols.value.map((c) => c.def),
+    rows,
+    read: (row, def) => (def.accessor ? def.accessor(row) : readPath(row, def.id as string)),
+    env: fmtEnv,
+    name: entity.value.other,
+  })
 }
 const exportLabel = (scope: 'all' | 'visible') =>
   i18n.t(scope === 'all' ? 'sheet.exportAll' : 'sheet.exportVisible', {
@@ -1392,7 +1397,7 @@ defineExpose({
           {{ i18n.t('sheet.addRow') }}
         </button>
         <button
-          v-if="parseFile"
+          v-if="importable"
           type="button"
           class="dt-btn dt-btn-ghost has-icon dt-sheet-import"
           @click="importOpen = true"
@@ -1400,7 +1405,7 @@ defineExpose({
           <PhDownloadSimple :size="16" aria-hidden="true" />
           {{ i18n.t('sheet.import') }}
         </button>
-        <DropdownMenuRoot>
+        <DropdownMenuRoot v-if="exportable">
           <DropdownMenuTrigger as-child>
             <button type="button" class="dt-btn dt-btn-ghost has-icon dt-sheet-export">
               <PhExport :size="16" aria-hidden="true" />
@@ -1633,9 +1638,9 @@ defineExpose({
       @confirm="discard"
     />
     <ImportDialog
-      v-if="parseFile && importOpen"
+      v-if="importable && importOpen"
       v-model:open="importOpen"
-      :parse-file="parseFile"
+      :parse-file="readFile"
       :columns="sheetColumns"
       :key-column="keyColumn"
       :entity="entity"

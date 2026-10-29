@@ -511,8 +511,9 @@ export interface SheetRowResult<Row> {
 export type Progress = boolean | { done: number; total: number }
 
 /**
- * `parseFile` sonucu: dosya biçiminden bağımsız ham satırlar (.xlsx/.xls için ör. exceljs, .csv için uygulamanın
- * CSV ayrıştırıcısı). Başlık satırı tespiti ve sütun eşleme paketindir (07 §13); uygulama başlığı ayırmaz.
+ * `parseFile` sonucu: dosya biçiminden bağımsız ham satırlar. Paketin yerleşik okuyucusu da bunu üretir (D46); özel
+ * `parseFile` (ör. .xls ya da başka kaynak) aynı biçimi döner. Başlık satırı tespiti ve sütun eşleme paketindir
+ * (07 §13); uygulama başlığı ayırmaz. Tarihler yerel gün/saat olarak `Date`.
  */
 export interface ParsedWorkbook {
   sheets: Array<{
@@ -605,6 +606,8 @@ export interface DataTableProps<Row> extends CommonProps<Row> {
   pageSizes?: number[]
   /** Saniye. Verilmezse More menüsünde Auto-refresh görünmez. */
   autoRefresh?: number
+  /** More › Export (D46). Varsayılan true; false gizler (ör. yetki). */
+  exportable?: boolean
 }
 
 export interface DataTableEmits<Row> {
@@ -619,8 +622,11 @@ export interface DataTableEmits<Row> {
   'row-click': { row: Row; event: MouseEvent }
   /** Açılışta (varsayılan görünüm) ve her görünüm değişiminde; uygulama isterse URL'ini yazar (D25). */
   'view-change': { id: string; kind: View['kind'] }
-  /** More › Export. Dosyayı uygulama üretir. */
-  export: { format: 'csv' | 'xlsx'; query: QueryWithoutPage; selection: Row[]; visibleColumns: string[] }
+  /**
+   * More › Export (D46). Dinlenmezse dosyayı paket yazar (.xlsx `write-excel-file`, .csv); dinlenirse paket yazmaz,
+   * özel dosyayı uygulama üretir. `rows`: paketin yazacağı satırlar (seçim varsa seçili, yoksa sayfadaki satırlar).
+   */
+  export: { format: 'csv' | 'xlsx'; query: QueryWithoutPage; selection: Row[]; rows: Row[]; visibleColumns: string[] }
   /** More › Import… (uygulama kendi akışını açar). */
   import: void
   print: { query: QueryWithoutPage; visibleColumns: string[] }
@@ -653,8 +659,12 @@ export interface DataSheetProps<Row> extends CommonProps<Row> {
    * Verilmezse her bilinmeyen anahtar New sayılır. Toplu çağrılır (en fazla 500 anahtar).
    */
   lookupKeys?: (keys: string[], ctx: { signal: AbortSignal }) => Promise<Record<string, Row | null>>
-  /** Import Excel / CSV: dosyayı uygulama ayrıştırır (ör. exceljs; CSV için kendi ayrıştırıcısı) ve ham satırları verir. Verilmezse toolbar'da Import gösterilmez. */
+  /** Import: dosyayı uygulama ayrıştırır ve ham satırları verir. Verilmezse paketin okuyucusu (.xlsx `read-excel-file`, .csv; D46). */
   parseFile?: (file: File) => Promise<ParsedWorkbook>
+  /** Toolbar › Import (D46). Varsayılan true. */
+  importable?: boolean
+  /** Toolbar › Export (D46). Varsayılan true; false gizler (ör. yetki). */
+  exportable?: boolean
   /** Varsayılan 10.000. Aşılırsa ekleme/yapıştırma/içe aktarma durur ve uyarır. */
   maxRows?: number
   /** Add row ile oluşan satırın başlangıç değerleri. */
@@ -666,7 +676,7 @@ export interface DataSheetProps<Row> extends CommonProps<Row> {
 export interface DataSheetEmits<Row> {
   /** Save: doğrulama geçen yeni + değişmiş satırlar. Uygulama kaydeder, `saving` verir, `applyResult` çağırır. */
   save: SheetChanges
-  /** Export. Değerler güncel (kaydedilmemiş değişiklikler dahil); dosyayı uygulama yazar. */
+  /** Export. Değerler güncel (kaydedilmemiş değişiklikler dahil). Dinlenmezse dosyayı paket yazar; dinlenirse uygulama (D46). */
   export: { format: 'csv' | 'xlsx'; scope: 'all' | 'visible'; columns: string[]; rows: Row[] }
 }
 

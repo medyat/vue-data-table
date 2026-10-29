@@ -2,6 +2,14 @@
 
 ## Yayımlanmamış
 
+### İçe ve dışa aktarma (D46)
+
+- **Excel ve CSV paketin içinde.** `@export` dinlenmezse DataTable ve DataSheet dosyayı kendisi yazar; DataSheet `parseFile` verilmezse .xlsx / .csv'yi kendisi okur. Yeni zorunlu peer'ler: `read-excel-file` (^9.3.13) ve `write-excel-file` (^4.1.1); ilk Import/Export'ta yüklenir. **Geçiş:** `pnpm add read-excel-file write-excel-file`; mevcut `@export` / `parseFile` kodu aynen çalışır (override), istenirse silinebilir.
+- DataTable Export ekranda görüneni yazar: seçim varsa seçili satırlar, yoksa sayfadaki satırlar. Menü etiketi “Export matching rows” → “Export 100 rows” (`toolbar.export` artık `.one` / `.other`). `export` olayına `rows` eklendi.
+- Export menüsü artık dinleyici olmadan da görünür; `:exportable="false"` gizler. DataSheet'te Import da varsayılan açık, `:importable="false"` gizler.
+- .xlsx: yazı 16 pt; başlık kalın, dolgulu, dondurulmuş; sayı, para, yüzde ve tarih tipli hücre; `select` ve `boolean` sütunlarının seçenekleri ikinci sayfada (“Options”), hücreler o listeden açılır liste.
+- Eski ikili `.xls` yerleşik okuyucuda desteklenmez (`import.xlsxOnly`); `import.drop` metninden `.xls` çıktı.
+
 ### DataTable
 
 - **Satır klavyesi kaldırıldı (D40).** Satır odağı ve çerçevesi, satır okları, satırda `↵` / `→` / `←` / `X` / `⇧↑↓` / `⌘A` / `⇧F10` ve başlıklar arası ok gezinmesi yok. Satırdaki widget'lar ve başlık düğmeleri doğal Tab sırasında; kök `role="table"`, hücreler `cell`, satırda `aria-selected` yok. Sayfa kısayolları ve başlık düğmesindeki sıralama/menü/genişlik/taşıma tuşları değişmedi. DataSheet etkilenmez.

@@ -48,8 +48,8 @@ Bulk edit products                                                              
 | **All / Changed / Errors** | Segmented, her birinde sayı (Errors sayısı `--dt-r-fg`). §11. |
 | Undo / Redo | İkon butonlar, tooltip `Undo (⌘Z)` / `Redo (⌘⇧Z)`. Yığın boşsa pasif. |
 | **Add row** | Partiye yeni satır (§9). |
-| **Import Excel** | `parseFile` prop'u varsa (§13). |
-| **Export** | Menü: Export all rows (10,000) · Export visible rows (96) › Excel (.xlsx) / CSV. Paket `export` olayını taslak değerlerle yayar; dosyayı uygulama yazar. |
+| **Import Excel** | Varsayılan açık (`:importable="false"` gizler); dosyayı paket okur, `parseFile` verilirse o (§13, D46). |
+| **Export** | Menü: Export all rows (10,000) · Export visible rows (96) › Excel (.xlsx) / CSV. Taslak değerlerle; dosyayı paket yazar, `@export` dinlenirse olay yayılır ve uygulama yazar (§13 · Dışa aktarma, D46). `:exportable="false"` gizler. |
 | Display ⚙ | Yoğunluk, Columns (dialog, D45), Vertical grid lines. (Sort › yok; header tıklaması yeterli.) |
 
 ### Formula bar (36 px)
@@ -219,13 +219,13 @@ Header tıklaması **yerel** sıralar (asc → desc → kapalı; ⇧ ile ikincil
 - Yığın sınırı 100 adım. Undo, seçimi ve aktif hücreyi o adımın yerine taşır.
 - `applyResult()` ve **Discard** yığını temizler (kaydedilmiş satır geri alınamaz; kısmi kayıtta hatalı satırların düzenlemesi korunur ama geri alınamaz).
 
-## 13. Excel'den içe aktarma
+## 13. Excel'den içe aktarma ve dışa aktarma
 
 İlke: dosya yalnızca grid'i doldurur; Save'e basılana kadar hiçbir şey kaydedilmez.
 
 Dialog 560 px, başlık “Import from Excel”, açıklama: “Rows are matched by SKU: a known SKU updates its product, a new SKU becomes a new row. Everything lands in the grid for review first.”
 
-1. **Dosya:** sürükle-bırak veya seç (`.xlsx`, `.xls`, `.csv`). Seçilince dosya kartı: XLS ikonu · ad · “Sheet “Fiyatlar” · 1,252 rows” · **Replace file**. Birden çok sayfa varsa sayfa seçici.
+1. **Dosya:** sürükle-bırak veya seç (`.xlsx`, `.csv`). Yerleşik okuyucu (D46) `.xlsx`'i `read-excel-file` ile, `.csv`'yi kendi ayrıştırıcısıyla okur (BOM atılır, ayraç ilk satırdan `;` veya `,`); eski ikili `.xls` “Only .xlsx and .csv files can be read…” (`import.xlsxOnly`) ile reddedilir. Özel kaynak için `parseFile`. Seçilince dosya kartı: XLS ikonu · ad · “Sheet “Fiyatlar” · 1,252 rows” · **Replace file**. Birden çok sayfa varsa sayfa seçici.
 2. **Başlık satırı** (`detectHeaderRow`): paket ham satırlardan başlığı otomatik seçer — ilk 20 satır içinde, boş olmayan hücre sayısı en yüksek ve hücrelerinin çoğu metin olan ilk satır; eşitlikte ilk boş olmayan satır. Eşleşme satırının sağındaki **Header row** select'i (“Row 1”) tespit edilen satırla gelir; kullanıcı değiştirebilir, değişince sütun eşleme tablosu yeniden kurulur ve önceki elle seçimler sıfırlanır. Tespit dosya biçiminden bağımsızdır (.xlsx ve .csv aynı yol).
 3. **Eşleşme anahtarı:** “Match rows by **SKU ← “Stok Kodu”**”. Anahtar eşlenmeden **Apply pasif**.
 4. **Sütun eşleme tablosu** (`matchColumns`): Excel column → Field (yerel `select`; tasarımdaki özel liste yerine, klavye ve ekran okuyucu için) · First value (dönüşüm önizlemesiyle: `1.650,00 → 1,650.00`, `%20 → 20%`). Otomatik eşleme yalnızca **tek ve kesin** eşleşmede: başlık, normalize edilerek (küçük harf, baştaki/sondaki ve ardışık boşluklar, Türkçe karakterler `ı→i, ş→s` …) sütunun `header`, `id` veya `importAliases` değerlerinden biriyle aynıysa. Eşleşmeyen ya da birden fazla alana uyan sütunun select'i **boş** kalır (“Choose a field”, `import.chooseField`); kullanıcı elle seçer. Otomatik eşlemeler de değiştirilebilir. Seçenekler: alanlar · “Don't import”. Boş bırakılan sütun Apply'da alınmaz (Don't import gibi). Read-only alanlara eşleme yapılamaz (listede pasif). Başlık tespiti ve sütun eşleme ayrı saf fonksiyonlardır (01, `sheet/import/`), ayrı test edilir.
@@ -241,6 +241,17 @@ Uygulama kuralları:
 - Sayı/tarih hücreleri Excel'den tipli gelirse olduğu gibi; metin olarak gelirse §7'deki yerel ayar kuralı.
 - `maxRows` aşılırsa Apply pasif ve uyarı: `sheet.limitFile`: “This file would make 11,252 rows. The limit is 10,000.”
 - İçe aktarma **tek undo adımı**. Sonrasında toast: “Imported 1,252 rows · 1,240 updated · 12 new · Undo”.
+
+### Dışa aktarma (D46; DataTable de aynı yazıcıyı kullanır)
+
+Dosya adı ve sayfa adı `entityName.other` (“products.xlsx”). Yazılan: görünür sütunlar, sırasıyla; satırlar kapsamın (All / Visible; DataTable'da seçim ya da sayfa).
+
+- **.xlsx** (`write-excel-file`): başlık satırı kalın, dolgulu, alt çizgili ve dondurulmuş (renkler 02 · Dışa aktarma). Yazı 16 pt (Excel varsayılanı 11; 02 · Dışa aktarma). Sütun genişliği başlık ve ilk 200 satırın en uzun metninden (8–60 karakter, 16/11 ölçekli).
+  - `int`/`float`/`percentage`/`currency`/`star` sayı hücresi; biçim `#,##0` / ondalık basamak; yüzde değeri bölünmez (`20` → `20%` biçimiyle); para kodu sabitse biçimde (`#,##0.00 "TRY"`).
+  - `date`/`datetime` tarih hücresi, yerel ayarın gün/ay sırasıyla (`dd.mm.yyyy`, `mm/dd/yyyy`; saatte ` hh:mm`); duvar saati korunur (UTC kayması yok).
+  - `select` etiket, `boolean` Yes / No (dilde), `multiselect` etiketler `; ` ile; diğerleri pano metniyle aynı (§7).
+  - `select` ve `boolean` sütunlarının seçenekleri **ikinci sayfada (“Options”, görünür)** birer sütun (`export.optionsSheet`); kullanıcı seçenekleri görebilir; içerik sayfasındaki veri hücreleri o listeden açılır liste (liste dışı değer Excel'de reddedilir). Böylece dosya Excel'de düzenlenip geri içe aktarılınca etiketler değere döner.
+- **.csv**: UTF-8 BOM'lu (Excel Türkçe karakterleri doğru açsın), satır sonu CRLF; ondalık ayırıcısı virgül olan yerel ayarda `;`, aksi halde `,`. Değerler pano metni (§7).
 
 ## 14. Kaydetme: teslim ve sonuç
 

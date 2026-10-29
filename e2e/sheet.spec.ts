@@ -3,6 +3,7 @@
 // (combobox listesi ve tarih popover'ı: ↓/Enter/Esc önce widget'ta, odak portala gidince düzenleme sürer), sayı ve
 // tarih girişleri, "Was …", aktif satır kaydırmada DOM'da, hücre düzenleme → DOM < 16 ms.
 import { expect, test, type Page } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const settings = (page: Page) =>
@@ -488,7 +489,7 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     const dlg = page.locator('.dt-import')
     await expect(dlg).toBeVisible()
     await expect(dlg.locator('.dt-btn-primary')).toBeDisabled()
-    // .xlsx (playground exceljs ile ayrıştırır): aynı dosya, sayı hücreleri sayı; formül ve zengin metin düz değere iner.
+    // .xlsx (paketin yerleşik okuyucusu, D46): aynı dosya, sayı hücreleri sayı; formül ve zengin metin düz değere iner.
     await dlg.locator('input[type=file]').setInputFiles(xlsx)
     await expect(dlg.locator('.dt-import-file')).toContainText('Fiyat listesi')
     await expect(dlg.locator('.dt-import-headerrow select')).toHaveValue('2')
@@ -541,8 +542,26 @@ test.describe('T11 · DataSheet · içe/dışa aktarma ve telefon (Faz 6d)', () 
     await page.locator('.dt-menu-item', { hasText: 'Export visible rows (30)' }).hover()
     const download = page.waitForEvent('download')
     await page.locator('.dt-menu-item', { hasText: 'CSV' }).click()
-    expect((await download).suggestedFilename()).toBe('products-visible.csv')
-    await expect(page.getByTestId('last-export')).toHaveText('visible csv 30 rows 11 cols')
+    const file = await download
+    expect(file.suggestedFilename()).toBe('products.csv')
+    // Paketin yazdığı dosya (D46): BOM + başlık + 30 satır, görünen 11 sütun.
+    const text = readFileSync((await file.path())!, 'utf8')
+    expect(text.startsWith('\uFEFF')).toBe(true)
+    const lines = text.slice(1).split('\r\n')
+    expect(lines).toHaveLength(31)
+    expect(lines[0]!.split(',')).toHaveLength(11)
+    // .xlsx da paketten; geri okununca aynı satır sayısı.
+    await page.locator('.dt-sheet-export').click()
+    await page.locator('.dt-menu-item', { hasText: 'Export visible rows (30)' }).hover()
+    const xdl = page.waitForEvent('download')
+    await page.locator('.dt-menu-item', { hasText: 'Excel (.xlsx)' }).click()
+    const xfile = await xdl
+    expect(xfile.suggestedFilename()).toBe('products.xlsx')
+    expect(
+      readFileSync((await xfile.path())!)
+        .subarray(0, 2)
+        .toString(),
+    ).toBe('PK')
   })
 
   test('Import dialog düzeni (TR): uzun başlık tabloyu taşırmaz, İlk değer görünür, sınır uyarısı binmez, etiketler tek satır', async ({

@@ -18,7 +18,8 @@ import { useDataTableContext } from '../plugin'
 
 const props = defineProps<{
   refresh: boolean
-  export: boolean
+  /** Export menü etiketi ("Export 100 rows" / "Export 3 selected rows"); false → yok. */
+  export: string | false
   import: boolean
   print: boolean
   /** `autoRefresh` prop'u verilmişse switch görünür. */
@@ -51,7 +52,7 @@ const hasActions = () => props.export || props.import || props.print
     <DropdownMenuPortal>
       <DropdownMenuContent class="dt-menu dt-more-menu" align="end" :side-offset="4">
         <DropdownMenuSub v-if="$props.export">
-          <DropdownMenuSubTrigger class="dt-menu-item">{{ i18n.t('toolbar.export') }}</DropdownMenuSubTrigger>
+          <DropdownMenuSubTrigger class="dt-menu-item">{{ $props.export }}</DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent class="dt-menu" :side-offset="4">
               <DropdownMenuItem class="dt-menu-item" @select="emit('export', 'csv')">
