@@ -50,7 +50,7 @@ Bulk edit products                                                              
 | **Add row** | Partiye yeni satır (§9). |
 | **Import Excel** | `parseFile` prop'u varsa (§13). |
 | **Export** | Menü: Export all rows (10,000) · Export visible rows (96) › Excel (.xlsx) / CSV. Paket `export` olayını taslak değerlerle yayar; dosyayı uygulama yazar. |
-| Display ⚙ | Yoğunluk, Columns ›, Vertical grid lines. (Sort › yok; header tıklaması yeterli.) |
+| Display ⚙ | Yoğunluk, Columns (dialog, D45), Vertical grid lines. (Sort › yok; header tıklaması yeterli.) |
 
 ### Formula bar (36 px)
 

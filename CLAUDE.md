@@ -14,7 +14,7 @@ Bu repo, Vue 3 için `@medyat/vue-data-table` paketini geliştirir: ortak bir ç
 ## Teknoloji
 
 - Vue 3.5+, `<script setup lang="ts">`, TypeScript `strict`.
-- Headless tablo mantığı: `@tanstack/vue-table` 9.x — yalnızca `core/columns/useColumnLayout`, `list/useListTable`, `sheet/useSheetTable` içinde; `grid/`, `cells/`, `filters/`, `ui/` TanStack import edemez (ESLint). Public API'de TanStack tipi yok. Sanal satırlar: `@tanstack/vue-virtual`.
+- Headless tablo mantığı: `@tanstack/vue-table` 9.x — yalnızca `core/columns/useColumnLayout`, `list/useListTable`, `sheet/useSheetTable` içinde; `grid/`, `cells/`, `filters/`, `ui/` TanStack import edemez (ESLint). Public API'de TanStack tipi yok. Sanal satırlar: `@tanstack/vue-virtual`. Sürükle-bırak yalnızca Columns dialog'unda: `@dnd-kit/vue` (D22 revize).
 - Popover, Combobox, Dialog, Calendar, Tooltip, DropdownMenu gibi primitifler: shadcn-vue'nun dayandığı `reka-ui`. Uygulamadaki shadcn-vue bileşenlerine bağımlı olma; paket kendi bileşenlerini taşır. Portallı içerik için reka'nın public emit/prop'larını kullan (`escapeKeyDown`, `focusOutside`, `interactOutside`), dahili özniteliklerini değil.
 - İkonlar: `@phosphor-icons/vue` (regular).
 - Stil: paketle birlikte derlenmiş CSS + `--dt-*` CSS değişkenleri. Ayrıntılar: `02-design-tokens.md`.
@@ -26,7 +26,7 @@ Bu repo, Vue 3 için `@medyat/vue-data-table` paketini geliştirir: ortak bir ç
 - **Renk, ölçü, gölge, yarıçap için asla sabit değer yazma.** Her zaman `--dt-*` token'larını kullan. Yeni bir değer gerekiyorsa önce `02-design-tokens.md`'ye ekle.
 - Sayılar ve tutarlar `font-variant-numeric: tabular-nums`. ID ve kodlar `--dt-font-mono`. Biçimlendiriciler (`Intl.*`) önbelleklenir, hücre başına oluşturulmaz.
 - **Paket veri çekmez, kaydetmez (D18).** HTTP, önbellek, otomatik yeniden deneme, chunk gönderimi ve iş mantığı uygulamadadır. Paket yalnızca `@request` / `@save` yayar ve `rows` / `applyResult()` alır.
-- Spesifikasyonda olmayan özellik ekleme. Özellikle **reddedilmiş** olanları ekleme: AND/OR filtre builder, mobilde kart görünümü, satırın tamamının link olması, bulk edit'te sunucudan silme, Vue slot ile hücre özelleştirme (D21), sürükle-bırak (D22), numbered/load-more/infinite sayfalama (D7), all-matching seçim (D19), `syncUrl` (D25), uzaktan metin önerisi (D3), toolbar'da facet çipi (D26), filtre satırında görünüm kaydetme üçlüsü (D27), önizleme (peek) paneli (D28), `tags` sütun tipi (D37).
+- Spesifikasyonda olmayan özellik ekleme. Özellikle **reddedilmiş** olanları ekleme: AND/OR filtre builder, mobilde kart görünümü, satırın tamamının link olması, bulk edit'te sunucudan silme, Vue slot ile hücre özelleştirme (D21), Columns dialog'u dışında sürükle-bırak (D22), numbered/load-more/infinite sayfalama (D7), all-matching seçim (D19), `syncUrl` (D25), uzaktan metin önerisi (D3), toolbar'da facet çipi (D26), filtre satırında görünüm kaydetme üçlüsü (D27), önizleme (peek) paneli (D28), `tags` sütun tipi (D37).
 - Hücre içindeki etkileşimli öğeler için geliştirici `stopPropagation` yazmaz; paket tek bir guard ile satır tıklaması, seçim ve düzenleme başlatmayı ayırır (05 §7, 07 §5).
 - Karar günlüğündeki bir karar uygulamada sorun çıkarırsa, değiştirmeden önce sor.
 - Erişilebilirlik spesifikasyonun parçasıdır, sonradan eklenmez: `08-accessibility-keyboard.md`.

@@ -257,13 +257,9 @@
     0 0 0 4px var(--dt-focus);
 }
 
-/* Display popover (308) ve drill-in'ler (320). */
+/* Display popover (308). */
 .dt-display {
   width: calc(308 * var(--dt-ui-fs) / 13);
-}
-.dt-display.is-columns,
-.dt-display.is-sort {
-  width: calc(320 * var(--dt-ui-fs) / 13);
 }
 .dt-display-density {
   width: calc(100% - 8px);
@@ -279,13 +275,6 @@
 }
 .dt-pop-head strong {
   font-weight: 600;
-}
-.dt-pop-find {
-  width: 100%;
-  margin-bottom: var(--dt-pop-pad);
-}
-.dt-pop-find input {
-  box-shadow: none;
 }
 .dt-pop-end {
   margin-left: auto;
@@ -327,6 +316,141 @@
 .dt-col-lock {
   color: var(--dt-text-3);
   margin-right: 6px;
+}
+
+/* Columns dialog'u (05 §5, D45): solda sabitleme, sağda bul + liste; liste kayar, başlık ve alt satır sabit. */
+.dt-cols-dialog {
+  display: flex;
+  flex-direction: column;
+  width: calc(760 * var(--dt-ui-fs) / 13);
+  height: min(calc(640 * var(--dt-ui-fs) / 13), calc(100dvh - 32px));
+  padding: 24px;
+}
+.dt-cols-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr);
+  gap: 32px;
+  flex: 1;
+  min-height: 0;
+}
+.dt-cols-dialog.is-phone .dt-cols-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+.dt-cols-pins {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.dt-cols-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.dt-cols-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dt-space);
+  margin: 0;
+  font-size: var(--dt-ui-fs-lg);
+  font-weight: 600;
+}
+.dt-cols-title .dt-pop-value {
+  margin-left: auto;
+  font-size: var(--dt-ui-fs-sm);
+  font-weight: 400;
+}
+.dt-cols-desc {
+  margin: 4px 0 12px;
+  color: var(--dt-text-2);
+  font-size: var(--dt-ui-fs-sm);
+  line-height: 1.45;
+}
+.dt-radio-group {
+  display: flex;
+  flex-direction: column;
+}
+.dt-radio-row {
+  display: flex;
+  align-items: center;
+  gap: var(--dt-space);
+  height: var(--dt-control-h);
+  cursor: pointer;
+}
+.dt-radio {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid var(--dt-line-3);
+  border-radius: var(--dt-radius-pill);
+  background: var(--dt-surface);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.dt-radio[data-state='checked'] {
+  border-color: var(--dt-accent);
+  background: var(--dt-accent);
+}
+.dt-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--dt-radius-pill);
+  background: var(--dt-switch-knob);
+}
+.dt-cols-find {
+  flex: none;
+  margin-bottom: 8px;
+}
+.dt-cols-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+.dt-cols-list .dt-col-row {
+  height: var(--dt-control-h-lg);
+  border-bottom: 1px solid var(--dt-line);
+  border-radius: 0;
+}
+.dt-cols-list .dt-col-row:has(.dt-col-desc) {
+  height: auto;
+}
+.dt-col-pin {
+  margin-left: 4px;
+  color: var(--dt-text-3);
+  vertical-align: -1px;
+}
+.dt-col-switch {
+  margin-left: 6px;
+}
+/* Kilitli satırda tutamaç yok; ad diğer satırlarla aynı hizada başlasın. */
+.dt-col-row.is-fixed .dt-col-name {
+  padding-left: var(--dt-control-h-2xs);
+}
+.dt-col-handle {
+  margin-left: -4px;
+  color: var(--dt-text-3);
+  cursor: grab;
+  touch-action: none;
+}
+.dt-col-handle:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.dt-cols-list .dt-col-row.is-dragging {
+  background: var(--dt-surface);
+  box-shadow: var(--dt-shadow-pop);
+}
+.dt-cols-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--dt-space);
+  margin-top: 20px;
 }
 .dt-sort-row {
   height: var(--dt-control-h-lg);

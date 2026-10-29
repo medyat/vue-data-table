@@ -29,6 +29,7 @@ import { useDataTableContext } from '../core/plugin'
 import { usePreferences } from '../core/preferences/usePreferences'
 import StateMessage from '../core/states/StateMessage.vue'
 import DisplayPopover from '../core/toolbar/DisplayPopover.vue'
+import type { ColumnsDraft } from '../core/toolbar/ColumnsDialog.vue'
 import MoreMenu from '../core/toolbar/MoreMenu.vue'
 import Toolbar from '../core/toolbar/Toolbar.vue'
 import ConfirmDialog from '../core/ui/ConfirmDialog.vue'
@@ -609,18 +610,20 @@ const displayProps = computed(() => ({
   verticalLines: pref.prefs.verticalLines,
   columns: layout.panel.value,
   counts: layout.counts.value,
-  sort: sort.value,
   persistent: pref.persistent,
 }))
 // v-on nesnesi: anahtarlar olay adı (Vue `on` önekini kendisi ekler).
 const displayOn = {
   'update:density': (d: Density) => pref.set({ density: d }),
-  'column-visible': (id: string, visible: boolean) => layout.setVisible(id, visible),
-  'column-move': (id: string, delta: -1 | 1) => layout.move(id, delta),
-  'columns-all': (visible: boolean) => {
-    for (const c of layout.panel.value) if (!c.pinned && c.canHide) layout.setVisible(c.id, visible)
+  'columns-save': (d: ColumnsDraft) => layout.arrange(d),
+  // Display › Reset: tercihler + sütun düzeni aktif görünümün kayıtlı haline; filtre ve sıralama korunur.
+  reset: () => {
+    pref.reset()
+    layout.reset(vw.active.value?.state.columns)
   },
-  'columns-reset': () => layout.reset(vw.active.value?.state.columns),
+}
+// Telefon ⋯ sayfasında Sort › kalır (masaüstü Display'de yok).
+const phoneSortOn = {
   'sort-dir': (column: string, dir: 'asc' | 'desc') => {
     sort.value = sort.value.map((s) => (s.column === column ? { column, dir } : s))
     goTo(1)
@@ -630,7 +633,6 @@ const displayOn = {
     sort.value = []
     goTo(1)
   },
-  reset: () => pref.reset(),
 }
 const onExport = (format: 'csv' | 'xlsx') =>
   emit('export', {
@@ -899,7 +901,7 @@ defineExpose({ refresh: req.refresh, clearSelection })
           :sort="sort"
           :persistent="pref.persistent"
           :auto-refresh-on="autoRefreshOn"
-          v-on="displayOn"
+          v-on="{ ...displayOn, ...phoneSortOn }"
           @update:auto-refresh-on="(v) => (autoRefreshOn = v)"
           @refresh="req.refresh()"
           @export="onExport"

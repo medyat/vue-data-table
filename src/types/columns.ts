@@ -123,7 +123,7 @@ export interface BaseColumn<Row, V = unknown> {
   header: string
   /** Dar alanlarda (telefon) kısa header. */
   headerShort?: string
-  /** Sütun açıklaması: header tooltip'inde ad altında ikinci satır, Columns panelinde ad altında; hücrede gösterilmez. */
+  /** Sütun açıklaması: header tooltip'inde ad altında ikinci satır, Columns dialog'unda ad altında; hücrede gösterilmez. */
   description?: string
   /** Hesaplanan değer. Verilirse `fields` ile sunucudan istenecek alanlar bildirilir. */
   accessor?: (row: Row) => V
@@ -137,12 +137,11 @@ export interface BaseColumn<Row, V = unknown> {
   /** px. Varsayılan 80. */
   minWidth?: number
   maxWidth?: number
-  pinned?: 'left' | 'right'
   hidden?: boolean
   /** Gizlenemez. Birincil sütun için otomatik true. */
   alwaysVisible?: boolean
 
-  /** Birincil hücre: gerçek <a href> (D6); telefonda sabit. Tabloda en fazla bir tane. */
+  /** Birincil hücre: gerçek <a href> (D6); her zaman sola sabit (D45). Tabloda en fazla bir tane. */
   primary?: boolean
   /** Birincil hücre veya `id`/`ajax` tipi için kayıt linki. */
   href?: (row: Row) => string | undefined

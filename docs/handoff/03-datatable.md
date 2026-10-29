@@ -75,7 +75,7 @@ Seçicinin 4 px altında, solda hizalı.
 
 ### 4.3 Display (308)
 
-Sağa hizalı, Display düğmesinin altında. Density segmented (Comfortable / Standard / Compact) · ayırıcı · **Columns ›** “8 of 14” · **Sort ›** “Due date ↑” · Vertical grid lines + switch · ayırıcı · “Saved for you only” + Reset. Drill-in öğeleri 32 px, değer 12.5 `--dt-text-3` + `CaretRight`.
+Sağa hizalı, Display düğmesinin altında. Density segmented (Comfortable / Standard / Compact) · Vertical grid lines + switch · ayırıcı · **Columns ›** “8 of 14” (dialog, D45; Sort › 2026-10-29'da kalktı) · ayırıcı · “Saved for you only” + Reset. Drill-in öğeleri 32 px, değer 12.5 `--dt-text-3` + `CaretRight`.
 
 ## 5. Header ve sütun yönetimi (T4)
 
@@ -99,9 +99,11 @@ Yükseklik `--dt-head-h`, `--dt-surface-2`, üst ve alt 1 px `--dt-line`, metin 
 
 ### 5.2 Sütun menüsü (248)
 
-Başlık etiketi sütun tipi (“Person”). Sort ascending · Sort descending · Clear sort (sıralama yokken `--dt-text-3`) · ayırıcı · Filter by this column… · ayırıcı · Pin left · Pin right · Move left `⌥⇧←` · Move right `⌥⇧→` · ayırıcı · Hide column.
+Başlık etiketi sütun tipi (“Person”). Sort ascending · Sort descending · Clear sort (sıralama yokken `--dt-text-3`) · ayırıcı · Filter by this column… · ayırıcı · Move left `⌥⇧←` · Move right `⌥⇧→` · ayırıcı · Hide column.
 
-### 5.3 Display › Columns (320)
+### 5.3 Columns dialog'u (D45; eski drill-in aşağıda, geçersiz)
+
+Ölçü ve davranış 05 §5 · Columns dialog'u. Eski drill-in tarifi tarihçe için:
 
 Başlık 36 px: geri (24, `CaretLeft`) · “Columns” 13 / 600 · sağda “8 of 14 shown” 12 `--dt-text-3`. “Find a column” 32. Bölümler: **Pinned** (sağda “Always shown”), **Shown** (sağda Hide all), **Hidden** (sağda Show all). Satır 32: tip ikonu · ad · Move up / Move down (20 × 20; uçta pasif `--dt-line-3`) · göster/gizle 24 (`Eye` / `EyeSlash`; gizli satırın adı `--dt-text-2`, düğmesi `--dt-text-3`). Pinned satırında `Lock`. Alt: Reset. **Sürükle-bırak yok** (brief §6.8).
 

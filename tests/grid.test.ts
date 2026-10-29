@@ -27,7 +27,7 @@ const rows: Order[] = Array.from({ length: 40 }, (_, i) => ({
 
 const run = vi.fn()
 const columns: Array<ColumnDef<Order>> = [
-  { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left', href: (r) => `/orders/${r.id}` },
+  { id: 'number', header: 'Order no.', type: 'id', primary: true, href: (r) => `/orders/${r.id}` },
   {
     id: 'product.name',
     header: 'Product',

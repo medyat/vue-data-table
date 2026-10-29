@@ -57,6 +57,8 @@ export interface ColumnLayoutOptions<Row extends object> {
   rowKey?: MaybeRefOrGetter<string>
   /** Görünümden gelen düzen (Faz 3b); verilmezse sütun tanımları. */
   layout?: MaybeRefOrGetter<Partial<ColumnLayout> | undefined>
+  /** Her zaman sola sabit sütunlar (D45); verilmezse birincil sütun. DataSheet anahtar + birincil verir. */
+  fixedStart?: MaybeRefOrGetter<string[]>
   /** DataSheet (07 §3): sola sabit son sütun (birincil ad) px değil minmax ile esner; ofseti kimseye gerekmez. */
   flexLastStart?: boolean
   /** Varsayılan genişliklerin çarpanı (02 · Ölçek): hücre yazısı 13 px'ten büyükse sütunlar da o oranda genişler. Elle verilen genişlik etkilenmez. */
@@ -73,6 +75,9 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
   const defById = computed(() => new Map(defs.value.map((d) => [d.id as string, d])))
   const rowKey = computed(() => toValue(options.rowKey) ?? 'id')
   const layout = computed(() => toValue(options.layout))
+  const fixed = computed(
+    () => toValue(options.fixedStart) ?? defs.value.filter((d) => d.primary).map((d) => d.id as string),
+  )
   const trackFor = (d: ColumnDef<Row>): Track => {
     const t = defaultTrack(d)
     const k = toValue(options.scale) ?? 1
@@ -104,8 +109,9 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
   /** Görünümden gelen düzen → TanStack durumu (04 §7): bilinmeyen sütun atlanır; `visible` varsa beyaz listedir; gizlenemeyen hep açık. */
   const known = (ids: string[] | undefined) => ids?.filter((id) => defById.value.has(id))
   const stateOf = (l: Partial<ColumnLayout> | undefined) => {
-    const start = known(l?.pinned?.left) ?? defs.value.filter((d) => d.pinned === 'left').map((d) => d.id as string)
-    const end = known(l?.pinned?.right) ?? defs.value.filter((d) => d.pinned === 'right').map((d) => d.id as string)
+    const fx = fixed.value.filter((id) => defById.value.has(id))
+    const start = [...fx, ...(known(l?.pinned?.left) ?? []).filter((id) => !fx.includes(id))]
+    const end = (known(l?.pinned?.right) ?? []).filter((id) => !fx.includes(id))
     const visibility: Record<string, boolean> = {}
     for (const d of defs.value) {
       const id = d.id as string
@@ -197,22 +203,26 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     table.getVisibleLeafColumns().reduce((sum, c) => sum + trackMin(trackOf(c, isPinnedCol(c))), 0),
   )
 
-  /** Columns paneli (05 §5): tüm yaprak sütunlar etkin sırada; Pinned / Shown / Hidden bölümleri buradan türer. */
-  const panel = computed(() =>
-    table
-      .getOrderColumnsFn()(table.getAllLeafColumns())
+  /** Columns dialog'u (05 §5, D45): tüm yaprak sütunlar ekrandaki sırada (sol sabitler · orta · sağ sabitler). */
+  const panel = computed(() => {
+    const rank = (c: Column<Features, Row, unknown>) => {
+      const p = c.getIsPinned()
+      return p === 'start' ? 0 : p === 'end' ? 2 : 1
+    }
+    return [...table.getOrderColumnsFn()(table.getAllLeafColumns())]
+      .sort((a, b) => rank(a) - rank(b))
       .map((c) => {
-        const def = defById.value.get(c.id)!
         const pinned = c.getIsPinned()
         return {
           id: c.id,
-          def,
+          def: defById.value.get(c.id)!,
           visible: c.getIsVisible(),
           pinned: pinned === false ? null : pinned,
           canHide: c.getCanHide(),
+          fixed: fixed.value.includes(c.id),
         }
-      }),
-  )
+      })
+  })
   const counts = computed(() => ({
     shown: table.getVisibleLeafColumns().length,
     total: table.getAllLeafColumns().length,
@@ -242,6 +252,17 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     table.setColumnVisibility(s.columnVisibility)
     table.setColumnPinning(s.columnPinning)
     table.setColumnSizing(s.columnSizing)
+  }
+  /** Dialog taslağı (D45): sabitleme konumsaldır — sabitlerden sonraki ilk `start` ve son `end` görünür sütun. */
+  const arrange = (d: { order: string[]; visible: string[]; start: number; end: number }) => {
+    const free = d.order.filter((id) => d.visible.includes(id) && !fixed.value.includes(id))
+    const left = free.slice(0, d.start)
+    apply({
+      order: d.order,
+      visible: d.visible,
+      widths: state.value.widths,
+      pinned: { left, right: d.end ? free.slice(left.length).slice(-d.end) : [] },
+    })
   }
   /** Verilmezse `layout` seçeneğine (o da yoksa sütun tanımlarına) döner. */
   const reset = (l: Partial<ColumnLayout> | undefined = layout.value) => apply(l)
@@ -287,6 +308,7 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     move,
     reset,
     apply,
+    arrange,
     state,
     resolve,
     colsVar,
@@ -297,7 +319,6 @@ export function useColumnLayout<Row extends object>(options: ColumnLayoutOptions
     widthOf: (id: string): number => table.getColumn(id)?.getSize() ?? 0,
     setWidth: (id: string, px: number) => table.setColumnSizing((s) => ({ ...s, [id]: clampWidth(id, px) })),
     resetWidth: (id: string) => table.getColumn(id)?.resetSize(),
-    pin: (id: string, side: PinSide) => table.getColumn(id)?.pin(side ?? false),
     setVisible: (id: string, visible: boolean) => table.getColumn(id)?.toggleVisibility(visible),
     setOrder: (ids: string[]) => table.setColumnOrder(ids),
   }

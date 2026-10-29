@@ -136,11 +136,6 @@ test.describe('T1 · filtreler', () => {
     await page.keyboard.press('Escape')
     await page.locator('.dt-view-trigger').click()
     expect(await insets(page, '.dt-views', '.dt-picker-search')).toEqual({ top: 6, left: 6, right: 6 })
-    await page.keyboard.press('Escape')
-    await page.getByRole('button', { name: 'Display' }).click()
-    await page.getByRole('button', { name: /^Columns/ }).click()
-    const find = await insets(page, '.dt-display', '.dt-pop-find')
-    expect([find.left, find.right]).toEqual([6, 6])
   })
 
   test('operatör menüsü: metin, değer korunur; is empty değer parçasını gizler', async ({ page }) => {

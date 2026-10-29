@@ -552,8 +552,7 @@
   background: transparent;
 }
 .dt-bsheet .dt-pop-item,
-.dt-bsheet .dt-view-item,
-.dt-bsheet .dt-col-row {
+.dt-bsheet .dt-view-item {
   min-height: 52px;
   border-radius: var(--dt-radius-pop);
   font-size: 15px;
@@ -586,13 +585,6 @@
 .dt-bsheet .dt-pop-foot {
   min-height: 44px;
   font-size: 13px;
-}
-.dt-bsheet .dt-pop-find {
-  height: 44px;
-}
-.dt-bsheet .dt-pop-find input {
-  border-radius: var(--dt-radius-pop);
-  font-size: 15px;
 }
 
 @media (prefers-reduced-motion: reduce) {

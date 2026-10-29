@@ -38,6 +38,7 @@ Erişilebilirlik spesifikasyonun parçasıdır; her fazın kabul kriterlerinde y
 - Açılınca odak içeri: arama kutusu varsa ona, yoksa ilk öğeye. Kapanınca odak **tetikleyiciye** döner.
 - Menüler `role="menu"` / `menuitem`, oklarla gezinme, harf ile atlama (typeahead), `Esc` kapatır.
 - Dialog'lar odak tuzağı, `aria-modal="true"`, ilk odak: yıkıcı dialog'da **güvenli** buton (Keep orders / Stay / Fix first), formlu dialog'da ilk alan.
+- Columns dialog'u (05 §5): sütun tutamacında `Space` al · `↑`/`↓` taşı · `Space` bırak · `Esc` iptal (dialog açık kalır). Tutamaç `aria-label="Reorder Status"`, talimat `aria-describedby` ile, konum canlı bölgede duyurulur (@dnd-kit Accessibility eklentisi, metinler `columns.drag*`). Gösterim switch'i adını sütundan alır.
 - Toast'lar `role="status"`; Undo butonu klavyeyle erişilebilir (`F6` döngüsünde son durak, toast görünürken).
 
 ### Filtre çipi

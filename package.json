@@ -81,6 +81,8 @@
     "vue-tsc": "^3.3.13"
   },
   "dependencies": {
+    "@dnd-kit/dom": "~0.5.1",
+    "@dnd-kit/vue": "~0.5.1",
     "@internationalized/date": "^3.12.4",
     "@phosphor-icons/vue": "^2.2.1",
     "@tanstack/vue-table": "^9.3.1",

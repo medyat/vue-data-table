@@ -17,6 +17,7 @@ Ortak bir çekirdek üzerinde üç bileşen. Uygulama (ör. Laravel + Inertia/Vu
 |---|---|---|
 | Tablo mantığı | `@tanstack/vue-table` 9.x (headless) | Sütun modeli, sıralama, sayfalama state'i, satır seçimi, expand ve hücre seçimi hazır; UI bize ait. |
 | Sanal satırlar | `@tanstack/vue-virtual` | Liste 100–500 satır/sayfa, sheet 10.000 satır. Sabit satır yüksekliği; expand alt satırı `measureElement` ile ölçülür. |
+| Sürükle-bırak | `@dnd-kit/vue` + `@dnd-kit/dom` (`~0.5.1`) | Yalnızca Columns dialog'unda sütun sırası (D22 revize); tembel yüklenen parçada, external. |
 | Primitifler | `reka-ui` | shadcn-vue'nun temeli; erişilebilir Popover, Combobox, Dialog, DropdownMenu, Tooltip, Calendar. |
 | İkonlar | `@phosphor-icons/vue` | Tek ağırlık (regular), tree-shake. |
 | Stil | Derlenmiş CSS + `--dt-*` değişkenleri | Uygulamanın Tailwind kurulumundan bağımsız; shadcn temasına köprülenebilir (02). |

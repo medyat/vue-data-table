@@ -319,15 +319,6 @@ const onHeaderAction = (col: LayoutColumn<AnyRow>, action: HeaderAction) => {
     case 'sort-clear':
       emit('sort-set', col.id, action === 'sort-clear' ? null : action === 'sort-asc' ? 'asc' : 'desc')
       return
-    case 'pin-left':
-      layout.pin(col.id, 'start')
-      return
-    case 'pin-right':
-      layout.pin(col.id, 'end')
-      return
-    case 'unpin':
-      layout.pin(col.id, null)
-      return
     case 'hide':
       layout.setVisible(col.id, false)
       return

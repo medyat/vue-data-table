@@ -152,16 +152,12 @@ test.describe('T1 · sunucu modu', () => {
     expect(Math.abs(m.textTop - m.textBottom)).toBeLessThanOrEqual(1)
   })
 
-  test('sütun menüsü: Pin right, Move left, Hide; Display › Columns ile geri gelir', async ({ page }) => {
+  test('sütun menüsü: Move left, Hide (Pin yok, D45); Columns dialog\'u ile geri gelir ve sabitlenir', async ({ page }) => {
     const status = page.locator('.dt-head-cell[data-col="status"]')
     await status.hover() // ⋯ yalnızca hover'da yer kaplar (D44)
     await status.locator('.dt-head-menu').click()
-    await page.getByRole('menuitem', { name: 'Pin right' }).click()
-    await expect(status).toHaveClass(/is-pinned-end/)
-    await status.hover()
-    await status.locator('.dt-head-menu').click()
-    await page.getByRole('menuitem', { name: 'Unpin' }).click()
-    await expect(status).not.toHaveClass(/is-pinned-end/)
+    await expect(page.getByRole('menuitem', { name: /^Pin/ })).toHaveCount(0)
+    await page.keyboard.press('Escape')
     await status.hover()
     await status.locator('.dt-head-menu').click()
     await page.getByRole('menuitem', { name: 'Move left' }).click()
@@ -175,9 +171,70 @@ test.describe('T1 · sunucu modu', () => {
     await expect(page.locator('[role="columnheader"][data-col]')).toHaveCount(7)
     await page.getByRole('button', { name: 'Display' }).click()
     await page.getByRole('button', { name: /^Columns/ }).click()
-    await expect(page.locator('.dt-display')).toContainText('7 of 10 shown')
-    await page.locator('.dt-col-row.is-hidden', { hasText: 'Status' }).locator('button').click()
+    const dlg = page.getByRole('dialog', { name: 'Columns' })
+    await expect(dlg).toContainText('7 of 10 shown')
+    await dlg.getByRole('switch', { name: 'Status' }).click()
+    await dlg.getByRole('radio', { name: 'Last column' }).click()
+    await dlg.getByRole('button', { name: 'Save' }).click()
+    await expect(dlg).toHaveCount(0)
     await expect(page.locator('[role="columnheader"][data-col]')).toHaveCount(8)
+    await expect(page.getByRole('button', { name: 'Display' })).toBeFocused()
+    const after = await page
+      .locator('[role="columnheader"][data-col]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('data-col')))
+    await expect(page.locator(`.dt-head-cell[data-col="${after.at(-1)}"]`)).toHaveClass(/is-pinned-end/)
+  })
+
+  test('Columns dialog\'u: tutamaçla sürükle-bırak ve klavye ile sıralama, Save\'de uygulanır (D22 revize, D45)', async ({
+    page,
+  }) => {
+    const headers = () =>
+      page.locator('[role="columnheader"][data-col]').evaluateAll((els) => els.map((e) => e.getAttribute('data-col')))
+    const before = await headers()
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.getByRole('button', { name: /^Columns/ }).click()
+    const dlg = page.getByRole('dialog', { name: 'Columns' })
+    const rows = () => dlg.locator('.dt-col-row:not(.is-fixed)').evaluateAll((els) => els.map((e) => e.getAttribute('data-col')))
+    await expect(dlg.locator('.dt-col-handle').first()).toBeVisible() // dialog tembel yüklenir
+    const listed = await rows()
+
+    // Fare: üçüncü satırı birincinin üstüne sürükle.
+    const from = await dlg.locator(`.dt-col-row[data-col="${listed[2]}"] .dt-col-handle`).boundingBox()
+    const to = await dlg.locator(`.dt-col-row[data-col="${listed[0]}"]`).boundingBox()
+    await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(from!.x + from!.width / 2, to!.y + 4, { steps: 12 })
+    await page.mouse.up()
+    await expect.poll(rows).toEqual([listed[2], listed[0], listed[1], ...listed.slice(3)])
+    expect(await headers()).toEqual(before) // taslak
+
+    // Klavye: dördüncü satırı bir yukarı (Space al · ↑ · Space bırak); duyuru i18n metniyle.
+    const handle = dlg.locator(`.dt-col-row[data-col="${listed[3]}"] .dt-col-handle`)
+    await handle.focus()
+    await page.keyboard.press('Space')
+    await expect(page.locator('[id^="dnd-kit-announcement"]')).toContainText('Picked up')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('Space')
+    await expect.poll(rows).toEqual([listed[2], listed[0], listed[3], listed[1], ...listed.slice(4)])
+    await expect(dlg).toBeVisible() // Space dialog'u kapatmaz
+
+    // Esc taşımayı iptal eder; dialog açık kalır, sıra değişmez.
+    const kept = await rows()
+    await handle.focus()
+    await page.keyboard.press('Space')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Escape')
+    await expect(dlg).toBeVisible()
+    await expect.poll(rows).toEqual(kept)
+
+    // Arama açıkken tutamaçlar pasif.
+    await dlg.getByRole('searchbox').fill('a')
+    await expect(dlg.locator('.dt-col-handle').first()).toBeDisabled()
+    await dlg.getByRole('searchbox').fill('')
+
+    await dlg.getByRole('button', { name: 'Save' }).click()
+    const after = await headers()
+    expect(after.indexOf(listed[2]!)).toBeLessThan(after.indexOf(listed[0]!))
   })
 
   test('Display: yoğunluk ve dikey çizgiler tercihte kalır (localStorage)', async ({ page }) => {
@@ -215,6 +272,16 @@ test.describe('T1 · sunucu modu', () => {
     await page.getByRole('button', { name: 'More actions' }).click()
     await expect(page.locator('.dt-bsheet')).toContainText('Display')
     await expect(page.locator('.dt-bsheet .dt-bsheet-row').filter({ hasText: 'Density' })).toBeVisible()
+  })
+
+  test('⋯ menüsü: öğeler alt alta (hücredeki +N rozetinin .dt-more stiliyle çakışmaz)', async ({ page }) => {
+    await page.getByRole('button', { name: 'More' }).click()
+    const items = page.getByRole('menu').locator('.dt-menu-item')
+    await expect(items.first()).toBeVisible()
+    const boxes = await items.evaluateAll((els) => els.map((e) => e.getBoundingClientRect()))
+    expect(boxes.length).toBeGreaterThan(2)
+    for (let i = 1; i < boxes.length; i++) expect(boxes[i]!.top).toBeGreaterThan(boxes[i - 1]!.top)
+    expect(new Set(boxes.map((b) => Math.round(b.left))).size).toBe(1)
   })
 
   test('Auto-refresh açıkken footer Live', async ({ page }) => {

@@ -35,6 +35,19 @@ test('axe · T1 filtre çipi açık ve görünüm menüsü', async ({ page }) =>
   await scan(page, 'sütun seçici')
 })
 
+for (const theme of ['light', 'dark-class']) {
+  test(`axe · Columns dialog'u (${theme})`, async ({ page }) => {
+    await settings(page, theme)
+    await page.goto('/t1?size=100')
+    await expect(page.locator('.dt-row[data-index="0"]')).toBeVisible()
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.getByRole('button', { name: /^Columns/ }).click()
+    await expect(page.locator('.dt-cols-dialog')).toBeVisible()
+    await page.waitForTimeout(200)
+    await scan(page, 'Columns dialog')
+  })
+}
+
 test('axe · T11 sheet (düzenleme, hata balonu, dialog)', async ({ page }) => {
   await settings(page)
   await page.goto('/t11?delay=0&rows=50&fresh=1')

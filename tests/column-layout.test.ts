@@ -15,12 +15,12 @@ interface Order {
 }
 
 const columns: Array<ColumnDef<Order>> = [
-  { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left' },
+  { id: 'number', header: 'Order no.', type: 'id', primary: true },
   { id: 'product.name', header: 'Product', type: 'string' },
   { id: 'customer', header: 'Customer', type: 'string' },
   { id: 'value', header: 'Value', type: 'currency', currency: 'TRY' },
   { id: 'dueAt', header: 'Due date', type: 'date', hidden: true },
-  { id: 'actions', header: '', type: 'object', width: 56, pinned: 'right', alwaysVisible: true },
+  { id: 'actions', header: '', type: 'object', width: 56, alwaysVisible: true },
 ]
 const rows: Order[] = [
   { id: 7, number: 'WO-1', product: { name: 'Pump' }, customer: 'Acme', value: 10, dueAt: '2026-10-21' },
@@ -32,7 +32,7 @@ function setup() {
   mount(
     defineComponent({
       setup() {
-        api = useColumnLayout<Order>({ columns: cols, rows })
+        api = useColumnLayout<Order>({ columns: cols, rows, layout: { pinned: { left: [], right: ['actions'] } } })
         return () => null
       },
     }),
@@ -87,5 +87,38 @@ describe('useColumnLayout', () => {
     const { api } = setup()
     expect(api.rowId(rows[0]!)).toBe('7')
     expect(api.columns.value[1]!.def.header).toBe('Product')
+  })
+  it('birincil sütun tanımda pinned olmadan da sola sabit (D45)', () => {
+    const { api } = setup()
+    expect(api.state.value.pinned.left).toEqual(['number'])
+    api.reset({ pinned: { left: [], right: [] } })
+    expect(api.state.value.pinned.left).toEqual(['number'])
+  })
+  it('arrange: konumsal sabitleme — birincilden sonraki ilk N ve son M görünür sütun; gizli sayılmaz (D45)', async () => {
+    const { api } = setup()
+    const order = ['number', 'customer', 'dueAt', 'product.name', 'value', 'actions']
+    api.arrange({ order, visible: ['number', 'customer', 'product.name', 'value', 'actions'], start: 2, end: 1 })
+    await nextTick()
+    expect(api.state.value.pinned).toEqual({ left: ['number', 'customer', 'product.name'], right: ['actions'] })
+    expect(api.columns.value.map((c) => [c.id, c.pinned])).toEqual([
+      ['number', 'start'],
+      ['customer', 'start'],
+      ['product.name', 'start'],
+      ['value', null],
+      ['actions', 'end'],
+    ])
+    // Dialog listesi ekrandaki sırayla: sabitler başta/sonda, gizli sütun yerinde.
+    expect(api.panel.value.map((c) => c.id)).toEqual(['number', 'customer', 'product.name', 'dueAt', 'value', 'actions'])
+    expect(api.panel.value[0]).toMatchObject({ fixed: true })
+    api.arrange({ order, visible: ['number', 'customer', 'value'], start: 0, end: 2 })
+    await nextTick()
+    expect(api.state.value.pinned).toEqual({ left: ['number'], right: ['customer', 'value'] })
+  })
+  it('arrange genişlikleri korur', async () => {
+    const { api } = setup()
+    api.setWidth('customer', 220)
+    api.arrange({ order: api.state.value.order, visible: api.state.value.visible, start: 1, end: 0 })
+    await nextTick()
+    expect(api.widthOf('customer')).toBe(220)
   })
 })

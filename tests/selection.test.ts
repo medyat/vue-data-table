@@ -19,7 +19,7 @@ const rows: Order[] = Array.from({ length: 12 }, (_, i) => ({
   value: 100 * (i + 1),
 }))
 const columns: Array<ColumnDef<Order>> = [
-  { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left', href: (r) => `/orders/${r.id}` },
+  { id: 'number', header: 'Order no.', type: 'id', primary: true, href: (r) => `/orders/${r.id}` },
   { id: 'status', header: 'Status', type: 'select', options: [{ value: 'done', label: 'Done' }] },
   { id: 'value', header: 'Value', type: 'int' },
 ]

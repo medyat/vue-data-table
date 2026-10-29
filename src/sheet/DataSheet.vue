@@ -57,6 +57,7 @@ import { useDataTableContext } from '../core/plugin'
 import { usePreferences } from '../core/preferences/usePreferences'
 import StateMessage from '../core/states/StateMessage.vue'
 import DisplayPopover from '../core/toolbar/DisplayPopover.vue'
+import type { ColumnsDraft } from '../core/toolbar/ColumnsDialog.vue'
 import SearchBox from '../core/toolbar/SearchBox.vue'
 import ConfirmDialog from '../core/ui/ConfirmDialog.vue'
 import type { ColumnDef, ColumnType } from '../types/columns'
@@ -153,13 +154,12 @@ const readOnlyDevice =
   typeof matchMedia === 'function' &&
   (matchMedia(`(max-width: ${props.readOnlyBelow - 1}px)`).matches || !matchMedia('(any-pointer: fine)').matches)
 const sheetColumns = computed<Array<ColumnDef<Row>>>(() =>
-  props.columns.map((d) =>
-    d.id === props.keyColumn
-      ? { ...d, pinned: 'left', width: readOnlyDevice ? 104 : 128 }
-      : d.primary && !readOnlyDevice
-        ? { ...d, pinned: 'left' }
-        : d,
-  ),
+  props.columns.map((d) => (d.id === props.keyColumn ? { ...d, width: readOnlyDevice ? 104 : 128 } : d)),
+)
+const fixedStart = computed(() =>
+  sheetColumns.value
+    .filter((d) => d.id === props.keyColumn || (d.primary && !readOnlyDevice))
+    .map((d) => d.id as string),
 )
 const defById = computed(() => new Map(sheetColumns.value.map((d) => [d.id as string, d])))
 const keyDef = computed(() => defById.value.get(props.keyColumn))
@@ -228,6 +228,7 @@ const layout = useColumnLayout<Row>({
   columns: sheetColumns,
   rows: rowsAll,
   rowKey: () => props.rowKey,
+  fixedStart,
   flexLastStart: true,
 })
 const table = useSheetTable<Row>({
@@ -1256,13 +1257,12 @@ const displayProps = computed(() => ({
 const displayOn = {
   'update:density': (d: Density) => pref.set({ density: d }),
   'update:verticalLines': (on: boolean) => pref.set({ verticalLines: on }),
-  'column-visible': (id: string, visible: boolean) => layout.setVisible(id, visible),
-  'column-move': (id: string, delta: -1 | 1) => layout.move(id, delta),
-  'columns-all': (visible: boolean) => {
-    for (const c of layout.panel.value) if (!c.pinned && c.canHide) layout.setVisible(c.id, visible)
+  'columns-save': (d: ColumnsDraft) => layout.arrange(d),
+  // Display › Reset: tercihler + sütun düzeni tanımlara (sheet'te görünüm yok).
+  reset: () => {
+    pref.reset()
+    layout.reset()
   },
-  'columns-reset': () => layout.reset(),
-  reset: () => pref.reset(),
 }
 
 const rootEl = ref<HTMLElement | null>(null)

@@ -287,7 +287,7 @@ Varsayılan görünüm tercihtir (D5): `preferences` adapter'ı yoksa oturumlukt
 
 ### Sütun düzeni ve görünüm
 
-Sütun gizleme/gösterme, sıra (menü ve klavye; D22), genişlik ve sabitleme görünümü düzenler. Ayrıntılar 05 · Sütun yönetimi.
+Sütun gizleme/gösterme, sıra (menü, klavye ve Columns dialog'u; D22, D45), genişlik ve sabitleme (yalnızca dialog'dan, konumsal) görünümü düzenler. Ayrıntılar 05 · Sütun yönetimi.
 
 ---
 

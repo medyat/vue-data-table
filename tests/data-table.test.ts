@@ -25,7 +25,7 @@ const rows: Order[] = Array.from({ length: 40 }, (_, i) => ({
   dueAt: '2026-10-18',
 }))
 const columns: Array<ColumnDef<Order>> = [
-  { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left' },
+  { id: 'number', header: 'Order no.', type: 'id', primary: true },
   { id: 'product.name', header: 'Product', type: 'string' },
   { id: 'status', header: 'Status', type: 'select', options: [{ value: 'done', label: 'Done' }] },
   { id: 'value', header: 'Value', type: 'currency', currency: 'TRY' },
@@ -758,21 +758,78 @@ describe('görünümler (04 §7)', () => {
     w.unmount()
   })
 
-  it('Columns panelinde description ad altında ikinci satır (D33)', async () => {
+  const openColumns = async (w: Awaited<ReturnType<typeof mountViews>>) => {
+    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
+    await flush()
+    ;[...document.querySelectorAll<HTMLElement>('.dt-display .dt-pop-item')]
+      .find((b) => b.textContent?.includes('Columns'))!
+      .click()
+    await flush()
+    await vi.dynamicImportSettled() // dialog tembel yüklenir
+    await flush()
+    return document.querySelector<HTMLElement>('.dt-cols-dialog')!
+  }
+  const colRow = (dlg: HTMLElement, name: string) =>
+    [...dlg.querySelectorAll<HTMLElement>('.dt-col-row')].find((r) => r.textContent?.includes(name))!
+  const dialogButton = (dlg: HTMLElement, name: string) =>
+    [...dlg.querySelectorAll<HTMLElement>('button')].find((b) => b.textContent?.trim() === name)!
+
+  it('Display popover: Density · Vertical grid lines · Columns; Sort › yok', async () => {
+    const w = await mountViews({})
+    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
+    await flush()
+    const items = [...document.querySelectorAll<HTMLElement>('.dt-display .dt-pop-item')].map((e) =>
+      e.textContent!.trim(),
+    )
+    expect(items).toHaveLength(2)
+    expect(items[0]).toBe('Vertical grid lines')
+    expect(items[1]).toMatch(/^Columns/)
+    w.unmount()
+  })
+  it('Display › Reset: tercihler ve sütun düzeni görünümün kayıtlı haline döner; filtre ve sıralama korunur', async () => {
+    const w = await mountViews({ props: { views: [{ ...sys[1]!, default: true }] } })
+    const ids = () => w.findAll('[role="columnheader"][data-col]').map((h) => h.attributes('data-col'))
+    const before = ids()
+    let dlg = await openColumns(w)
+    colRow(dlg, 'Status').querySelector<HTMLElement>('[role="switch"]')!.click()
+    await flush()
+    dialogButton(dlg, 'Save').click()
+    await flush()
+    expect(ids()).not.toContain('status')
+    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
+    await flush()
+    ;[...document.querySelectorAll<HTMLElement>('.dt-display .dt-seg-item')]
+      .find((b) => b.textContent?.trim() === 'Compact')!
+      .click()
+    await flush()
+    expect(w.attributes('data-density')).toBe('compact')
+    const chipsBefore = w.findAll('.dt-chip').length
+    ;[...document.querySelectorAll<HTMLElement>('.dt-display .dt-pop-action')]
+      .find((b) => b.textContent?.trim() === 'Reset')!
+      .click()
+    await flush()
+    expect(ids()).toEqual(before)
+    expect(w.attributes('data-density')).not.toBe('compact')
+    expect(trigger(w).text()).not.toContain('Edited')
+    expect(chipsBefore).toBe(1)
+    expect(w.findAll('.dt-chip')).toHaveLength(1)
+    expect(w.get('[role="columnheader"][data-col="dueAt"]').attributes('aria-sort')).toBe('ascending')
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await flush()
+    dlg = await openColumns(w)
+    expect(colRow(dlg, 'Status').querySelector('[role="switch"]')!.getAttribute('data-state')).toBe('checked')
+    w.unmount()
+  })
+  it("Columns dialog'unda description ad altında ikinci satır (D33)", async () => {
     const w = await mountViews({
       props: { columns: columns.map((c) => (c.id === 'value' ? { ...c, description: 'Net of discounts' } : c)) },
     })
-    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
-    await flush()
-    const pop = document.querySelector<HTMLElement>('.dt-display')!
-    ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes('Columns'))!.click()
-    await flush()
-    const row = [...pop.querySelectorAll<HTMLElement>('.dt-col-row')].find((r) => r.textContent?.includes('Value'))!
-    expect(row.querySelector('.dt-col-desc')?.textContent).toBe('Net of discounts')
-    expect(pop.querySelectorAll('.dt-col-desc')).toHaveLength(1)
+    const dlg = await openColumns(w)
+    expect(colRow(dlg, 'Value').querySelector('.dt-col-desc')?.textContent).toBe('Net of discounts')
+    expect(dlg.querySelectorAll('.dt-col-desc')).toHaveLength(1)
     w.unmount()
   })
-  it('columns.visible beyaz liste; bilinmeyen sütun atlanır; Columns › Reset görünümün düzenine döner ve Edited kalkar', async () => {
+  it('columns.visible beyaz liste; dialog taslakta çalışır: Cancel değiştirmez, Save tek seferde uygular (D45)', async () => {
     const views: View[] = [
       {
         id: 'v',
@@ -783,26 +840,32 @@ describe('görünümler (04 §7)', () => {
     ]
     const w = await mountViews({ props: { views } })
     const ids = () => w.findAll('[role="columnheader"][data-col]').map((h) => h.attributes('data-col'))
-    expect(ids()).toEqual(['number', 'status', 'product.name']) // primary hep görünür; zzz yok
-    await w.get('.dt-toolbar button[aria-label="Display"]').trigger('click')
+    expect(ids()).toEqual(['number', 'status', 'product.name']) // primary hep görünür ve sabit; zzz yok
+    let dlg = await openColumns(w)
+    expect(colRow(dlg, 'Order no.').classList).toContain('is-fixed')
+    colRow(dlg, 'Product').querySelector<HTMLElement>('[role="switch"]')!.click()
     await flush()
-    const pop = document.querySelector<HTMLElement>('.dt-display')!
-    ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-item')].find((b) => b.textContent?.includes('Columns'))!.click()
-    await flush()
-    ;[
-      ...[...pop.querySelectorAll<HTMLElement>('.dt-col-row')]
-        .find((r) => r.textContent?.includes('Product'))!
-        .querySelectorAll('button'),
-    ]
-      .at(-1)!
-      .click()
-    await flush()
-    expect(ids()).toEqual(['number', 'status'])
-    expect(trigger(w).text()).toContain('Edited')
-    ;[...pop.querySelectorAll<HTMLElement>('.dt-pop-action')].find((b) => b.textContent?.trim() === 'Reset')!.click()
+    expect(ids()).toEqual(['number', 'status', 'product.name']) // taslak
+    dialogButton(dlg, 'Cancel').click()
     await flush()
     expect(ids()).toEqual(['number', 'status', 'product.name'])
     expect(trigger(w).text()).not.toContain('Edited')
+
+    dlg = await openColumns(w)
+    expect(colRow(dlg, 'Product').querySelector('[role="switch"]')!.getAttribute('data-state')).toBe('checked')
+    colRow(dlg, 'Product').querySelector<HTMLElement>('[role="switch"]')!.click()
+    ;[...dlg.querySelectorAll<HTMLElement>('.dt-radio-row')]
+      .find((r) => r.textContent?.includes('First column'))!
+      .click()
+    await flush()
+    expect(colRow(dlg, 'Status').querySelector('.dt-col-pin')).not.toBeNull() // kaydedilince sabitlenecek
+    dialogButton(dlg, 'Save').click()
+    await flush()
+    expect(document.querySelector('.dt-cols-dialog')).toBeNull()
+    expect(ids()).toEqual(['number', 'status'])
+    expect(w.get('.dt-head-cell[data-col="status"]').classes()).toContain('is-pinned-start')
+    expect(trigger(w).text()).toContain('Edited')
+    await flush()
     w.unmount()
   })
 })

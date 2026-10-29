@@ -176,7 +176,7 @@ interface BaseColumn<Row, V = unknown> {
   header: string
   /** Dar alanlarda (telefon) kısa header: "Disc.". */
   headerShort?: string
-  /** Sütun açıklaması (uygulama i18n'den verir): header tooltip'inde ad altında ikinci satır, Columns panelinde ad altında; hücrede gösterilmez. */
+  /** Sütun açıklaması (uygulama i18n'den verir): header tooltip'inde ad altında ikinci satır, Columns dialog'unda ad altında; hücrede gösterilmez. */
   description?: string
   /** Hesaplanan değer. Verilirse `fields` ile sunucudan istenecek alanlar bildirilir. */
   accessor?: (row: Row) => V
@@ -191,10 +191,9 @@ interface BaseColumn<Row, V = unknown> {
   /** px. Varsayılan 80. */
   minWidth?: number
   maxWidth?: number
-  pinned?: 'left' | 'right'
-  /** Varsayılan olarak gizli (Columns › Hidden). */
+  /** Varsayılan olarak gizli (Columns dialog'unda kapalı). Sabitleme sütunda değil, görünümde ve dialog'da (D45). */
   hidden?: boolean
-  /** Gizlenemez (Columns › "Always shown"). Birincil sütun için otomatik true. */
+  /** Gizlenemez (Columns dialog'unda anahtarı pasif). Birincil sütun için otomatik true. */
   alwaysVisible?: boolean
 
   /**

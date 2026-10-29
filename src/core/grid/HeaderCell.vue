@@ -185,17 +185,6 @@ const onMenuCloseAutoFocus = (e: Event) => {
             </DropdownMenuItem>
             <DropdownMenuSeparator class="dt-menu-sep" />
           </template>
-          <DropdownMenuItem v-if="column.pinned" class="dt-menu-item" @select="act('unpin')">
-            {{ i18n.t('header.unpin') }}
-          </DropdownMenuItem>
-          <template v-else>
-            <DropdownMenuItem class="dt-menu-item" @select="act('pin-left')">
-              {{ i18n.t('header.pinLeft') }}
-            </DropdownMenuItem>
-            <DropdownMenuItem class="dt-menu-item" @select="act('pin-right')">
-              {{ i18n.t('header.pinRight') }}
-            </DropdownMenuItem>
-          </template>
           <DropdownMenuItem class="dt-menu-item" @select="act('move-left')">
             {{ i18n.t('header.moveLeft') }}
             <kbd class="dt-kbd">{{ MOVE_KBD.left }}</kbd>

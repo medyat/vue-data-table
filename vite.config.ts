@@ -28,7 +28,14 @@ export default defineConfig({
       cssFileName: 'style',
     },
     rolldownOptions: {
-      external: [/^vue$/, /^reka-ui/, /^@tanstack\//, /^@phosphor-icons\//, /^@internationalized\//],
+      external: [
+        /^vue$/,
+        /^reka-ui/,
+        /^@tanstack\//,
+        /^@dnd-kit\//,
+        /^@phosphor-icons\//,
+        /^@internationalized\//,
+      ],
     },
     sourcemap: true,
   },

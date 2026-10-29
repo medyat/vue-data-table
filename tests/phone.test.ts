@@ -23,7 +23,7 @@ const rows: Order[] = Array.from({ length: 30 }, (_, i) => ({
 }))
 const columns: Array<ColumnDef<Order>> = [
   { id: 'number', header: 'Order no.', headerShort: 'No.', type: 'id', primary: true },
-  { id: 'product', header: 'Product', type: 'string', pinned: 'right' },
+  { id: 'product', header: 'Product', type: 'string' },
   {
     id: 'status',
     header: 'Status',
@@ -82,7 +82,9 @@ const click = async (el: Element | null | undefined) => {
 
 describe('DataTable · telefon düzeni', () => {
   it('kart < 640: is-phone; toolbar ikon düğmeleri; birincil sütun sola sabit, sağa sabit yok; kısa header', async () => {
-    const w = await mountPhone()
+    const w = await mountPhone({
+      views: [{ id: 'v', name: 'All', kind: 'system', state: { columns: { pinned: { left: [], right: ['product'] } } } }],
+    })
     expect(w.classes()).toContain('is-phone')
     expect(w.find('.dt-toolbar.is-phone').exists()).toBe(true)
     expect(w.find('.dt-search-open').exists()).toBe(true)

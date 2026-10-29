@@ -1,15 +1,19 @@
 <script setup lang="ts">
-// Telefon ⋯ alt sayfası (handoff 04 §6.4, T13-07): Display (Density › · Columns › · Sort ›) · Export matching rows › · Import ·
+// Telefon ⋯ alt sayfası (handoff 04 §6.4, T13-07): Display (Density › · Columns (dialog, D45) · Sort ›) · Export matching rows › · Import ·
 // Print · Refresh · Auto-refresh · "Saved for you only" + Reset. Masaüstündeki Display popover'ı ve ⋯ menüsünün yerini alır.
 import { PhCaretLeft, PhCaretRight, PhCheck, PhDotsThree } from '@phosphor-icons/vue'
 import { SwitchRoot, SwitchThumb } from 'reka-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import type { Density } from '../../types/core'
 import type { SortRule } from '../../types/query'
 import { useDataTableContext } from '../plugin'
 import Layer from '../ui/Layer.vue'
-import ColumnsPanel, { type PanelColumn } from './ColumnsPanel.vue'
+import type { ColumnsDraft, PanelColumn } from './ColumnsDialog.vue'
 import SortPanel from './SortPanel.vue'
+
+// Dialog ve @dnd-kit yalnızca Columns ilk açılışta yüklenir; sonra bağlı kalır (odak dönüşü).
+const ColumnsDialog = defineAsyncComponent(() => import('./ColumnsDialog.vue'))
+const columnsUsed = ref(false)
 
 const props = defineProps<{
   density: Density
@@ -26,10 +30,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   'update:density': [density: Density]
-  'column-visible': [id: string, visible: boolean]
-  'column-move': [id: string, delta: -1 | 1]
-  'columns-all': [visible: boolean]
-  'columns-reset': []
+  'columns-save': [draft: ColumnsDraft]
   'sort-dir': [column: string, dir: 'asc' | 'desc']
   'sort-remove': [column: string]
   'sort-clear': []
@@ -42,7 +43,13 @@ const emit = defineEmits<{
 }>()
 const { i18n } = useDataTableContext()
 const open = ref(false)
-const level = ref<'main' | 'density' | 'columns' | 'sort' | 'export'>('main')
+const level = ref<'main' | 'density' | 'sort' | 'export'>('main')
+const columnsOpen = ref(false)
+const trigger = ref<HTMLButtonElement | null>(null)
+const focusTrigger = (e: Event) => {
+  e.preventDefault()
+  trigger.value?.focus()
+}
 watch(open, (o) => {
   if (!o) level.value = 'main'
 })
@@ -50,7 +57,6 @@ const DENSITIES: Density[] = ['comfortable', 'standard', 'compact']
 const TITLES = {
   main: 'toolbar.more',
   density: 'display.density',
-  columns: 'display.columns',
   sort: 'display.sort',
   export: 'toolbar.export',
 } as const
@@ -81,7 +87,7 @@ const setDensity = (d: Density) => {
     :hide-title="level === 'main'"
   >
     <template #trigger>
-      <button type="button" class="dt-btn dt-btn-icon dt-more-trigger" :aria-label="i18n.t('toolbar.more')">
+      <button ref="trigger" type="button" class="dt-btn dt-btn-icon dt-more-trigger" :aria-label="i18n.t('toolbar.more')">
         <PhDotsThree :size="20" weight="bold" aria-hidden="true" />
       </button>
     </template>
@@ -89,9 +95,6 @@ const setDensity = (d: Density) => {
       <button type="button" class="dt-bsheet-back" :aria-label="i18n.t('common.back')" @click="level = 'main'">
         <PhCaretLeft :size="20" aria-hidden="true" />
       </button>
-    </template>
-    <template v-if="level === 'columns'" #head-end>
-      <span class="dt-bsheet-value">{{ i18n.t('columns.shownOf', counts) }}</span>
     </template>
 
     <template v-if="level === 'main'">
@@ -101,7 +104,7 @@ const setDensity = (d: Density) => {
         <span class="dt-bsheet-value">{{ i18n.t(`display.${density}`) }}</span>
         <PhCaretRight :size="16" aria-hidden="true" />
       </button>
-      <button type="button" class="dt-bsheet-row" @click="level = 'columns'">
+      <button type="button" class="dt-bsheet-row" @click="close(() => (columnsUsed = columnsOpen = true))">
         {{ i18n.t('display.columns') }}
         <span class="dt-bsheet-value">{{ i18n.t('columns.shownOf', counts) }}</span>
         <PhCaretRight :size="16" aria-hidden="true" />
@@ -148,14 +151,6 @@ const setDensity = (d: Density) => {
       </button>
     </template>
 
-    <ColumnsPanel
-      v-else-if="level === 'columns'"
-      :columns="columns"
-      @column-visible="(id, v) => emit('column-visible', id, v)"
-      @column-move="(id, d) => emit('column-move', id, d)"
-      @columns-all="(v) => emit('columns-all', v)"
-      @columns-reset="emit('columns-reset')"
-    />
     <SortPanel
       v-else-if="level === 'sort'"
       :sort="sort"
@@ -174,4 +169,12 @@ const setDensity = (d: Density) => {
       </button>
     </template>
   </Layer>
+  <ColumnsDialog
+    v-if="columnsUsed"
+    v-model:open="columnsOpen"
+    phone
+    :columns="columns"
+    @save="(d) => emit('columns-save', d)"
+    @close-auto-focus="focusTrigger"
+  />
 </template>

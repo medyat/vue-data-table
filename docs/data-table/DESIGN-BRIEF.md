@@ -303,7 +303,7 @@ Retry = aynı talebin yeniden yayılması; otomatik yeniden deneme yoktur. 401/4
 
 | Öğe | Kullanım | Kullanılmayan yer |
 |---|---|---|
-| **Popover** (10 px yarıçap, 120 ms) | Filtre değeri, operatör, görünüm menüsü, Display, Columns paneli, column picker, hücre JSON/uzun metin kartı | Kaydetmeyi gerektiren formlar |
+| **Popover** (10 px yarıçap, 120 ms) | Filtre değeri, operatör, görünüm menüsü, Display, column picker, hücre JSON/uzun metin kartı | Kaydetmeyi gerektiren formlar |
 | **Menü** (`role="menu"`) | Header ⋯, satır ⋯, More ⋯, hücre ⋯, sheet sağ tık | Değer seçimi (o combobox'tır) |
 | **Dialog** (460 px, odak tuzağı) | Save as new view; görünüm silme onayı; DataSheet hata/ayrılma/discard onayları; Import (560 px) | Filtre düzenleme, sütun yönetimi (dialog yok, D22), toplu aksiyon onayı (uygulamanın) |
 | **Bottom sheet** (telefon, 18 px üst yarıçap) | < 640 px'te tüm popover'lar; Filters | Masaüstü |
@@ -356,7 +356,7 @@ Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. D43: görünüm seçic
 | 2 | Search | Aranabilir sütun varsa | 240 px; `/` odaklar; 250 ms sonra arar; çip üretmez (D3). İlk `Esc` temizler, ikinci odaktan çıkar |
 | 3 | Filter | Filtrelenebilir sütun varsa | Sayaç rozeti = uygulanmış çip sayısı; column picker açar. `F`. Facet çipi yok (D26) |
 | 4 | Filter bar | Yalnızca çip varken | Ayrı satır (6.5) |
-| 5 | Display | Kullanılabilir ayar varsa | Popover 300–312 px: Density segmented · Columns › `8 of 14` · Sort › `Due date ↑` · Vertical grid lines switch · altta “Saved for you only” (yalnızca tercih deposu varsa) + Reset |
+| 5 | Display | Kullanılabilir ayar varsa | Popover 300–312 px: Density segmented · Vertical grid lines switch · Columns › `8 of 14` (dialog) · altta “Saved for you only” (yalnızca tercih deposu varsa) + Reset |
 | 6 | More ⋯ | Öğe varsa | Export matching rows › CSV / Excel (seçim varsa üstte “Export 7 selected rows”) · Import… · Print · Refresh `R` · Auto-refresh switch (açıkken footer'da yeşil `live-dot` + “Live”). Her öğe yalnızca uygulama ilgili olayı dinliyorsa |
 | 7 | `#toolbar-end` | Uygulama verirse | Birincil aksiyon (“New order”): mürekkep, asla accent mavi; en fazla bir |
 
@@ -422,13 +422,11 @@ Filtre değildir: çip üretmez, sayaca girmez, görünüme kaydedilmez, görün
 | Resize | Kenarda hover'da 2 px accent tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; içeriğe sığdırma yok (D42) |
 | Sıra | Menüden **Move left / Move right**, klavye `⌥⇧←/→`. Sürükleme yok (D22); sabit sütunlar kendi bölgesinde taşınır |
 
-**Sütun menüsü** (`⋯` veya sağ tık, 248 px): `[tip etiketi]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Pin left · Pin right / Unpin · Move left · Move right · Hide column.
+**Sütun menüsü** (`⋯` veya sağ tık, 248 px): `[tip etiketi]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Move left · Move right · Hide column. (Pin öğeleri D45 ile kalktı.)
 
-### 6.8 Sütun yönetimi: Display › Columns [Karar D22]
+### 6.8 Sütun yönetimi: Columns dialog'u [Karar D22, D45]
 
-- Display popover'ı içinde drill-in (320 px): geri oku + “Columns” + `8 of 14 shown`; **Find a column** araması.
-- Bölümler: **Pinned** (kilit; “Always shown” notu), **Shown** (sağda “Hide all”), **Hidden** (sağda “Show all”). Satır: tip ikonu · ad · göz switch'i · **Move up / Move down** okları. Sürükle tutamacı yok.
-- Altta **Reset** (görünümün kayıtlı düzenine). Değişiklikler anında uygulanır ve görünümü “edited” yapar.
+- D45 ile drill-in'in yerini dialog aldı; anatomi ve davranış 05 §5'tedir (solda konumsal sabitleme, sağda bul + liste, Cancel / Save, taslak). Sıra tutamaçla sürükle-bırak ve klavyeyle (D22 revize).
 - Sütun gizleme/sıra/genişlik/sabitleme görünümün parçasıdır. Yeni görünen sütunun verisi sunucudan gelmemişse paket onu ister; o sütunun hücreleri gelene kadar skeleton.
 - **Manage columns dialog'u yoktur** (860 px dialog ertelendi).
 
@@ -762,7 +760,7 @@ Bu özellikler tasarlanmaz ve geliştirilmez; tasarımda “ileride eklenebilir�
 | Sayfalar arası seçim, “Select all matching”, hariç tutma | D19 |
 | Toplu aksiyon için paket içi onay dialog'u, toast, spinner | D20 |
 | Vue slot ile hücre özelleştirme; `custom` tipi | D21 |
-| Sürükle-bırak (sütun sırası, Columns paneli, Sort paneli); Manage columns dialog'u; Manage views ekranı; görünüm sekmeleri | D22, 04 §7 |
+| Sürükle-bırak (header'da sütun sırası, Sort paneli; Columns dialog'u hariç); Manage views ekranı; görünüm sekmeleri | D22, 04 §7 |
 | Paket içinde HTTP, önbellek, otomatik yeniden deneme, chunk gönderimi; DataSheet'te Stop/ETA/çevrimdışı banner'ı | D18 |
 | DataSheet'te sunucudan silme; çoklu aralık seçimi; yatay doldurma; formül | D11, 07 |
 | Expand verisinin paket tarafından yüklenmesi ve önbelleklenmesi; önizleme (peek) paneli | 05 §7, D28 |

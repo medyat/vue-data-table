@@ -49,7 +49,7 @@ const hasActions = () => props.export || props.import || props.print
       </button>
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
-      <DropdownMenuContent class="dt-menu dt-more" align="end" :side-offset="4">
+      <DropdownMenuContent class="dt-menu dt-more-menu" align="end" :side-offset="4">
         <DropdownMenuSub v-if="$props.export">
           <DropdownMenuSubTrigger class="dt-menu-item">{{ i18n.t('toolbar.export') }}</DropdownMenuSubTrigger>
           <DropdownMenuPortal>

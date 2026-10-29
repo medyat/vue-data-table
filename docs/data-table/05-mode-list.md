@@ -43,7 +43,7 @@ Sol = bağlam, sağ = görünüm ayarları ve aksiyonlar. **Yalnızca yapıland�
 | 2 | Search | `searchable` sütun varsa. `/`. Çip üretmez (04 §5) |
 | 3 | Filter | `filterable` sütun varsa. Sayaç rozeti = uygulanmış çip sayısı. Column picker açar. `F`. Facet çipi yok (D26) |
 | 4 | Filter bar | Ayrı satır, yalnızca filtre varken (04 §4) |
-| 5 | Display | Kullanılabilir en az bir ayar varsa: yoğunluk, Columns ›, Sort › (sıralama varsa), dikey çizgiler |
+| 5 | Display | Kullanılabilir en az bir ayar varsa: yoğunluk, dikey çizgiler, Columns › |
 | 6 | More `⋯` | Öğe varsa: **Refresh** `R` (sunucu modunda veya `@request` dinleyicisi varsa), **Export** / **Import…** / **Print** (ilgili olay dinleniyorsa), **Auto-refresh** (`autoRefresh` verilmişse) |
 | 7 | `#toolbar-end="{ compact }"` | Uygulamanın birincil aksiyonu vb. **En fazla bir** birincil buton; mürekkep (`--dt-ink`), asla accent mavi değil. `compact` daralmada ikon moduna geçmek için |
 
@@ -70,10 +70,10 @@ Sıra: `[1] … [2 3] … [5 6] │ [7]` (D43). [2 3] toolbar'ın tam ortasında
 ### Display popover (300–312 px)
 
 - **Density** — üçlü segmented: Comfortable / Standard / Compact.
-- **Columns** › `8 of 14` — drill-in (§5).
-- **Sort** › `Due date ↑` — drill-in: aktif sıralamalar (en fazla 3), yön değiştirme, × ile kaldırma. Sürükleme yok (D22).
-- **Vertical grid lines** — switch.
-- Altta soluk not “Saved for you only” (yalnızca `preferences` adapter'ı varsa) + **Reset** (tercihleri sıfırlar).
+- **Vertical grid lines** — switch, hemen yoğunluğun altında.
+- Ayırıcı · **Columns** › `8 of 14` — Columns dialog'unu açar (§5, D45).
+- Masaüstünde **Sort ›** yoktur (2026-10-29): sıralama header'dan (tık, ⇧+tık, sütun menüsü › Clear sort). Telefonda ⋯ sayfasındaki Sort › kalır.
+- Altta soluk not “Saved for you only” (yalnızca `preferences` adapter'ı varsa) + **Reset**: tercihleri (yoğunluk, dikey çizgiler, sayfa boyutu) varsayılana, sütun düzenini (görünürlük, sıra, sabitleme, genişlik) aktif görünümün kayıtlı haline döndürür; filtre ve sıralamaya dokunmaz, `defaultViewId`'yi silmez (2026-10-29). DataSheet'te sütun düzeni tanımlara döner. Telefon ⋯ sayfasındaki Reset aynıdır.
 - Liste modunda **Wrap long text yoktur** (D8 — sanal satırlar sabit yükseklikte).
 
 ### More menüsü (236 px)
@@ -122,9 +122,10 @@ Sıra: `[1] … [2 3] … [5 6] │ [7]` (D43). [2 3] toolbar'ın tam ortasında
 | Sayısal | Sağa hizalı; ok etiketin solunda, `⋯` en sağda; hover'da `⋯` yer açınca etiket o kadar sola kayar (D44). |
 | Resize | Kenarda hover'da 2 px `--dt-accent` tutamaç; sürüklerken canlı genişlik rozeti (`184 px`); min 80 px; genişlikler tek `--cols` değişkenine Vue dışından yazılır. İçeriğe sığdırma yok: ne çift tık ne menü öğesi (D42). Sabit sütunlar px, orta sütunlar `minmax(min, fr)`, resize sonrası px; bölge sonunda `auto` dolgu. |
 | Sıra | Header menüsü › **Move left / Move right**; klavye `⌥⇧←` / `⌥⇧→`. Sürükleme yok (D22). Sabit sütunlar kendi bölgeleri içinde taşınır. |
+| Sabitleme | Yalnızca Columns dialog'undan, konumsal (D45). Birincil sütun her zaman sola sabittir. Header menüsünde Pin yoktur. |
 
 Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık: **Column menu** —
-`[Tip etiketi başlıkta]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Pin left · Pin right (sabitse Unpin) · Move left · Move right · Hide column
+`[Tip etiketi başlıkta]` · Sort ascending · Sort descending · Clear sort · ─ · Filter by this column… · ─ · Move left · Move right · Hide column
 
 ### Satır
 
@@ -144,17 +145,17 @@ Tıklama: sıralama (04 §6). ⇧+tık: ikincil sıralama. `⋯` veya sağ tık:
 
 ## 5. Sütun yönetimi
 
-### Display › Columns (günlük kullanım)
+### Columns dialog'u (D45)
 
-- Drill-in görünüm (Display popover'ı içinde, 320 px), başlıkta geri oku + “Columns” + `8 of 14 shown`; altında **Find a column** araması.
-- Bölümler: **Pinned** (kilit, “Always shown” notu), **Shown** (sağda “Hide all”), **Hidden** (sağda “Show all”).
-- Satır: tip ikonu · ad (altında varsa `description`, 12 px `--dt-text-3`, tek satır kesilir) · göz switch'i · **Move up / Move down** ok butonları (sürükle tutamacı yok, D22).
-- Altta **Reset** (görünümün kayıtlı sütun düzenine).
-- Değişiklikler anında uygulanır ve görünümü “edited” yapar.
+Display › **Columns** (telefonda ⋯ sayfası › Columns) popover'ı kapatıp dialog'u açar; drill-in yoktur. DataTable ve DataSheet aynı dialog'u kullanır.
 
-### Manage columns dialog
-
-860 px'lik bir Manage columns dialog'u (gruplu alan listesi, genişlik input'u, L/–/R sabitleme) **ilk sürümde yoktur** (D22). Columns drill-in'i aynı işleri (arama, göster/gizle, sıra, sabitleme menüden) görür; 40+ sütunlu ekranlarda ihtiyaç doğarsa yeniden ele alınır.
+- 760 px (ölçekle büyür), yükseklik en çok 640 px; iki sütun (≈ 1 : 1.75), aralık 32, dolgu 24.
+- **Sol — sabitleme:** “Pin first columns” (Hiçbiri / İlk sütun / İlk iki sütun) ve “Pin last columns” (Hiçbiri / Son sütun / Son iki sütun), her biri başlık + açıklama + radio grubu. Sayılan sütunlar her zaman sabit olanlardan (birincil; sheet'te anahtar + birincil; seçim ve ⋯ düzenin dışında) sonraki **görünür** sütunlardır; gizli sütun sayılmaz. Sıra değişince sabit sütun da değişir. Telefonda sabitleme uygulanmadığı için (§11) sol bölüm gösterilmez.
+- **Sağ — Column preferences:** başlık + `8 of 14 shown`, açıklama, **Find a column**. Liste ekrandaki sırayla (sol sabitler · orta · sağ sabitler; gizliler yerinde). Her zaman sabit sütunlar en üstte kilitli (`Lock`), taşınmaz ve gizlenmez. Satır: sürükle tutamacı (`DotsSixVertical`, `--dt-text-3`) · ad (altında varsa `description`) · kaydedilince sabitlenecekse 12 px raptiye · göster/gizle switch'i (`alwaysVisible` ise pasif). Satırlar arasında 1 px `--dt-line`; kilitli satırın adı tutamaç genişliği kadar içeride, diğerleriyle hizalı. **Sıralama:** tutamaçtan fare/dokunmatik sürükle-bırak (sürüklenen satır `--dt-shadow-pop`), klavyede tutamaçta `Space` al · `↑`/`↓` taşı · `Space` bırak · `Esc` iptal (dialog kapanmaz); ekran okuyucuya “Picked up Status. Position 3 of 9.” biçiminde duyuru (D22 revize). Arama açıkken tutamaçlar pasif.
+- **Alt:** solda **Show all** / **Hide all** (gizli sütun varsa Show all), sağda **Cancel** · **Save**.
+- Dialog taslak üzerinde çalışır: **Save** sırayı, görünürlüğü ve sabitlemeyi tek seferde uygular (tek talep, tek “edited” geçişi); Cancel, Esc ve dışarı tıklama hiçbir şeyi değiştirmez. Kapanınca odak Display (telefonda ⋯) düğmesine döner.
+- Dialog'da Reset yoktur; sütun düzenini görünümün kayıtlı haline Display › **Reset** (tercihlerle birlikte) ya da görünüm menüsündeki **Discard changes** döndürür. Genişlik dialog'da düzenlenmez (resize, D42); Save genişlikleri korur.
+- Görünümdeki biçim değişmez: `pinned.left` = birincil + ilk N, `pinned.right` = son M sütunun id'leri.
 
 ## 6. Seçim ve bulk bar
 

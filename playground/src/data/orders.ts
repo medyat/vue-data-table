@@ -24,7 +24,7 @@ export const owners: UserOption[] = [
 ]
 
 export const orderColumns: Array<ColumnDef<Order>> = [
-  { id: 'number', header: 'Order no.', type: 'id', primary: true, pinned: 'left', href: (r) => `/orders/${r.id}` },
+  { id: 'number', header: 'Order no.', type: 'id', primary: true, href: (r) => `/orders/${r.id}` },
   {
     id: 'product.name',
     header: 'Product',

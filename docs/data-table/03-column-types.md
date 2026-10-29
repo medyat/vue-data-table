@@ -17,7 +17,7 @@ Sıralama ve filtreleme her zaman **ham değer** üzerinden çalışır; göster
 | Taşma | Tek satır, `…` ile kesilir, tam değer tooltip'te (400 ms gecikme). Sütun düzeyinde `wrap` seçeneği yok; liste (D8) ve sheet modunda tek satır. |
 | İkinci satır | `secondary` (ör. SKU, e-posta) yalnızca Comfortable'da; 12 px, `--dt-text-3`. |
 | Birim | Hücrede değil, header'da (`Produced pcs`, `Lead time d`). |
-| Açıklama | `description` (uygulama i18n'den verir): header tooltip'inde ad altında ikinci satır, Columns panelinde ad altında soluk satır. Header'da ikon yoktur; hücrede gösterilmez (D33). |
+| Açıklama | `description` (uygulama i18n'den verir): header tooltip'inde ad altında ikinci satır, Columns dialog'unda ad altında soluk satır. Header'da ikon yoktur; hücrede gösterilmez (D33). |
 | Değer okuma | `id` nokta yolu (`customer.title`) null-güvenli okunur (`row.customer?.title`); `accessor` fonksiyonu hesaplanan değer içindir ve `fields` ile sunucuya istenecek alanlar bildirilir. Hücre değeri her zaman depodan okunur. |
 | Yerelleştirme | `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.Collator`; locale `createDataTable({ locale })` veya tablonun `locale` prop'u (varsayılan `navigator.language`). Biçimlendiriciler locale + seçenek anahtarıyla önbelleklenir. Metin sıralaması `Intl.Collator(locale, { numeric: true })`. |
 | Skeleton | Tipe göre: metin → %55–80 genişlikte çubuk; sayı → sağa yaslı kısa çubuk; rozet → 76×20 hap; kişi → daire + çubuk. |
